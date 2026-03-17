@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lumana — Get Started Block Prototype</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f6f8; color: #1a1a2e; height: 100vh; overflow: hidden; }
+
+  .app { display: flex; height: 100vh; }
+
+  /* Sidebar */
+  .sidebar { width: 48px; background: #fff; border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; align-items: center; padding: 12px 0; z-index: 10; flex-shrink: 0; }
+  .sidebar-logo { width: 28px; height: 28px; margin-bottom: 16px; color: #1a1a2e; }
+  .sidebar-nav { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+  .sidebar-icon { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 8px; color: #6b7280; cursor: pointer; transition: all 0.15s; position: relative; }
+  .sidebar-icon:hover { background: #f3f4f6; color: #374151; }
+  .sidebar-icon.active { background: #eef2ff; color: #4f46e5; }
+  .sidebar-icon svg { width: 20px; height: 20px; }
+  .sidebar-bottom { display: flex; flex-direction: column; gap: 4px; align-items: center; }
+  .sidebar-avatar { width: 28px; height: 28px; border-radius: 50%; background: #4f46e5; color: #fff; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  /* Main area */
+  .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .header { height: 48px; background: #fff; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center; padding: 0 24px; justify-content: space-between; flex-shrink: 0; }
+  .header-left { font-size: 14px; font-weight: 500; color: #1a1a2e; }
+  .header-tabs { display: flex; gap: 24px; }
+  .header-tab { font-size: 13px; color: #6b7280; cursor: pointer; padding: 4px 0; border-bottom: 2px solid transparent; transition: all 0.15s; }
+  .header-tab.active { color: #4f46e5; border-bottom-color: #4f46e5; }
+  .content-area { flex: 1; overflow-y: auto; }
+
+
+  /* ─── Page content ─── */
+  .page-content { flex: 1; padding: 24px 32px; }
+  .page-content.has-cameras .empty-state { display: none; }
+  .page-content:not(.has-cameras) .camera-content { display: none; }
+
+  .camera-content { }
+  .location-group { margin-bottom: 24px; }
+  .location-label { font-size: 14px; font-weight: 600; color: #1a1a2e; margin-bottom: 12px; }
+  .camera-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .camera-card { position: relative; border-radius: 8px; overflow: hidden; background: #1a1a2e; aspect-ratio: 16/10; cursor: pointer; }
+  .camera-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.15); }
+  .camera-thumb-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+  .camera-thumb-placeholder svg { width: 32px; height: 32px; color: #374151; }
+  .camera-badge { position: absolute; bottom: 8px; left: 8px; display: flex; align-items: center; gap: 5px; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); padding: 3px 8px; border-radius: 4px; font-size: 11px; color: #fff; max-width: calc(100% - 16px); }
+  .camera-badge-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .camera-badge-dot.online { background: #22c55e; }
+  .camera-badge-dot.offline { background: #ef4444; }
+  .camera-badge-dot.warning { background: #f59e0b; }
+  .camera-badge-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .camera-card-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0.4; }
+  .camera-card-overlay svg { width: 28px; height: 28px; color: #fff; }
+
+  .search-bar { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 10px 16px; margin-bottom: 20px; }
+  .search-bar svg { width: 18px; height: 18px; color: #9ca3af; flex-shrink: 0; }
+  .search-bar input { border: none; outline: none; font-size: 14px; color: #1a1a2e; width: 100%; background: transparent; }
+  .search-bar input::placeholder { color: #9ca3af; }
+
+  .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 64px 40px; text-align: center; gap: 32px; }
+  .empty-icon-wrap { width: 140px; height: 132px; flex-shrink: 0; }
+  .empty-text-group { display: flex; flex-direction: column; gap: 8px; align-items: center; }
+  .empty-title { font-size: 16px; font-weight: 600; color: #344054; }
+  .empty-sub { font-size: 16px; color: #667085; line-height: 24px; max-width: 400px; }
+  .empty-actions { display: flex; gap: 16px; align-items: center; }
+  .empty-btn-secondary { padding: 10px 20px; border: 1px solid #d0d5dd; border-radius: 4px; background: #fff; font-size: 16px; font-weight: 500; color: #344054; cursor: pointer; font-family: inherit; transition: background 0.15s; }
+  .empty-btn-secondary:hover { background: #f9fafb; }
+  .empty-btn-primary { padding: 10px 20px; border: 1px solid #3456e0; border-radius: 4px; background: #4367f6; font-size: 16px; font-weight: 500; color: #fff; cursor: pointer; text-decoration: none; display: inline-block; font-family: inherit; transition: background 0.15s; }
+  .empty-btn-primary:hover { background: #3456e0; }
+
+  /* Help popup */
+  .help-popup { position: absolute; left: 56px; bottom: 20px; width: 280px; background: #fcfcfd; border: 1px solid #eaecf0; border-radius: 8px; box-shadow: 0 20px 24px rgba(16,24,40,0.08), 0 8px 8px rgba(16,24,40,0.03); padding: 0; z-index: 20; opacity: 0; pointer-events: none; transform: translateY(4px); transition: all 0.2s; overflow: hidden; }
+  .help-popup.visible { opacity: 1; pointer-events: all; transform: translateY(0); }
+  /* Onboarding guide row (kept as-is) */
+  .help-popup-gs { padding: 8px 12px 4px; }
+  .help-popup-gs-link { display: flex; align-items: center; gap: 10px; padding: 10px 8px; border-radius: 8px; background: #eef2ff; text-decoration: none; transition: background 0.12s; }
+  .help-popup-gs-link:hover { background: #e0e7ff; }
+  .help-popup-gs-link svg { width: 18px; height: 18px; color: #4f46e5; flex-shrink: 0; }
+  .help-popup-gs-label { font-size: 13px; font-weight: 500; color: #4f46e5; }
+  /* Contact support section */
+  .help-popup-header { padding: 8px 16px; }
+  .help-popup-title { font-size: 14px; font-weight: 600; color: #101828; }
+  .help-popup-avail { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #667085; margin-top: 2px; }
+  .help-popup-avail .green-dot { width: 8px; height: 8px; background: #17b26a; border-radius: 50%; flex-shrink: 0; }
+  .help-popup-divider { height: 1px; background: #eaecf0; margin: 0 9px; }
+  .help-popup-body { padding: 4px 0 4px; }
+  .help-popup-item { display: flex; align-items: center; gap: 4px; padding: 8px 16px; min-height: 40px; font-size: 14px; text-decoration: none; transition: background 0.12s; cursor: pointer; }
+  .help-popup-item:hover { background: #f2f4f7; }
+  .help-popup-item-icon { display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; flex-shrink: 0; }
+  .help-popup-item-icon svg { width: 18px; height: 18px; display: block; }
+  .help-popup-item-label { color: #344054; margin-right: 4px; white-space: nowrap; }
+  .help-popup-item-val { color: #3456e0; white-space: nowrap; }
+  .help-popup-item-full { color: #3456e0; flex: 1; }
+
+  /* Video modal */
+  .video-modal-overlay { position: fixed; inset: 0; background: rgba(16,24,40,0.7); z-index: 300; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+  .video-modal-overlay.visible { opacity: 1; pointer-events: all; }
+  .video-modal { background: #1a1a2e; border-radius: 12px; overflow: hidden; width: 720px; max-width: calc(100vw - 48px); box-shadow: 0 24px 48px rgba(0,0,0,0.4); transform: scale(0.96); transition: transform 0.2s; position: relative; }
+  .video-modal-overlay.visible .video-modal { transform: scale(1); }
+  .video-modal-close { position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.12); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #fff; z-index: 1; transition: background 0.15s; }
+  .video-modal-close:hover { background: rgba(255,255,255,0.22); }
+  .video-modal-close svg { width: 16px; height: 16px; }
+  .video-modal-player { aspect-ratio: 16/9; background: #0d0d1a; display: flex; align-items: center; justify-content: center; position: relative; }
+  .video-modal-player iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; }
+  .video-modal-placeholder { display: flex; flex-direction: column; align-items: center; gap: 16px; color: #6b7280; }
+  .video-modal-placeholder svg { width: 48px; height: 48px; color: #4f46e5; opacity: 0.7; }
+  .video-modal-placeholder span { font-size: 13px; }
+
+  /* Prototype controls */
+  .proto-controls { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 200; background: #1a1a2e; padding: 8px 12px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+  .proto-btn { padding: 6px 14px; border: none; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.15s; background: #2d2d44; color: #a5a5c0; }
+  .proto-btn:hover { background: #3d3d58; color: #fff; }
+  .proto-btn.active { background: #4f46e5; color: #fff; }
+  .proto-label { font-size: 11px; color: #6b7280; padding: 6px 8px; display: flex; align-items: center; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <svg class="sidebar-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+    <div class="sidebar-nav">
+      <div class="sidebar-icon active" title="Control Center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
+      <div class="sidebar-icon" title="Search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg></div>
+      <div class="sidebar-icon" title="Alerts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg></div>
+      <div class="sidebar-icon" title="Analytics"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg></div>
+      <div class="sidebar-icon" title="Camera Walls"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
+      <div class="sidebar-icon" title="Archives"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 002 2h12a2 2 0 002-2V8M10 12h4"/></svg></div>
+      <div class="sidebar-icon" title="Reports"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg></div>
+      <div class="sidebar-icon" title="Dashboards"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></div>
+    </div>
+    <div class="sidebar-bottom">
+      <div class="sidebar-icon" id="helpBtn" title="Help"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01"/></svg></div>
+      <div class="sidebar-icon" title="User"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+      <div class="sidebar-avatar">JA</div>
+    </div>
+  </div>
+
+  <!-- Help popup -->
+  <div class="help-popup" id="helpPopup">
+    <!-- Onboarding guide (kept as-is) -->
+    <div class="help-popup-gs">
+      <a class="help-popup-gs-link" href="get-started-page.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+        <span class="help-popup-gs-label">Onboarding guide</span>
+      </a>
+    </div>
+    <div class="help-popup-divider"></div>
+    <!-- Contact support header -->
+    <div class="help-popup-header">
+      <div class="help-popup-title">Contact Lumana support</div>
+      <div class="help-popup-avail"><span class="green-dot"></span>Available 24/7</div>
+    </div>
+    <div class="help-popup-divider"></div>
+    <!-- Contact rows -->
+    <div class="help-popup-body">
+      <!-- Live chat -->
+      <div class="help-popup-item">
+        <div class="help-popup-item-icon"><svg viewBox="0 0 15 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M0 0H14.815V10.402H8.189L3.152 14V10.402H0V0ZM0.946 0.946V9.456H4.098V12.163L7.886 9.456H13.869V0.946H0.946Z" fill="#667085"/></svg></div>
+        <span class="help-popup-item-full">Live chat</span>
+      </div>
+      <!-- Email -->
+      <div class="help-popup-item">
+        <div class="help-popup-item-icon"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.333" y="2.667" width="13.334" height="10.666" rx="1.333" stroke="#667085" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M1.333 4.667L8 9.333l6.667-4.666" stroke="#667085" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <a class="help-popup-item-full" href="mailto:support@lumana.ai" style="text-decoration:none;">support@lumana.ai</a>
+      </div>
+      <!-- Phone North America -->
+      <div class="help-popup-item">
+        <div class="help-popup-item-icon"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14.667 11.28v2a1.333 1.333 0 01-1.454 1.333 13.193 13.193 0 01-5.753-2.047 13 13 0 01-4-4 13.193 13.193 0 01-2.047-5.78A1.333 1.333 0 012.747 1.333h2a1.333 1.333 0 011.333 1.147c.085.64.24 1.268.467 1.873a1.333 1.333 0 01-.3 1.407L5.273 6.74a10.667 10.667 0 004 4l.98-.98a1.333 1.333 0 011.407-.3c.605.227 1.233.382 1.873.467a1.333 1.333 0 011.134 1.353z" stroke="#667085" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="help-popup-item-label">North America</span>
+        <a class="help-popup-item-val" href="tel:18004705576" style="text-decoration:none;">1-800-470-5576</a>
+      </div>
+      <!-- Phone Israel -->
+      <div class="help-popup-item">
+        <div class="help-popup-item-icon"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14.667 11.28v2a1.333 1.333 0 01-1.454 1.333 13.193 13.193 0 01-5.753-2.047 13 13 0 01-4-4 13.193 13.193 0 01-2.047-5.78A1.333 1.333 0 012.747 1.333h2a1.333 1.333 0 011.333 1.147c.085.64.24 1.268.467 1.873a1.333 1.333 0 01-.3 1.407L5.273 6.74a10.667 10.667 0 004 4l.98-.98a1.333 1.333 0 011.407-.3c.605.227 1.233.382 1.873.467a1.333 1.333 0 011.134 1.353z" stroke="#667085" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="help-popup-item-label">Israel</span>
+        <a class="help-popup-item-val" href="tel:0732158229" style="text-decoration:none;">073-215-8229</a>
+      </div>
+    </div>
+    <div class="help-popup-divider"></div>
+    <!-- Support center -->
+    <div class="help-popup-body" style="padding-bottom:8px;">
+      <div class="help-popup-item">
+        <div class="help-popup-item-icon"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6.667 2.667H3.333A1.333 1.333 0 002 4v8.667A1.333 1.333 0 003.333 14H12A1.333 1.333 0 0013.333 12.667V9.333M9.333 2H14m0 0v4.667M14 2L6.667 9.333" stroke="#667085" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="help-popup-item-full">Support center</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main content -->
+  <div class="main">
+    <div class="header">
+      <div class="header-left">Home</div>
+      <div class="header-tabs">
+        <div class="header-tab active">Cameras</div>
+        <div class="header-tab">Map</div>
+        <div class="header-tab">Floor plans</div>
+        <div class="header-tab">Devices</div>
+      </div>
+    </div>
+
+    <div class="content-area">
+      <!-- Page content -->
+      <div class="page-content" id="pageContent">
+        <div class="search-bar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input type="text" placeholder="Search locations and cameras">
+          <div style="display:flex;gap:8px;flex-shrink:0;">
+            <div style="display:flex;align-items:center;gap:4px;padding:4px 10px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;color:#6b7280;cursor:pointer;">Tags <svg style="width:12px;height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div>
+            <div style="display:flex;align-items:center;gap:4px;padding:4px 10px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;color:#6b7280;cursor:pointer;">Status <svg style="width:12px;height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div>
+          </div>
+        </div>
+
+        <div class="empty-state" id="emptyState">
+          <!-- Illustration -->
+          <div class="empty-icon-wrap">
+            <svg viewBox="0 0 140 132" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:140px;height:132px;">
+              <!-- Background circle -->
+              <circle cx="70" cy="63" r="57" fill="#f2f4f7"/>
+              <!-- Stacked panels (back) -->
+              <rect x="26" y="24" width="72" height="56" rx="5" fill="#d0d5dd"/>
+              <!-- Stacked panels (mid) -->
+              <rect x="32" y="30" width="72" height="56" rx="5" fill="#e4e7ec"/>
+              <!-- Front panel -->
+              <rect x="38" y="36" width="72" height="56" rx="5" fill="#eaecf0"/>
+              <!-- Camera tile grid on front panel (2x2) -->
+              <rect x="44" y="42" width="28" height="22" rx="3" fill="#d0d5dd"/>
+              <circle cx="58" cy="53" r="6" fill="#98a2b3"/>
+              <circle cx="58" cy="53" r="3.5" fill="#667085"/>
+              <rect x="76" y="42" width="28" height="22" rx="3" fill="#d0d5dd"/>
+              <circle cx="90" cy="53" r="6" fill="#98a2b3"/>
+              <circle cx="90" cy="53" r="3.5" fill="#667085"/>
+              <rect x="44" y="68" width="28" height="18" rx="3" fill="#d0d5dd"/>
+              <rect x="76" y="68" width="28" height="18" rx="3" fill="#d0d5dd"/>
+              <!-- + add badge -->
+              <circle cx="101" cy="92" r="13" fill="#667085"/>
+              <path d="M101 84v16M93 92h16" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <!-- Text -->
+          <div class="empty-text-group">
+            <div class="empty-title">Connect your cameras</div>
+            <div class="empty-sub">Add cameras to your locations and start seeing live video, running AI searches, and getting alerts.</div>
+          </div>
+          <!-- Actions -->
+          <div class="empty-actions">
+            <button class="empty-btn-secondary" id="seeHowBtn" style="display:inline-flex;align-items:center;gap:8px;"><svg style="width:16px;height:16px;flex-shrink:0;" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>See how</button>
+            <a class="empty-btn-primary" href="#">Add cameras</a>
+          </div>
+        </div>
+
+        <div class="camera-content" id="cameraContent">
+          <div class="location-group">
+            <div class="location-label">Cesaria office 1</div>
+            <div class="camera-grid">
+              <div class="camera-card" style="background:linear-gradient(135deg,#2d1810,#4a2518);"><div class="camera-thumb-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></div><div class="camera-badge"><span class="camera-badge-dot online"></span><span class="camera-badge-name">RTSP 5</span></div></div>
+              <div class="camera-card" style="background:linear-gradient(135deg,#1e293b,#334155);"><div class="camera-card-overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15,3 21,3 21,9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></div><div class="camera-thumb-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></div><div class="camera-badge"><span class="camera-badge-dot offline"></span><span class="camera-badge-name">ss</span></div></div>
+              <div class="camera-card" style="background:linear-gradient(135deg,#1c1917,#374151);"><div class="camera-thumb-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></div><div class="camera-badge"><span class="camera-badge-dot online"></span><span class="camera-badge-name">Lost Camera's test 6</span></div></div>
+              <div class="camera-card" style="background:linear-gradient(135deg,#e5e7eb,#d1d5db);"><div class="camera-thumb-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></div><div class="camera-badge"><span class="camera-badge-dot online"></span><span class="camera-badge-name">Yes!</span></div></div>
+              <div class="camera-card" style="background:linear-gradient(135deg,#1e1e2e,#2d2d44);"><div class="camera-thumb-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></div><div class="camera-badge"><span class="camera-badge-dot online"></span><span class="camera-badge-name">Camera 2610d Red</span></div></div>
+              <div class="camera-card" style="background:linear-gradient(135deg,#374151,#4b5563);"><div class="camera-card-overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15,3 21,3 21,9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></div><div class="camera-thumb-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></div><div class="camera-badge"><span class="camera-badge-dot warning"></span><span class="camera-badge-name">Camera 20</span></div></div>
+            </div>
+          </div>
+          <div class="location-group">
+            <div class="location-label">New sub</div>
+            <div class="camera-grid">
+              <div class="camera-card" style="background:linear-gradient(135deg,#44403c,#57534e);"><div class="camera-thumb-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></div><div class="camera-badge"><span class="camera-badge-dot warning"></span><span class="camera-badge-name">Alex SSS</span></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Video modal -->
+<div class="video-modal-overlay" id="videoModal">
+  <div class="video-modal">
+    <button class="video-modal-close" id="videoModalClose">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div class="video-modal-player">
+      <div class="video-modal-placeholder">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        <span>Video preview</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Prototype controls -->
+<div class="proto-controls">
+  <div class="proto-label">Simulate:</div>
+  <button class="proto-btn active" id="simNoCameras">No cameras</button>
+  <button class="proto-btn" id="simCameras">With cameras</button>
+</div>
+
+<script>
+  const helpBtn = document.getElementById('helpBtn');
+  const helpPopup = document.getElementById('helpPopup');
+  const pageContent = document.getElementById('pageContent');
+
+  helpBtn.addEventListener('click', () => helpPopup.classList.toggle('visible'));
+
+  document.addEventListener('click', e => {
+    if (!helpBtn.contains(e.target) && !helpPopup.contains(e.target)) {
+      helpPopup.classList.remove('visible');
+    }
+  });
+
+  const videoModal = document.getElementById('videoModal');
+  document.getElementById('seeHowBtn').addEventListener('click', () => videoModal.classList.add('visible'));
+  document.getElementById('videoModalClose').addEventListener('click', () => videoModal.classList.remove('visible'));
+  videoModal.addEventListener('click', e => { if (e.target === videoModal) videoModal.classList.remove('visible'); });
+
+  document.getElementById('simCameras').addEventListener('click', function() {
+    pageContent.classList.add('has-cameras');
+    this.classList.add('active');
+    document.getElementById('simNoCameras').classList.remove('active');
+  });
+
+  document.getElementById('simNoCameras').addEventListener('click', function() {
+    pageContent.classList.remove('has-cameras');
+    this.classList.add('active');
+    document.getElementById('simCameras').classList.remove('active');
+  });
+</script>
+
+</body>
+</html>
