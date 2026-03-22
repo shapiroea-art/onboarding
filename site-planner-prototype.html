@@ -2300,7 +2300,7 @@ function renderPanel() {
   document.getElementById('bpChangeFloorLabel').textContent = hasFile ? 'Change floor plan' : 'Upload floor plan';
 
   // Opacity only when showing floor plan over map AND file loaded
-  document.getElementById('bpOpacityRow').style.display = (mode === 'both' && hasFile) ? 'flex' : 'none';
+  document.getElementById('bpOpacityRow').style.display = (mode === 'both') ? 'flex' : 'none';
 }
 
 // Alias kept so existing callers (loadFloorPlan, deleteFloorPlan, enable/disableFloorPlanEdit) still work
