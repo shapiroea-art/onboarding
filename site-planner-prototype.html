@@ -135,6 +135,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .prop-ctrl { flex: 1; }
 .prop-input { width: 100%; padding: 5px 10px; border: 1px solid #d0d5dd; border-radius: 5px; font-size: 13px; color: #344054; outline: none; }
 .prop-input:focus { border-color: #7c3aed; box-shadow: 0 0 0 2px rgba(124,58,237,0.1); }
+.prop-input:disabled, .prop-select:disabled { background: #f9fafb; border-color: #eaecf0; color: #344054; cursor: default; -webkit-text-fill-color: #344054; }
 .prop-select { width: 100%; padding: 5px 8px; border: 1px solid #d0d5dd; border-radius: 5px; font-size: 13px; color: #344054; outline: none; background: #fff; cursor: pointer; }
 .prop-range-row { display: flex; align-items: center; gap: 8px; }
 .prop-range-row input[type=range] { flex: 1; accent-color: #7c3aed; }
@@ -1235,8 +1236,8 @@ function addCamera(typeId, x, y, skipNameInput) {
     baseIdR:  def.idR,
     // Config
     resolution: def.resolution || '4K',
-    mountHeight: 9,
-    tiltAngle: 15,
+    distance: 30,
+    unit: 'imperial',
     retention: 30,
     license: 'Standard',
     // DORI visibility
@@ -2103,60 +2104,65 @@ function renderProperties(id) {
           </div>
         </div>
       </div>
-      <div class="prop-row">
+      ${(()=>{
+        const isModel = !!CAMERA_DB.find(m => m.id === cam.typeId);
+        const unit = cam.unit || 'imperial';
+        const dist = cam.distance || 30;
+        const distDisp = unit === 'metric' ? (dist * 0.3048).toFixed(1) : dist.toFixed(1);
+        const unitLabel = unit === 'metric' ? 'm' : 'ft';
+        const haov = cam.fovAngle < 360 ? cam.fovAngle : 360;
+        const wFt = 2 * dist * Math.tan(haov * Math.PI / 360);
+        const wDisp = unit === 'metric' ? (wFt * 0.3048).toFixed(1) : wFt.toFixed(1);
+        const hPx = {'1080p':1920,'4K':3840,'8MP':3264,'12MP':4000}[cam.resolution]||1920;
+        const ppf = wFt > 0 ? (hPx / wFt).toFixed(1) : '0';
+        const disabledStyle = 'pointer-events:none';
+        return `
+      <div class="prop-row" style="${isModel ? disabledStyle : ''}">
         <span class="prop-label">Resolution</span>
         <div class="prop-ctrl">
-          <select class="prop-select" onchange="updateCamProp(${id},'resolution',this.value)">
+          <select class="prop-select" onchange="updateCamProp(${id},'resolution',this.value)" ${isModel ? 'disabled' : ''}>
             ${['1080p','4K','8MP','12MP'].map(r=>`<option ${cam.resolution===r?'selected':''}>${r}</option>`).join('')}
           </select>
         </div>
       </div>
-      ${cam.fovAngle < 360 ? `
       <div class="prop-row">
-        <span class="prop-label">Focal Length</span>
+        <span class="prop-label">Unit</span>
         <div class="prop-ctrl">
-          <div class="prop-range-row">
-            <input type="range" id="fl-slider-${id}" min="1.8" max="25" step="0.2"
-              value="${cam.focalLength.toFixed(1)}"
-              oninput="updateFocalLength(${id},+this.value)">
-            <span class="prop-range-val" id="fl-val-${id}">${cam.focalLength.toFixed(1)}mm</span>
-          </div>
-          <div class="fl-presets" id="fl-presets-${id}">
-            ${[2.8,4,6,8,12,25].map(f=>`<span class="fl-chip ${Math.abs(cam.focalLength-f)<0.25?'active':''}" data-f="${f}" onclick="updateFocalLength(${id},${f})">${f}mm</span>`).join('')}
-          </div>
+          <select class="prop-select" onchange="updateCamUnit(${id},this.value)">
+            <option value="imperial" ${unit==='imperial'?'selected':''}>Imperial (ft)</option>
+            <option value="metric" ${unit==='metric'?'selected':''}>Metric (m)</option>
+          </select>
         </div>
       </div>
       <div class="prop-row">
-        <span class="prop-label">FoV Angle</span>
-        <div class="prop-ctrl">
-          <div class="prop-range-row">
-            <input type="range" min="10" max="180" value="${cam.fovAngle}" oninput="updateFov(${id},this.value,this)">
-            <span class="prop-range-val" id="fov-val-${id}">${cam.fovAngle}°</span>
-          </div>
-        </div>
-      </div>` : `
-      <div class="prop-row">
-        <span class="prop-label">Optics</span>
-        <div class="prop-ctrl" style="font-size:12px;color:#667085">Fixed fisheye — 360°</div>
-      </div>`}
-      <div class="prop-row">
-        <span class="prop-label">Mount Height</span>
-        <div class="prop-ctrl">
-          <div class="prop-range-row">
-            <input type="range" min="6" max="30" value="${cam.mountHeight}" oninput="updateCamProp(${id},'mountHeight',+this.value);document.getElementById('mh-val-${id}').textContent=this.value+'ft'">
-            <span class="prop-range-val" id="mh-val-${id}">${cam.mountHeight}ft</span>
-          </div>
-        </div>
+        <span class="prop-label">Distance</span>
+        <div class="prop-ctrl"><div class="prop-range-row">
+          <input type="number" id="cam-dist-${id}" class="prop-input" style="text-align:right" value="${distDisp}" min="0.5" max="500" step="0.5" onchange="updateCamDistance(${id},+this.value)">
+          <span class="prop-range-val">${unitLabel}</span>
+        </div></div>
+      </div>
+      <div class="prop-row" style="${(isModel || cam.fovAngle>=360) ? disabledStyle : ''}">
+        <span class="prop-label">HAoV</span>
+        <div class="prop-ctrl"><div class="prop-range-row">
+          <input type="number" id="cam-haov-${id}" class="prop-input" style="text-align:right" value="${haov}" min="1" max="${cam.fovAngle<360?179:360}" step="1" ${(isModel || cam.fovAngle>=360)?'disabled':''} onchange="updateCamHaov(${id},+this.value)">
+          <span class="prop-range-val">°</span>
+        </div></div>
       </div>
       <div class="prop-row">
-        <span class="prop-label">Tilt Angle</span>
-        <div class="prop-ctrl">
-          <div class="prop-range-row">
-            <input type="range" min="0" max="60" value="${cam.tiltAngle}" oninput="updateCamProp(${id},'tiltAngle',+this.value);document.getElementById('tilt-val-${id}').textContent=this.value+'°'">
-            <span class="prop-range-val" id="tilt-val-${id}">${cam.tiltAngle}°</span>
-          </div>
-        </div>
+        <span class="prop-label">Width</span>
+        <div class="prop-ctrl"><div class="prop-range-row">
+          <input type="number" id="cam-width-${id}" class="prop-input" style="text-align:right" value="${wDisp}" min="0.1" max="1000" step="0.1" onchange="updateCamWidth(${id},+this.value)">
+          <span class="prop-range-val">${unitLabel}</span>
+        </div></div>
       </div>
+      <div class="prop-row">
+        <span class="prop-label">PPF</span>
+        <div class="prop-ctrl"><div class="prop-range-row">
+          <input type="number" id="cam-ppf-${id}" class="prop-input" style="text-align:right" value="${ppf}" min="0.1" max="1000" step="0.1" onchange="updateCamPPF(${id},+this.value)">
+          <span class="prop-range-val">px/ft</span>
+        </div></div>
+      </div>`;
+      })()}
     </div>
     <div class="props-section">
       <div class="props-section-title">Recording & License</div>
@@ -2285,6 +2291,79 @@ function updateCamColor(id, color) {
   renderCamera(cam);
   drawFov(cam);
   renderProperties(id);
+  updateUI();
+}
+
+// ═══════════════════════════════════════════════
+// CAMERA CONFIG — Distance / HAoV / Width / PPF
+// distance stored in feet internally; unit pref in cam.unit
+// ═══════════════════════════════════════════════
+function _camHPx(cam) {
+  return {'1080p':1920,'4K':3840,'8MP':3264,'12MP':4000}[cam.resolution] || 1920;
+}
+function _camWFt(cam) {
+  return 2 * (cam.distance||30) * Math.tan((cam.fovAngle < 360 ? cam.fovAngle : 360) * Math.PI / 360);
+}
+function _refreshCamFields(id) {
+  const cam = state.cameras.find(c => c.id === id);
+  if (!cam) return;
+  const unit = cam.unit || 'imperial';
+  const dist = cam.distance || 30;
+  const wFt  = _camWFt(cam);
+  const ppf  = wFt > 0 ? (_camHPx(cam) / wFt).toFixed(1) : '0';
+  const distDisp  = unit === 'metric' ? (dist * 0.3048).toFixed(1) : dist.toFixed(1);
+  const widthDisp = unit === 'metric' ? (wFt  * 0.3048).toFixed(1) : wFt.toFixed(1);
+  const distEl  = document.getElementById('cam-dist-'  + id);
+  const widthEl = document.getElementById('cam-width-' + id);
+  const ppfEl   = document.getElementById('cam-ppf-'   + id);
+  const haovEl  = document.getElementById('cam-haov-'  + id);
+  if (distEl)  distEl.value  = distDisp;
+  if (widthEl) widthEl.value = widthDisp;
+  if (ppfEl)   ppfEl.value   = ppf;
+  if (haovEl)  haovEl.value  = cam.fovAngle < 360 ? cam.fovAngle : 360;
+}
+function updateCamUnit(id, unit) {
+  const cam = state.cameras.find(c => c.id === id);
+  if (!cam) return;
+  cam.unit = unit;
+  renderProperties(id);
+}
+function updateCamDistance(id, val) {
+  const cam = state.cameras.find(c => c.id === id);
+  if (!cam) return;
+  cam.distance = cam.unit === 'metric' ? val / 0.3048 : val;
+  _refreshCamFields(id);
+  drawFov(cam);
+  updateUI();
+}
+function updateCamHaov(id, val) {
+  const cam = state.cameras.find(c => c.id === id);
+  if (!cam) return;
+  cam.fovAngle = Math.max(1, Math.min(179, +val));
+  _refreshCamFields(id);
+  drawFov(cam);
+  updateUI();
+}
+function updateCamWidth(id, val) {
+  const cam = state.cameras.find(c => c.id === id);
+  if (!cam) return;
+  const wFt = cam.unit === 'metric' ? val / 0.3048 : val;
+  const dist = cam.distance || 30;
+  if (dist > 0 && wFt > 0) {
+    cam.fovAngle = Math.max(1, Math.min(179, 2 * Math.atan(wFt / (2 * dist)) * 180 / Math.PI));
+  }
+  _refreshCamFields(id);
+  drawFov(cam);
+  updateUI();
+}
+function updateCamPPF(id, val) {
+  const cam = state.cameras.find(c => c.id === id);
+  if (!cam) return;
+  if (val <= 0) return;
+  const wFt = _camHPx(cam) / val;
+  cam.distance = wFt / (2 * Math.tan((cam.fovAngle < 360 ? cam.fovAngle : 90) * Math.PI / 360));
+  _refreshCamFields(id);
+  drawFov(cam);
   updateUI();
 }
 
