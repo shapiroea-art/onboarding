@@ -332,6 +332,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .bp-opacity-label { font-size: 11px; color: #667085; flex-shrink: 0; }
 .bp-opacity-row input[type=range] { flex: 1; accent-color: #7c3aed; cursor: pointer; }
 .bp-opacity-val { font-size: 11px; font-weight: 600; color: #344054; min-width: 30px; text-align: right; flex-shrink: 0; }
+/* Floor plan transform toggle */
+.bp-fp-edit-btn { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; margin-top: 8px; padding: 6px 10px; font-size: 12px; font-weight: 500; border: 1px solid #d0d5dd; border-radius: 6px; background: #fff; color: #344054; cursor: pointer; transition: all 0.15s; }
+.bp-fp-edit-btn:hover { background: #f9fafb; border-color: #98a2b3; }
+.bp-fp-edit-btn.active { background: #ede9fe; border-color: #c4b5fd; color: #7c3aed; }
+.bp-fp-edit-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
+/* Canvas transform-mode hint pill */
+.fp-transform-hint { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: rgba(124,58,237,0.92); color: #fff; font-size: 11px; font-weight: 600; padding: 5px 14px; border-radius: 20px; z-index: 20; pointer-events: none; display: none; white-space: nowrap; box-shadow: 0 2px 8px rgba(124,58,237,0.3); }
+.fp-transform-hint.show { display: block; }
+
 /* Address row */
 .bp-addr-row { display: flex; align-items: center; gap: 6px; margin-bottom: 9px; padding: 5px 9px; border: 1px solid #d0d5dd; border-radius: 6px; background: #fff; }
 .bp-addr-row svg { width: 13px; height: 13px; color: #98a2b3; flex-shrink: 0; }
@@ -667,6 +676,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
                   <button class="bp-fp-btn bp-fp-btn-del" onclick="deleteFloorPlan()">Delete</button>
                 </div>
               </div>
+              <button class="bp-fp-edit-btn" id="bpFloorEditBtn" style="display:none" onclick="toggleFloorPlanEdit()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                Resize &amp; Rotate
+              </button>
               <div id="bpOpacityRow" class="bp-opacity-row" style="display:none">
                 <span class="bp-opacity-label">Opacity</span>
                 <input type="range" min="10" max="100" value="70" oninput="setFloorPlanOpacity(this.value/100)" id="bpOpacitySlider">
@@ -744,6 +757,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
         <div id="map-container"></div>
         <div id="konva-container"></div>
         <div id="camLabelOverlay" style="position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:4"></div>
+        <div class="fp-transform-hint" id="fpTransformHint">Drag to move · Corners to resize · Top handle to rotate · Press Esc to finish</div>
 
         <div class="canvas-empty hidden" id="canvasEmpty">
           <div class="upload-zone" onclick="document.getElementById('floorPlanInput').click()">
@@ -1116,6 +1130,7 @@ const state = {
   mapType: 'satellite',     // 'standard' | 'satellite'
   floorPlanFile: null,      // null | { name }
   floorPlanOpacity: 0.7,
+  floorPlanEditMode: false,
 };
 
 // Wall type visual configs
@@ -1788,8 +1803,11 @@ function loadFloorPlan(e) {
       DEMO_WALLS = [];
       const W = stage.width(), H = stage.height();
       const scale = Math.min((W - 80) / img.width, (H - 80) / img.height);
-      const kImg = new Konva.Image({ image:img, x:(W-img.width*scale)/2, y:(H-img.height*scale)/2, width:img.width*scale, height:img.height*scale, listening:false });
-      floorLayer.add(kImg);
+      // Disable any active transform before replacing
+      if (state.floorPlanEditMode) disableFloorPlanEdit();
+      floorLayer.destroyChildren();
+      floorPlanNode = new Konva.Image({ image:img, x:(W-img.width*scale)/2, y:(H-img.height*scale)/2, width:img.width*scale, height:img.height*scale, listening:false });
+      floorLayer.add(floorPlanNode);
       floorLayer.draw();
       document.getElementById('canvasEmpty').classList.add('hidden');
       // Store file metadata and update panel
@@ -2064,6 +2082,8 @@ function updateInfo3D(cam, dist, detR, recR, idR) {
 // BASEMAP & FLOOR PLAN
 // ═══════════════════════════════════════════════
 let leafletMap = null;
+let floorPlanNode = null;
+let floorTransformer = null;
 let activeTileLayer = null;
 
 const TILE_LAYERS = {
@@ -2222,7 +2242,9 @@ function setFloorLayerOpacity(val) {
 
 function deleteFloorPlan() {
   if (!confirm('Remove the floor plan from this project?')) return;
+  if (state.floorPlanEditMode) disableFloorPlanEdit();
   state.floorPlanFile = null;
+  floorPlanNode = null;
   if (typeof floorLayer !== 'undefined') { floorLayer.destroyChildren(); floorLayer.draw(); }
   document.getElementById('bpFloorEmpty').style.display = '';
   document.getElementById('bpFloorLoaded').style.display = 'none';
@@ -2232,10 +2254,64 @@ function deleteFloorPlan() {
   if (state.mapMode === 'floorplan') setMapMode('map');
 }
 
+function enableFloorPlanEdit() {
+  if (!floorPlanNode) return;
+  state.floorPlanEditMode = true;
+  floorPlanNode.listening(true);
+  floorPlanNode.draggable(true);
+
+  if (!floorTransformer) {
+    floorTransformer = new Konva.Transformer({
+      keepRatio: true,
+      enabledAnchors: ['top-left', 'top-right', 'bottom-left', 'bottom-right'],
+      rotateEnabled: true,
+      rotationSnaps: [0, 45, 90, 135, 180, 225, 270, 315],
+      rotationSnapTolerance: 8,
+      borderStroke: '#7c3aed',
+      borderStrokeWidth: 1.5,
+      borderDash: [4, 3],
+      anchorFill: '#fff',
+      anchorStroke: '#7c3aed',
+      anchorStrokeWidth: 1.5,
+      anchorSize: 10,
+      anchorCornerRadius: 3,
+    });
+    floorLayer.add(floorTransformer);
+  }
+  floorTransformer.nodes([floorPlanNode]);
+  floorLayer.batchDraw();
+
+  document.getElementById('fpTransformHint').classList.add('show');
+  renderBasemapFloorState();
+}
+
+function disableFloorPlanEdit() {
+  state.floorPlanEditMode = false;
+  if (floorTransformer) {
+    floorTransformer.nodes([]);
+    floorTransformer.destroy();
+    floorTransformer = null;
+  }
+  if (floorPlanNode) {
+    floorPlanNode.listening(false);
+    floorPlanNode.draggable(false);
+  }
+  if (typeof floorLayer !== 'undefined') floorLayer.batchDraw();
+
+  document.getElementById('fpTransformHint').classList.remove('show');
+  renderBasemapFloorState();
+}
+
+function toggleFloorPlanEdit() {
+  state.floorPlanEditMode ? disableFloorPlanEdit() : enableFloorPlanEdit();
+}
+
 function renderBasemapFloorState() {
   const hasFile = !!state.floorPlanFile;
   document.getElementById('bpFloorEmpty').style.display = hasFile ? 'none' : '';
   document.getElementById('bpFloorLoaded').style.display = hasFile ? 'flex' : 'none';
+  document.getElementById('bpFloorEditBtn').style.display = hasFile ? '' : 'none';
+  document.getElementById('bpFloorEditBtn').classList.toggle('active', state.floorPlanEditMode);
   if (hasFile) document.getElementById('bpFloorName').textContent = state.floorPlanFile.name;
   const showOpacity = hasFile && state.mapMode === 'both';
   document.getElementById('bpOpacityRow').style.display = showOpacity ? 'flex' : 'none';
@@ -3780,7 +3856,7 @@ document.addEventListener('keydown', e => {
   if ((e.key === 'Delete' || e.key === 'Backspace') && state.selectedId) deleteCamera(state.selectedId);
   if (e.key === 'z' && (e.metaKey || e.ctrlKey) && !e.shiftKey) { e.preventDefault(); undo(); }
   if (e.key === 'z' && (e.metaKey || e.ctrlKey) && e.shiftKey)  { e.preventDefault(); redo(); }
-  if (e.key === 'Escape') { setTool('select'); selectCamera(null); }
+  if (e.key === 'Escape') { if (state.floorPlanEditMode) { disableFloorPlanEdit(); return; } setTool('select'); selectCamera(null); }
   // Arrow keys nudge selected camera
   if (state.selectedId && ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {
     e.preventDefault();
