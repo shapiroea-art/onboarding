@@ -564,10 +564,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
         </div>
       </div>
       <div class="tool-group">
-        <div class="tool-btn" data-tip="Upload Floor Plan" onclick="document.getElementById('floorPlanInput').click()">
+        <div class="tool-btn" data-tip="Update Floor Plan" onclick="document.getElementById('floorPlanInput').click()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
         </div>
-        <div class="tool-btn" id="tool-map" data-tip="Satellite Map" onclick="toggleSatSubtoolbar()">
+        <div class="tool-btn" id="tool-map" data-tip="Show map" onclick="toggleSatSubtoolbar()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
         </div>
       </div>
@@ -627,9 +627,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
         </div>
 
         <div class="catalog-header">
-          <div class="catalog-hdr-row">
-            <div class="catalog-title">Cameras</div>
-          </div>
           <button class="browse-btn" onclick="openModelPicker()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             Add camera by model
@@ -2210,13 +2207,15 @@ function renderProperties(id) {
       <div class="props-section-title">Coverage</div>
       <div class="prop-row"><span class="prop-label">Dead Zone</span><div class="prop-ctrl" style="font-size:12px;color:#344054">${calcDeadZone(cam)}</div></div>
       <div class="prop-row"><span class="prop-label">ID Range</span><div class="prop-ctrl" style="font-size:12px;color:#7c3aed;font-weight:500">${(cam.idR / state.scalePPM).toFixed(1)}m</div></div>
-    </div>
-    <div class="props-section">
-      <div class="props-section-title">Coverage Zones</div>
-      <div class="dori-zones">
-        <div class="dori-z dori-id ${cam.showId?'on':''}" onclick="toggleDori(${id},'id')" title="Identification zone — faces &amp; plates readable (inner, darkest)">ID</div>
-        <div class="dori-z dori-rec ${cam.showRec?'on':''}" onclick="toggleDori(${id},'rec')" title="Recognition zone — person identifiable (middle)">REC</div>
-        <div class="dori-z dori-det ${cam.showDet?'on':''}" onclick="toggleDori(${id},'det')" title="Detection zone — presence detected (outer, faintest)">DET</div>
+      <div class="prop-row">
+        <span class="prop-label">Show coverage zones</span>
+        <div class="prop-ctrl">
+          <div class="dori-zones">
+            <div class="dori-z dori-id ${cam.showId?'on':''}" onclick="toggleDori(${id},'id')" title="Identification zone — faces &amp; plates readable (inner, darkest)">ID</div>
+            <div class="dori-z dori-rec ${cam.showRec?'on':''}" onclick="toggleDori(${id},'rec')" title="Recognition zone — person identifiable (middle)">REC</div>
+            <div class="dori-z dori-det ${cam.showDet?'on':''}" onclick="toggleDori(${id},'det')" title="Detection zone — presence detected (outer, faintest)">DET</div>
+          </div>
+        </div>
       </div>
     </div>
   `;
