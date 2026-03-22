@@ -1,0 +1,3479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lumana — Site Planner</title>
+<script src="https://unpkg.com/konva@9/konva.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f9fafb; color: #344054; height: 100vh; overflow: hidden; }
+
+.app { display: flex; height: 100vh; }
+
+/* ── Left Nav ── */
+.nav { width: 64px; flex-shrink: 0; background: #f9fafb; border-right: 1px solid #eaecf0; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 16px 0 20px; z-index: 20; }
+.nav-logo { width: 32px; height: 32px; background: #7c3aed; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 4px; }
+.nav-logo svg { width: 18px; height: 18px; color: #fff; }
+.nav-top, .nav-bottom { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.nav-sep { width: 32px; height: 1px; background: #eaecf0; margin: 6px 0; }
+.nav-icon { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 8px; color: #667085; cursor: pointer; transition: all 0.15s; }
+.nav-icon:hover { background: #f2f4f7; color: #344054; }
+.nav-icon.active { background: #ede9fe; color: #7c3aed; }
+.nav-icon svg { width: 20px; height: 20px; }
+.nav-avatar { width: 32px; height: 32px; border-radius: 50%; background: #bbf7d0; color: #344054; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+/* ── Main ── */
+.main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+/* ── Top Bar ── */
+.topbar { height: 50px; flex-shrink: 0; background: #fff; border-bottom: 1px solid #eaecf0; display: flex; align-items: center; padding: 0 16px 0 20px; gap: 12px; z-index: 10; }
+.topbar-breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 14px; color: #667085; }
+.topbar-breadcrumb .sep { color: #d0d5dd; }
+.topbar-breadcrumb .current { color: #344054; font-weight: 500; }
+.topbar-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid #d0d5dd; background: #fff; color: #344054; transition: all 0.15s; white-space: nowrap; }
+.btn:hover { background: #f9fafb; }
+.btn-primary { background: #7c3aed; border-color: #7c3aed; color: #fff; }
+.btn-primary:hover { background: #6d28d9; }
+.btn-icon { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: 1px solid #d0d5dd; border-radius: 6px; background: #fff; cursor: pointer; color: #667085; transition: all 0.15s; }
+.btn-icon:hover { background: #f9fafb; color: #344054; }
+.btn-icon svg { width: 16px; height: 16px; }
+
+/* ── Toolbar ── */
+.toolbar { height: 40px; flex-shrink: 0; background: #fff; border-bottom: 1px solid #eaecf0; display: flex; align-items: center; padding: 0 12px; gap: 2px; }
+.tool-group { display: flex; align-items: center; gap: 2px; padding-right: 10px; margin-right: 6px; border-right: 1px solid #eaecf0; }
+.tool-group:last-child { border-right: none; padding-right: 0; margin-right: 0; }
+.tool-btn { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; color: #667085; border: 1px solid transparent; background: transparent; transition: all 0.15s; font-size: 10px; font-weight: 700; letter-spacing: -0.3px; position: relative; }
+.tool-btn:hover { background: #f2f4f7; color: #344054; }
+.tool-btn.active { background: #ede9fe; border-color: #c4b5fd; color: #7c3aed; }
+.tool-btn svg { width: 15px; height: 15px; }
+.tool-btn[data-tip]:hover::after { content: attr(data-tip); position: absolute; bottom: -28px; left: 50%; transform: translateX(-50%); background: #1d2939; color: #fff; font-size: 11px; font-weight: 400; padding: 3px 7px; border-radius: 4px; white-space: nowrap; pointer-events: none; z-index: 100; }
+.tool-spacer { flex: 1; }
+.zoom-display { font-size: 12px; color: #667085; min-width: 44px; text-align: center; }
+
+/* ── Workspace ── */
+.workspace { flex: 1; display: flex; min-height: 0; }
+
+/* ── Catalog ── */
+.catalog { width: 220px; flex-shrink: 0; background: #fcfcfd; border-right: 1px solid #eaecf0; display: flex; flex-direction: column; overflow: hidden; }
+.catalog-header { padding: 12px 12px 8px; flex-shrink: 0; border-bottom: 1px solid #eaecf0; }
+.catalog-title { font-size: 11px; font-weight: 600; color: #98a2b3; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; }
+.catalog-search { display: flex; align-items: center; gap: 6px; padding: 5px 8px; border: 1px solid #d0d5dd; border-radius: 6px; background: #fff; }
+.catalog-search svg { width: 13px; height: 13px; color: #98a2b3; flex-shrink: 0; }
+.catalog-search input { border: none; outline: none; font-size: 12px; color: #344054; background: transparent; flex: 1; width: 0; }
+.catalog-search input::placeholder { color: #98a2b3; }
+.catalog-body { flex: 1; overflow-y: auto; padding: 6px 8px; }
+.cat-section { margin-bottom: 2px; }
+.cat-section-hdr { display: flex; align-items: center; gap: 5px; padding: 5px 4px; cursor: pointer; font-size: 11px; font-weight: 600; color: #98a2b3; text-transform: uppercase; letter-spacing: 0.5px; user-select: none; }
+.cat-section-hdr:hover { color: #667085; }
+.cat-chev { transition: transform 0.2s; flex-shrink: 0; }
+.cat-section.closed .cat-chev { transform: rotate(-90deg); }
+.cat-section.closed .cat-items { display: none; }
+.cat-items { padding: 2px 0 4px; }
+.cat-item { display: flex; align-items: center; gap: 8px; padding: 7px 6px; border-radius: 7px; cursor: grab; border: 1px solid transparent; transition: all 0.15s; margin-bottom: 1px; }
+.cat-item:hover { background: #fff; border-color: #eaecf0; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.cat-item:active { cursor: grabbing; opacity: 0.6; }
+.cat-icon { width: 36px; height: 36px; border-radius: 9px; background: #f2f4f7; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.cat-icon svg { width: 20px; height: 20px; color: #667085; }
+.cat-info { flex: 1; min-width: 0; }
+.cat-name { font-size: 12px; font-weight: 500; color: #344054; line-height: 1.3; }
+.cat-model { font-size: 11px; color: #98a2b3; }
+.cat-price { font-size: 11px; color: #667085; font-weight: 500; white-space: nowrap; }
+
+/* ── Canvas ── */
+.canvas-area { flex: 1; position: relative; overflow: hidden; background-color: #1c2333; background-image: radial-gradient(circle, #283048 1.5px, transparent 1.5px); background-size: 28px 28px; }
+.canvas-area.cursor-crosshair { cursor: crosshair; }
+.canvas-area.cursor-grab { cursor: grab; }
+.canvas-area.cursor-grabbing { cursor: grabbing; }
+#konva-container { position: absolute; inset: 0; }
+
+.canvas-empty { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 12px; z-index: 5; pointer-events: none; }
+.canvas-empty.hidden { display: none; }
+.upload-zone { width: 300px; border: 2px dashed #3d4f6e; border-radius: 12px; padding: 28px 20px; text-align: center; background: rgba(255,255,255,0.03); pointer-events: all; cursor: pointer; transition: all 0.2s; }
+.upload-zone:hover { border-color: #7c3aed; background: rgba(124,58,237,0.06); }
+.upload-zone svg { width: 28px; height: 28px; color: #4d6080; margin-bottom: 10px; }
+.upload-zone-title { font-size: 13px; font-weight: 600; color: #8ba3c7; margin-bottom: 3px; }
+.upload-zone-sub { font-size: 11px; color: #4d6080; line-height: 1.5; }
+#floorPlanInput { display: none; }
+
+.canvas-controls { position: absolute; bottom: 44px; right: 14px; display: flex; flex-direction: column; gap: 3px; z-index: 10; }
+.cc-btn { width: 30px; height: 30px; border-radius: 6px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); color: #8ba3c7; cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.cc-btn:hover { background: rgba(255,255,255,0.16); color: #fff; }
+.cc-btn svg { width: 14px; height: 14px; }
+
+/* ── Properties ── */
+.properties { width: 536px; flex-shrink: 0; background: #fff; border-left: 1px solid #eaecf0; display: flex; flex-direction: column; position: relative; overflow: visible; transition: width 0.2s ease; }
+.properties.collapsed { width: 0; border-left: none; }
+.properties.collapsed .rp-total,
+.properties.collapsed .rp-tabs,
+.properties.collapsed .rp-body,
+.properties.collapsed .rp-cam-header,
+.properties.collapsed .rp-bom-header { display: none; }
+.properties.collapsed .props-collapse-tab { border-right: 1px solid #eaecf0; }
+.properties.collapsed .props-collapse-tab svg { transform: rotate(180deg); }
+.props-collapse-tab { position: absolute; top: 8px; left: -20px; width: 20px; height: 32px; background: #fff; border: 1px solid #eaecf0; border-right: none; border-radius: 4px 0 0 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 20; }
+.props-collapse-tab:hover { background: #f9fafb; }
+.props-collapse-tab svg { width: 12px; height: 12px; color: #667085; transition: transform 0.2s; flex-shrink: 0; }
+.props-hdr { padding: 14px 20px 12px; border-bottom: 1px solid #eaecf0; flex-shrink: 0; }
+.props-title { font-size: 14px; font-weight: 600; color: #344054; }
+.props-sub { font-size: 12px; color: #98a2b3; margin-top: 2px; }
+.props-body { flex: 1; overflow-y: auto; }
+.props-empty { display: flex; flex-direction: column; align-items: center; padding: 48px 20px; text-align: center; }
+.props-empty svg { width: 32px; height: 32px; color: #d0d5dd; margin-bottom: 12px; }
+.props-empty-txt { font-size: 13px; color: #98a2b3; line-height: 1.6; }
+.props-section { padding: 12px 20px 14px; border-bottom: 1px solid #f2f4f7; }
+.props-section-title { font-size: 11px; font-weight: 600; color: #98a2b3; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 12px; }
+.prop-row { display: flex; align-items: center; margin-bottom: 10px; }
+.prop-row:last-child { margin-bottom: 0; }
+.prop-label { font-size: 13px; color: #667085; width: 110px; flex-shrink: 0; }
+.prop-ctrl { flex: 1; }
+.prop-input { width: 100%; padding: 5px 10px; border: 1px solid #d0d5dd; border-radius: 5px; font-size: 13px; color: #344054; outline: none; }
+.prop-input:focus { border-color: #7c3aed; box-shadow: 0 0 0 2px rgba(124,58,237,0.1); }
+.prop-select { width: 100%; padding: 5px 8px; border: 1px solid #d0d5dd; border-radius: 5px; font-size: 13px; color: #344054; outline: none; background: #fff; cursor: pointer; }
+.prop-range-row { display: flex; align-items: center; gap: 8px; }
+.prop-range-row input[type=range] { flex: 1; accent-color: #7c3aed; }
+.prop-range-val { font-size: 12px; color: #667085; min-width: 38px; text-align: right; }
+.dori-zones { display: flex; gap: 5px; }
+.dori-z { flex: 1; padding: 5px 4px; border-radius: 4px; font-size: 11px; font-weight: 600; text-align: center; cursor: pointer; border: 1px solid transparent; transition: all 0.15s; opacity: 0.45; }
+.dori-z.on { opacity: 1; }
+/* Neutral single-hue toggles — intensity mirrors cone opacity (ID darkest, DET lightest) */
+.dori-id  { background: rgba(52,64,84,0.18); color: #344054; }
+.dori-id.on  { background: rgba(52,64,84,0.22); border-color: #667085; color: #1d2939; }
+.dori-rec { background: rgba(52,64,84,0.11); color: #344054; }
+.dori-rec.on { background: rgba(52,64,84,0.14); border-color: #98a2b3; color: #1d2939; }
+.dori-det { background: rgba(52,64,84,0.06); color: #667085; }
+.dori-det.on { background: rgba(52,64,84,0.09); border-color: #d0d5dd; color: #344054; }
+
+/* ── Right Panel — Camera selected header ── */
+.rp-cam-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid #eaecf0; flex-shrink: 0; }
+.rp-cam-back { display: flex; align-items: center; gap: 5px; background: none; border: 1px solid #eaecf0; border-radius: 6px; padding: 5px 10px; cursor: pointer; font-size: 13px; color: #344054; }
+.rp-cam-back:hover { background: #f9fafb; border-color: #d0d5dd; }
+.rp-cam-actions { display: flex; gap: 6px; }
+.rp-cam-icon-btn { display: flex; align-items: center; justify-content: center; background: none; border: 1px solid #eaecf0; border-radius: 6px; padding: 5px 8px; cursor: pointer; color: #667085; }
+.rp-cam-icon-btn:hover { background: #f9fafb; border-color: #d0d5dd; color: #344054; }
+.rp-cam-del-btn { color: #d92d20; border-color: #fca5a5; }
+.rp-cam-del-btn:hover { background: #fff5f5 !important; border-color: #f97066 !important; color: #d92d20 !important; }
+
+/* ── Right Panel — BOM header (no selection) ── */
+.rp-bom-header { display: flex; align-items: center; gap: 8px; padding: 14px 16px 13px; border-bottom: 1px solid #eaecf0; flex-shrink: 0; }
+.rp-bom-header-title { font-size: 15px; font-weight: 700; color: #101828; flex: 1; }
+.rp-bom-header-badge { font-size: 11px; font-weight: 700; border-radius: 10px; padding: 2px 8px; background: #7c3aed; color: #fff; }
+
+/* ── Right Panel — Project Total header ── */
+.rp-total { padding: 14px 16px 12px; background: linear-gradient(135deg,#faf5ff 0%,#f0ebff 100%); border-bottom: 1px solid #e9d5ff; flex-shrink: 0; }
+.rp-total-label { font-size: 10px; font-weight: 700; color: #7c3aed; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px; }
+.rp-total-amount { font-size: 28px; font-weight: 800; color: #4c1d95; line-height: 1; margin-bottom: 4px; letter-spacing: -0.5px; }
+.rp-total-meta { font-size: 11px; color: #9061f9; margin-bottom: 10px; }
+.rp-total-bar { height: 3px; background: #ede9fe; border-radius: 2px; }
+.rp-total-fill { height: 100%; background: linear-gradient(90deg,#7c3aed,#a78bfa); border-radius: 2px; transition: width 0.4s ease; min-width: 0; }
+
+/* ── Right Panel — Tabs ── */
+.rp-tabs { display: flex; border-bottom: 1px solid #eaecf0; flex-shrink: 0; background: #fff; }
+.rp-tab { flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px; padding: 9px 4px 8px; font-size: 12px; font-weight: 500; color: #667085; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; user-select: none; }
+.rp-tab:hover { color: #344054; background: #f9fafb; }
+.rp-tab.active { color: #7c3aed; border-bottom-color: #7c3aed; font-weight: 600; background: #fff; }
+.rp-tab-badge { font-size: 10px; font-weight: 700; border-radius: 10px; padding: 1px 5px; line-height: 1.4; }
+.rp-tab.active .rp-tab-badge { background: #7c3aed; color: #fff; }
+.rp-tab:not(.active) .rp-tab-badge { background: #e5e7eb; color: #667085; }
+
+/* ── Right Panel — Body ── */
+.rp-body { flex: 1; overflow-y: auto; min-height: 0; display: flex; flex-direction: column; }
+.props-pane { display: flex; flex-direction: column; flex: 1; }
+
+/* ── BOM Pane ── */
+.bom-pane { display: flex; flex-direction: column; flex: 1; }
+.bom-section { padding: 10px 16px 12px; border-bottom: 1px solid #f2f4f7; }
+.bom-section-hdr { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+.bom-section-icon { font-size: 14px; line-height: 1; }
+.bom-section-title { font-size: 10px; font-weight: 700; color: #98a2b3; text-transform: uppercase; letter-spacing: 0.6px; flex: 1; }
+.bom-section-sub { font-size: 12px; font-weight: 600; color: #344054; }
+.bom-line { display: flex; align-items: center; gap: 4px; padding: 5px 0; border-bottom: 1px solid #f9fafb; font-size: 12px; }
+.bom-line:last-child { border-bottom: none; }
+.bom-line-clickable { cursor: pointer; border-radius: 4px; padding: 5px 4px; margin: 0 -4px; }
+.bom-line-clickable:hover { background: #f5f3ff; }
+.bom-line-clickable:hover .bom-line-name { color: #7c3aed; }
+.bom-line-name { flex: 1; color: #344054; font-weight: 500; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bom-line-qty { color: #98a2b3; font-size: 11px; white-space: nowrap; }
+.bom-line-unit { color: #667085; font-size: 11px; white-space: nowrap; }
+.bom-line-total { font-weight: 600; color: #344054; white-space: nowrap; margin-left: auto; }
+.bom-grand { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-top: 2px solid #eaecf0; background: #fafafa; margin-top: auto; }
+.bom-grand-label { font-size: 12px; font-weight: 600; color: #344054; }
+.bom-grand-val { font-size: 18px; font-weight: 800; color: #7c3aed; }
+.bom-export { display: flex; align-items: center; justify-content: center; gap: 5px; padding: 9px 16px; font-size: 11px; color: #7c3aed; cursor: pointer; border-top: 1px solid #f2f4f7; background: #fff; }
+.bom-export:hover { background: #faf5ff; }
+.bom-empty-pane { display: flex; flex-direction: column; align-items: center; padding: 48px 20px; text-align: center; flex: 1; justify-content: center; }
+.bom-empty-pane svg { width: 32px; height: 32px; color: #d0d5dd; margin-bottom: 12px; }
+.bom-empty-pane p { font-size: 12px; color: #98a2b3; line-height: 1.7; }
+
+/* ── Status Bar ── */
+.statusbar { height: 30px; flex-shrink: 0; background: #fff; border-top: 1px solid #eaecf0; display: flex; align-items: center; padding: 0 16px; gap: 20px; font-size: 11px; color: #667085; }
+.sb-item { display: flex; align-items: center; gap: 5px; }
+.sb-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.sb-val { font-weight: 600; color: #344054; }
+.sb-sep { width: 1px; height: 14px; background: #eaecf0; }
+
+/* ── Share Modal (Phase 11) ── */
+.share-overlay { position:fixed; inset:0; background:rgba(16,24,40,0.5); z-index:400; display:none; }
+.share-overlay.show { display:block; }
+.share-modal { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:460px; background:#fff; border-radius:12px; z-index:401; display:none; flex-direction:column; box-shadow:0 24px 48px rgba(0,0,0,0.22); }
+.share-modal.show { display:flex; }
+.share-modal-hdr { display:flex; align-items:center; padding:16px 20px 14px; border-bottom:1px solid #eaecf0; gap:10px; }
+.share-modal-icon { width:34px; height:34px; border-radius:8px; background:#ede9fe; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.share-modal-icon svg { width:17px; height:17px; color:#7c3aed; }
+.share-modal-title { font-size:15px; font-weight:600; color:#1d2939; flex:1; }
+.share-modal-close { width:28px; height:28px; display:flex; align-items:center; justify-content:center; border-radius:6px; border:none; background:transparent; color:#98a2b3; cursor:pointer; font-size:16px; }
+.share-modal-close:hover { background:#f2f4f7; color:#344054; }
+.share-modal-body { padding:20px; display:flex; flex-direction:column; gap:14px; }
+.share-label { font-size:12px; font-weight:600; color:#344054; margin-bottom:4px; }
+.share-desc { font-size:12px; color:#667085; line-height:1.6; }
+.share-url-row { display:flex; gap:6px; align-items:stretch; }
+.share-url-input { flex:1; font-size:11px; font-family:'SF Mono',Monaco,monospace; padding:8px 10px; border:1px solid #d0d5dd; border-radius:6px; color:#344054; background:#f9fafb; outline:none; min-width:0; }
+.share-copy-btn { padding:8px 14px; background:#7c3aed; color:#fff; border:none; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap; transition:all 0.15s; }
+.share-copy-btn:hover { background:#6d28d9; }
+.share-copy-btn.copied { background:#059669; }
+.share-divider { display:flex; align-items:center; gap:10px; font-size:11px; color:#d0d5dd; }
+.share-divider::before,.share-divider::after { content:''; flex:1; height:1px; background:#eaecf0; }
+.share-file-row { display:flex; gap:8px; }
+.share-file-btn { flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding:9px 12px; border:1px solid #d0d5dd; border-radius:6px; font-size:12px; font-weight:500; color:#344054; cursor:pointer; background:#fff; transition:all 0.15s; }
+.share-file-btn:hover { background:#f9fafb; border-color:#98a2b3; }
+.share-file-btn svg { width:14px; height:14px; color:#667085; }
+.share-modal-footer { padding:12px 20px 16px; font-size:11px; color:#98a2b3; border-top:1px solid #f2f4f7; line-height:1.5; }
+
+/* ── 3D Preview Panel (Phase 9) ── */
+.preview-3d { position: absolute; top: 0; right: 0; bottom: 0; width: 360px; background: #0f1923; border-left: 1px solid #1e2d3e; z-index: 15; display: none; flex-direction: column; box-shadow: -4px 0 20px rgba(0,0,0,0.4); }
+.preview-3d.show { display: flex; }
+.p3d-hdr { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: #111c29; border-bottom: 1px solid #1e2d3e; flex-shrink: 0; height: 38px; }
+.p3d-title { font-size: 10px; font-weight: 700; color: #e5e7eb; text-transform: uppercase; letter-spacing: 0.8px; flex-shrink: 0; }
+.p3d-info { flex: 1; font-size: 11px; color: #6b7280; display: flex; align-items: center; gap: 5px; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.p3d-close { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border-radius: 4px; background: transparent; border: none; color: #6b7280; cursor: pointer; font-size: 14px; flex-shrink: 0; line-height: 1; }
+.p3d-close:hover { background: #1e2d3e; color: #e5e7eb; }
+#threeCanvas { display: block; width: 100% !important; cursor: grab; }
+#threeCanvas:active { cursor: grabbing; }
+.p3d-footer { display: flex; align-items: center; gap: 8px; padding: 6px 12px; background: #111c29; border-top: 1px solid #1e2d3e; flex-shrink: 0; height: 36px; font-size: 11px; color: #6b7280; }
+.p3d-footer input[type=range] { flex: 1; accent-color: #7c3aed; }
+.p3d-dist-val { font-weight: 600; color: #d1d5db; min-width: 38px; text-align: right; }
+.p3d-hint { font-size: 10px; color: #374151; flex-shrink: 0; }
+
+/* ── Storage stats (Phase 7) ── */
+.storage-stats { display: flex; gap: 6px; margin-top: 6px; }
+.storage-stat { flex: 1; padding: 7px 8px; border-radius: 6px; background: #f9fafb; border: 1px solid #eaecf0; text-align: center; }
+.storage-stat-val { font-size: 13px; font-weight: 700; color: #344054; line-height: 1; margin-bottom: 2px; }
+.storage-stat-lbl { font-size: 9px; font-weight: 600; color: #98a2b3; text-transform: uppercase; letter-spacing: 0.4px; }
+.storage-bar-wrap { margin-top: 8px; }
+.storage-bar-label { display: flex; justify-content: space-between; font-size: 10px; color: #98a2b3; margin-bottom: 3px; }
+.storage-bar-track { height: 5px; background: #f2f4f7; border-radius: 3px; overflow: hidden; }
+.storage-bar-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #7c3aed, #a78bfa); transition: width 0.3s; }
+.nvr-rec { margin-top: 8px; padding: 6px 10px; background: #ede9fe; border-radius: 6px; font-size: 11px; color: #5b21b6; font-weight: 500; display: flex; align-items: center; gap: 5px; }
+
+/* ── Focal Length presets ── */
+.fl-presets { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 5px; }
+.fl-chip { padding: 2px 7px; border-radius: 4px; font-size: 10px; font-weight: 600; border: 1px solid #d0d5dd; color: #667085; cursor: pointer; background: #fff; transition: all 0.12s; user-select: none; }
+.fl-chip:hover { border-color: #a78bfa; color: #7c3aed; }
+.fl-chip.active { background: #ede9fe; border-color: #a78bfa; color: #7c3aed; }
+
+/* ── Satellite map container (behind Konva) ── */
+#map-container { position: absolute; inset: 0; z-index: 0; display: none; }
+#konva-container { position: absolute; inset: 0; z-index: 1; }
+.canvas-area.map-active { background-color: transparent; background-image: none; }
+.canvas-area.map-active #konva-container canvas { background: transparent !important; }
+
+/* ── Satellite Sub-toolbar ── */
+.sat-subtoolbar { flex-shrink: 0; background: #fff; border-bottom: 1px solid #eaecf0; display: none; align-items: center; padding: 0 14px; gap: 8px; flex-wrap: wrap; min-height: 38px; }
+.sat-subtoolbar.show { display: flex; }
+.map-mode-group { display: flex; border: 1px solid #d0d5dd; border-radius: 6px; overflow: hidden; flex-shrink: 0; }
+.map-mode-btn { padding: 4px 11px; font-size: 11px; font-weight: 600; color: #667085; cursor: pointer; background: #fff; border-right: 1px solid #d0d5dd; user-select: none; transition: all 0.15s; white-space: nowrap; }
+.map-mode-btn:last-child { border-right: none; }
+.map-mode-btn:hover { background: #f9fafb; color: #344054; }
+.map-mode-btn.active { background: #7c3aed; color: #fff; border-color: #7c3aed; }
+.map-mode-btn.active + .map-mode-btn { border-left-color: #7c3aed; }
+.sat-search { display: flex; align-items: center; gap: 6px; padding: 4px 9px; border: 1px solid #d0d5dd; border-radius: 6px; background: #fff; flex: 1; min-width: 160px; max-width: 320px; }
+.sat-search svg { width: 13px; height: 13px; color: #98a2b3; flex-shrink: 0; }
+.sat-search input { border: none; outline: none; font-size: 12px; color: #344054; background: transparent; flex: 1; width: 0; }
+.sat-search input::placeholder { color: #98a2b3; }
+.sat-search-btn { padding: 3px 9px; font-size: 11px; font-weight: 600; border-radius: 5px; border: 1px solid #7c3aed; background: #7c3aed; color: #fff; cursor: pointer; white-space: nowrap; }
+.sat-search-btn:hover { background: #6d28d9; }
+.sat-opacity-group { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #667085; flex-shrink: 0; }
+.sat-opacity-group input[type=range] { width: 80px; accent-color: #7c3aed; }
+
+/* ── Wall Sub-toolbar ── */
+.wall-subtoolbar { height: 34px; flex-shrink: 0; background: #fafafa; border-bottom: 1px solid #eaecf0; display: none; align-items: center; padding: 0 14px; gap: 8px; }
+.wall-subtoolbar.show { display: flex; }
+.wt-label { font-size: 10px; font-weight: 700; color: #98a2b3; text-transform: uppercase; letter-spacing: 0.6px; margin-right: 2px; flex-shrink: 0; }
+.wt-btn { display: flex; align-items: center; gap: 5px; padding: 3px 11px 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; color: #667085; cursor: pointer; border: 1px solid #d0d5dd; background: #fff; transition: all 0.15s; white-space: nowrap; user-select: none; }
+.wt-btn:hover { border-color: #98a2b3; color: #344054; }
+.wt-solid.active { background: #ef4444; border-color: #ef4444; color: #fff; }
+.wt-glass.active { background: #3b82f6; border-color: #3b82f6; color: #fff; }
+.wt-fence.active { background: #f59e0b; border-color: #f59e0b; color: #fff; }
+.wt-swatch { width: 18px; height: 2.5px; border-radius: 1px; flex-shrink: 0; }
+.wt-hint { margin-left: auto; font-size: 11px; color: #98a2b3; }
+
+/* ── Wall legend (canvas overlay) ── */
+.wall-legend { position: absolute; bottom: 48px; left: 12px; background: rgba(17,24,39,0.78); border-radius: 7px; padding: 8px 12px; display: none; flex-direction: column; gap: 6px; z-index: 10; backdrop-filter: blur(4px); pointer-events: none; }
+.wall-legend.show { display: flex; }
+.wl-item { display: flex; align-items: center; gap: 8px; font-size: 11px; color: rgba(255,255,255,0.82); }
+.wl-line { display: inline-block; width: 24px; height: 2px; flex-shrink: 0; border-radius: 1px; }
+
+/* ── Scale popup ── */
+.scale-popup { position: fixed; z-index: 500; background: #fff; border: 1px solid #eaecf0; border-radius: 8px; padding: 14px 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); min-width: 220px; display: none; }
+.scale-popup.show { display: block; }
+.scale-popup-title { font-size: 12px; font-weight: 600; color: #344054; margin-bottom: 10px; }
+.scale-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.scale-row input { flex: 1; padding: 5px 8px; border: 1px solid #d0d5dd; border-radius: 5px; font-size: 13px; outline: none; }
+.scale-row input:focus { border-color: #7c3aed; }
+.scale-row select { padding: 5px 6px; border: 1px solid #d0d5dd; border-radius: 5px; font-size: 13px; outline: none; background: #fff; }
+.scale-actions { display: flex; justify-content: flex-end; gap: 6px; }
+
+/* ── Context menu ── */
+.ctx-menu { position: fixed; z-index: 600; background: #fff; border: 1px solid #eaecf0; border-radius: 8px; padding: 4px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); min-width: 160px; display: none; }
+.ctx-menu.show { display: block; }
+.ctx-item { padding: 7px 12px; border-radius: 4px; font-size: 13px; color: #344054; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+.ctx-item:hover { background: #f9fafb; }
+.ctx-item.danger { color: #d92d20; }
+.ctx-item.danger:hover { background: #fff1f0; }
+.ctx-sep { height: 1px; background: #eaecf0; margin: 3px 0; }
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 2px; }
+
+/* ── Phase 2: Left Panel ── */
+.browse-btn { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 8px 12px; border-radius: 7px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; background: #7c3aed; color: #fff; transition: background 0.15s; }
+.browse-btn:hover { background: #6d28d9; }
+.browse-btn svg { width: 13px; height: 13px; }
+.ff-section-label { font-size: 10px; font-weight: 600; color: #98a2b3; text-transform: uppercase; letter-spacing: 0.6px; padding: 10px 4px 6px; }
+.ff-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.ff-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 12px 6px 10px; background: #fff; border: 1px solid #eaecf0; border-radius: 9px; cursor: grab; transition: all 0.15s; user-select: none; }
+.ff-tile:hover { border-color: #c4b5fd; background: #faf5ff; box-shadow: 0 2px 6px rgba(124,58,237,0.1); }
+.ff-tile:active { cursor: grabbing; opacity: 0.7; }
+.ff-tile svg { width: 26px; height: 26px; color: #667085; }
+.ff-tile:hover svg { color: #7c3aed; }
+.ff-tile-label { font-size: 11px; font-weight: 500; color: #344054; }
+.recent-section { margin-top: 4px; }
+.recent-item { display: flex; align-items: center; gap: 8px; padding: 6px 6px; border-radius: 7px; cursor: pointer; border: 1px solid transparent; transition: all 0.15s; }
+.recent-item:hover { background: #fff; border-color: #eaecf0; }
+.recent-dot { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.recent-dot svg { width: 12px; height: 12px; color: #fff; }
+.recent-info { flex: 1; min-width: 0; }
+.recent-name { font-size: 11px; font-weight: 500; color: #344054; }
+.recent-model { font-size: 10px; color: #98a2b3; }
+
+/* ── Catalog collapse ── */
+.catalog-hdr-row { display: flex; align-items: center; margin-bottom: 8px; }
+.catalog { position: relative; transition: width 0.2s ease; overflow: visible !important; }
+.catalog-collapse-tab { position: absolute; top: 8px; right: -20px; width: 20px; height: 32px; background: #fff; border: 1px solid #eaecf0; border-left: none; border-radius: 0 4px 4px 0; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 20; }
+.catalog-collapse-tab:hover { background: #f9fafb; }
+.catalog-collapse-tab svg { width: 12px; height: 12px; color: #667085; transition: transform 0.2s; flex-shrink: 0; }
+.catalog.collapsed .catalog-body, .catalog.collapsed .browse-btn, .catalog.collapsed .catalog-header { display: none; }
+.catalog.collapsed { width: 0; min-width: 0; border-right: none; }
+.catalog.collapsed .catalog-collapse-tab { border-left: 1px solid #eaecf0; }
+.catalog.collapsed .catalog-collapse-tab svg { transform: rotate(180deg); }
+
+/* ── Camera name floating input ── */
+#camNameOverlay { position: fixed; z-index: 500; display: none; transform: translateX(-50%); }
+#camNameOverlay.show { display: block; }
+.cam-name-wrap { background: #fff; border: 1.5px solid #7c3aed; border-radius: 8px; box-shadow: 0 4px 20px rgba(124,58,237,0.2); padding: 5px 10px; display: flex; align-items: center; gap: 8px; }
+.cam-name-field { border: none; outline: none; font-size: 13px; font-weight: 500; color: #344054; background: transparent; width: 160px; }
+.cam-name-field::placeholder { color: #c4b5fd; }
+.cam-name-hint { font-size: 10px; color: #c4b5fd; white-space: nowrap; }
+
+/* ── Recently used — draggable row tiles ── */
+.recent-tile { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: #fff; border: 1px solid #eaecf0; border-radius: 9px; cursor: grab; transition: all 0.15s; margin-bottom: 5px; user-select: none; }
+.recent-tile:hover { border-color: #c4b5fd; background: #faf5ff; box-shadow: 0 2px 6px rgba(124,58,237,0.1); }
+.recent-tile:active { cursor: grabbing; opacity: 0.7; }
+.recent-tile-icon { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.recent-tile-icon svg { width: 16px; height: 16px; color: #fff; }
+.recent-tile-info { flex: 1; min-width: 0; }
+.recent-tile-name { font-size: 12px; font-weight: 500; color: #344054; }
+.recent-tile-sub { font-size: 10px; color: #98a2b3; }
+.recent-tile-drag { color: #d0d5dd; flex-shrink: 0; }
+.recent-tile-drag svg { width: 11px; height: 11px; }
+
+/* ── Phase 2: Model Picker Modal ── */
+.mp-overlay { position: fixed; inset: 0; background: rgba(17,24,39,0.55); z-index: 800; display: none; backdrop-filter: blur(2px); }
+.mp-overlay.show { display: block; }
+.mp-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(96vw, 960px); height: min(90vh, 660px); background: #fff; border-radius: 12px; box-shadow: 0 24px 64px rgba(0,0,0,0.2); z-index: 900; display: none; flex-direction: column; overflow: hidden; }
+.mp-modal.show { display: flex; }
+.mp-hdr { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px 12px; border-bottom: 1px solid #eaecf0; flex-shrink: 0; }
+.mp-hdr-title { font-size: 16px; font-weight: 700; color: #344054; }
+.mp-close { width: 28px; height: 28px; border: none; background: #f2f4f7; border-radius: 6px; cursor: pointer; font-size: 16px; color: #667085; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.mp-close:hover { background: #e5e7eb; color: #344054; }
+.mp-filters { padding: 12px 20px 10px; border-bottom: 1px solid #eaecf0; flex-shrink: 0; display: flex; flex-direction: column; gap: 10px; }
+.mp-search { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border: 1px solid #d0d5dd; border-radius: 7px; background: #fff; }
+.mp-search svg { width: 14px; height: 14px; color: #98a2b3; flex-shrink: 0; }
+.mp-search input { border: none; outline: none; font-size: 13px; color: #344054; flex: 1; background: transparent; }
+.mp-search input::placeholder { color: #98a2b3; }
+.mp-filter-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ff-chips { display: flex; gap: 4px; flex-wrap: wrap; }
+.ff-chip { display: flex; align-items: center; gap: 4px; padding: 4px 10px; border: 1px solid #d0d5dd; border-radius: 20px; font-size: 11px; font-weight: 500; color: #667085; cursor: pointer; transition: all 0.15s; background: #fff; white-space: nowrap; }
+.ff-chip:hover { border-color: #a78bfa; color: #7c3aed; }
+.ff-chip.active { background: #ede9fe; border-color: #a78bfa; color: #7c3aed; }
+.ff-chip svg { width: 13px; height: 13px; }
+.mp-toggles { display: flex; gap: 6px; margin-left: auto; }
+.mp-toggle { display: flex; align-items: center; gap: 5px; padding: 4px 10px; border: 1px solid #d0d5dd; border-radius: 20px; font-size: 11px; font-weight: 500; color: #667085; cursor: pointer; transition: all 0.15s; background: #fff; white-space: nowrap; }
+.mp-toggle:hover { border-color: #d0d5dd; }
+.mp-toggle.active { background: #f0fdf4; border-color: #86efac; color: #16a34a; }
+.mp-slider-row { display: flex; align-items: center; gap: 12px; }
+.mp-slider-label { font-size: 11px; color: #667085; min-width: 64px; }
+.mp-slider-val { font-size: 11px; color: #344054; font-weight: 500; min-width: 48px; }
+.mp-slider-wrap { flex: 1; display: flex; align-items: center; gap: 8px; }
+.mp-slider-wrap input[type=range] { flex: 1; accent-color: #7c3aed; height: 4px; }
+.mp-body { display: flex; flex: 1; min-height: 0; }
+.mp-brands { width: 180px; flex-shrink: 0; border-right: 1px solid #eaecf0; overflow-y: auto; }
+.brand-row { padding: 8px 16px; font-size: 13px; color: #344054; cursor: pointer; transition: background 0.1s; border-left: 3px solid transparent; }
+.brand-row:hover { background: #f9fafb; }
+.brand-row.active { background: #ede9fe; color: #7c3aed; font-weight: 600; border-left-color: #7c3aed; }
+.mp-models { width: 300px; flex-shrink: 0; border-right: 1px solid #eaecf0; overflow-y: auto; }
+.mp-models-hdr { padding: 8px 16px; font-size: 10px; font-weight: 600; color: #98a2b3; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #f2f4f7; position: sticky; top: 0; background: #fff; z-index: 1; }
+.model-row { display: flex; align-items: center; gap: 8px; padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f9fafb; transition: background 0.1s; }
+.model-row:hover { background: #f9fafb; }
+.model-row.active { background: #ede9fe; }
+.model-form-icon { width: 28px; height: 28px; border-radius: 6px; background: #f2f4f7; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.model-form-icon svg { width: 15px; height: 15px; color: #667085; }
+.model-row.active .model-form-icon { background: rgba(124,58,237,0.15); }
+.model-row.active .model-form-icon svg { color: #7c3aed; }
+.model-name { font-size: 12px; font-weight: 500; color: #344054; flex: 1; }
+.model-tags { display: flex; gap: 3px; }
+.tag { font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 3px; }
+.tag-eol { background: #fee2e2; color: #dc2626; }
+.tag-ndaa { background: #dcfce7; color: #16a34a; }
+.model-price { font-size: 11px; color: #667085; white-space: nowrap; }
+.mp-info { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 0; }
+.mp-info-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 12px; }
+.mp-info-empty svg { width: 40px; height: 40px; color: #d0d5dd; }
+.mp-info-empty-title { font-size: 18px; font-weight: 700; color: #344054; }
+.mp-info-empty-sub { font-size: 13px; color: #98a2b3; text-align: center; line-height: 1.6; }
+.mp-info-name { font-size: 20px; font-weight: 700; color: #344054; margin-bottom: 2px; }
+.mp-info-brand { font-size: 12px; color: #98a2b3; margin-bottom: 16px; }
+.mp-info-badges { display: flex; gap: 6px; margin-bottom: 16px; }
+.mp-badge { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px; }
+.mp-badge-ndaa { background: #dcfce7; color: #15803d; }
+.mp-badge-form { background: #ede9fe; color: #7c3aed; }
+.mp-badge-res  { background: #f0f9ff; color: #0369a1; }
+.mp-spec-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.mp-spec { background: #f9fafb; border-radius: 8px; padding: 10px 12px; }
+.mp-spec-label { font-size: 10px; font-weight: 600; color: #98a2b3; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+.mp-spec-val { font-size: 14px; font-weight: 600; color: #344054; }
+.mp-price { font-size: 24px; font-weight: 800; color: #7c3aed; margin-bottom: 16px; }
+.mp-fov-preview { width: 100%; height: 80px; background: #1c2333; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; overflow: hidden; }
+.mp-ftr { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; border-top: 1px solid #eaecf0; flex-shrink: 0; background: #f9fafb; }
+.mp-count { font-size: 12px; color: #667085; }
+.mp-count strong { color: #344054; }
+.mp-ftr-actions { display: flex; gap: 8px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Left Nav -->
+  <nav class="nav">
+    <div class="nav-top">
+      <div class="nav-logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5"/><line x1="12" y1="22" x2="12" y2="15.5"/><polyline points="22 8.5 12 15.5 2 8.5"/></svg>
+      </div>
+      <div class="nav-sep"></div>
+      <div class="nav-icon" title="Cameras">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+      </div>
+      <div class="nav-icon" title="Live View">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      </div>
+      <div class="nav-icon" title="Alerts">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+      </div>
+      <div class="nav-icon" title="Analytics">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      </div>
+      <div class="nav-icon active" title="Site Planner">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
+      </div>
+      <div class="nav-icon" title="Access Control">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+      </div>
+      <div class="nav-icon" title="Reports">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      </div>
+    </div>
+    <div class="nav-bottom">
+      <div class="nav-icon" title="Help">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </div>
+      <div class="nav-icon" title="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      </div>
+      <div class="nav-avatar">OR</div>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <div class="main">
+
+    <!-- Top Bar -->
+    <header class="topbar">
+      <div class="topbar-breadcrumb">
+        <span>Site Planner</span>
+        <span class="sep">›</span>
+        <span class="current">Acme HQ — Floor 2</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn" onclick="shareLink()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          Share
+        </button>
+
+        <button class="btn" onclick="exportPDF()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export PDF
+        </button>
+        <button class="btn btn-primary" onclick="saveDesign()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Save
+        </button>
+      </div>
+    </header>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="tool-group">
+        <div class="tool-btn active" id="tool-select" data-tool="select" data-tip="Select (V)" onclick="setTool('select')">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 0l16 12-8 2-4 8L4 0z"/></svg>
+        </div>
+      </div>
+      <div class="tool-group">
+        <div class="tool-btn" id="tool-camera" data-tool="camera" data-tip="Place Camera (C)" onclick="setTool('camera')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+        </div>
+        <div class="tool-btn" id="tool-wall" data-tool="wall" data-tip="Draw Wall (W)" onclick="setTool('wall')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </div>
+        <div class="tool-btn" id="tool-scale" data-tool="scale" data-tip="Scale Calibration (S)" onclick="setTool('scale')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="8" x2="3" y2="16"/><line x1="21" y1="8" x2="21" y2="16"/></svg>
+        </div>
+      </div>
+      <div class="tool-group">
+        <div class="tool-btn" data-tip="Undo (⌘Z)" onclick="undo()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+        </div>
+        <div class="tool-btn" data-tip="Redo (⌘⇧Z)" onclick="redo()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.13-9.36L23 10"/></svg>
+        </div>
+      </div>
+      <div class="tool-group">
+        <div class="tool-btn" data-tip="Upload Floor Plan" onclick="document.getElementById('floorPlanInput').click()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        </div>
+        <div class="tool-btn" id="tool-map" data-tip="Satellite Map" onclick="toggleSatSubtoolbar()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+        </div>
+      </div>
+      <div class="tool-group">
+        <div class="tool-btn" data-tip="Clear All" onclick="clearAll()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        </div>
+      </div>
+      <div class="tool-spacer"></div>
+      <span class="zoom-display" id="zoom-display">100%</span>
+    </div>
+
+    <!-- Satellite Sub-toolbar -->
+    <div class="sat-subtoolbar" id="satSubtoolbar">
+      <div class="map-mode-group">
+        <div class="map-mode-btn active" id="mmode-canvas" onclick="setMapMode('canvas')">Canvas</div>
+        <div class="map-mode-btn" id="mmode-satellite" onclick="setMapMode('satellite')">Satellite</div>
+        <div class="map-mode-btn" id="mmode-both" onclick="setMapMode('both')">Both</div>
+      </div>
+      <div class="sat-search" id="satSearchBox">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="satAddressInput" placeholder="Search address or place…" onkeydown="if(event.key==='Enter')geocodeAddress()">
+        <button class="sat-search-btn" onclick="geocodeAddress()">Go</button>
+      </div>
+      <div class="sat-opacity-group" id="satOpacityGroup" style="display:none">
+        <span>Floor plan:</span>
+        <input type="range" min="10" max="100" value="70" oninput="setFloorPlanOpacity(this.value/100)">
+        <span id="satOpacityVal">70%</span>
+      </div>
+    </div>
+
+    <!-- Wall Type Sub-toolbar (shown when Wall tool active) -->
+    <div class="wall-subtoolbar" id="wallSubtoolbar">
+      <span class="wt-label">Wall type:</span>
+      <div class="wt-btn wt-solid active" id="wt-solid" onclick="setWallType('solid')">
+        <span class="wt-swatch" style="background:#ef4444"></span>
+        Solid
+      </div>
+      <div class="wt-btn wt-glass" id="wt-glass" onclick="setWallType('glass')">
+        <span class="wt-swatch" style="background:repeating-linear-gradient(90deg,#3b82f6 0,#3b82f6 5px,transparent 5px,transparent 9px);height:2px"></span>
+        Glass / Window
+      </div>
+      <div class="wt-btn wt-fence" id="wt-fence" onclick="setWallType('fence')">
+        <span class="wt-swatch" style="background:repeating-linear-gradient(90deg,#f59e0b 0,#f59e0b 3px,transparent 3px,transparent 7px);height:2px"></span>
+        Fence / Barrier
+      </div>
+      <span class="wt-hint">Click to start · click again to finish · ESC to cancel</span>
+    </div>
+
+    <!-- Workspace -->
+    <div class="workspace">
+
+      <!-- Cameras Panel -->
+      <aside class="catalog" id="catalogPanel">
+        <div class="catalog-collapse-tab" onclick="toggleCatalog()" title="Collapse panel">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        </div>
+
+        <div class="catalog-header">
+          <div class="catalog-hdr-row">
+            <div class="catalog-title">Cameras</div>
+          </div>
+          <button class="browse-btn" onclick="openModelPicker()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Add camera by model
+          </button>
+        </div>
+        <div class="catalog-body" id="catalogBody">
+          <!-- Rendered by renderLeftPanel() -->
+        </div>
+      </aside>
+
+      <!-- Canvas -->
+      <div class="canvas-area" id="canvasArea"
+        ondragover="event.preventDefault()"
+        ondrop="onCanvasDrop(event)">
+        <div id="map-container"></div>
+        <div id="konva-container"></div>
+        <div id="camLabelOverlay" style="position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:4"></div>
+
+        <div class="canvas-empty hidden" id="canvasEmpty">
+          <div class="upload-zone" onclick="document.getElementById('floorPlanInput').click()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            <div class="upload-zone-title">Upload Floor Plan</div>
+            <div class="upload-zone-sub">Drop a JPG, PNG or PDF here, or click to browse.<br>Or drag cameras directly onto the map.</div>
+          </div>
+        </div>
+
+        <!-- Wall type legend -->
+        <div class="wall-legend" id="wallLegend">
+          <div class="wl-item"><span class="wl-line" style="background:#ef4444"></span>Solid wall</div>
+          <div class="wl-item"><span class="wl-line" style="border-top:2px dashed #3b82f6;background:transparent;height:0"></span>Glass / window</div>
+          <div class="wl-item"><span class="wl-line" style="border-top:2px dotted #f59e0b;background:transparent;height:0"></span>Fence / barrier</div>
+        </div>
+
+        <!-- 3D Preview Panel -->
+        <div class="preview-3d" id="preview3d">
+          <div class="p3d-hdr">
+            <span class="p3d-title">3D Preview</span>
+            <div class="p3d-info" id="info3d">Select a camera to preview</div>
+            <button class="p3d-close" onclick="toggle3DPanel()">✕</button>
+          </div>
+          <canvas id="threeCanvas"></canvas>
+          <div class="p3d-footer">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="3"/><line x1="12" y1="8" x2="12" y2="18"/><line x1="9" y1="21" x2="15" y2="21"/></svg>
+            <span>Target</span>
+            <input type="range" min="0.5" max="20" step="0.5" value="3" oninput="setTarget3D(+this.value)">
+            <span class="p3d-dist-val" id="target3dVal">3.0 m</span>
+            <span class="p3d-hint">Drag canvas to orbit · Scroll to zoom</span>
+          </div>
+        </div>
+
+        <div class="canvas-controls">
+          <div class="cc-btn" onclick="zoomIn()" title="Zoom In">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+          </div>
+          <div class="cc-btn" onclick="zoomOut()" title="Zoom Out">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+          </div>
+          <div class="cc-btn" onclick="resetZoom()" title="Reset View">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 3H3v18h18V3z"/><path d="M9 9h6v6H9z"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Properties / BOM Right Panel -->
+      <aside class="properties">
+        <div class="props-collapse-tab" onclick="toggleProperties()" title="Collapse panel">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12" style="color:#667085"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+        <!-- Camera selected header -->
+        <div class="rp-cam-header" id="rpCamHeader" style="display:none">
+          <button class="rp-cam-back" onclick="selectCamera(null)" title="Back">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg>
+            Back
+          </button>
+          <div class="rp-cam-actions">
+            <button class="rp-cam-icon-btn" title="Duplicate" onclick="duplicateCamera(state.selectedId)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            </button>
+            <button class="rp-cam-icon-btn rp-cam-del-btn" title="Delete" onclick="deleteCamera(state.selectedId)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+            </button>
+          </div>
+        </div>
+        <!-- BOM header (no selection) -->
+        <div class="rp-bom-header" id="rpBomHeader" style="display:none">
+          <span class="rp-bom-header-title">BOM</span>
+          <span class="rp-bom-header-badge" id="rpBomHeaderBadge">0</span>
+        </div>
+        <!-- Project Total Header -->
+        <div class="rp-total">
+          <div class="rp-total-label">MSRP Estimate</div>
+          <div class="rp-total-amount" id="rpTotalVal">$0</div>
+          <div class="rp-total-meta" id="rpTotalMeta">0 cameras · $0 avg</div>
+          <div class="rp-total-bar"><div class="rp-total-fill" id="rpTotalFill" style="width:0%"></div></div>
+        </div>
+        <!-- Tabs -->
+        <div class="rp-tabs">
+          <div class="rp-tab active" id="tab-props" onclick="switchTab('props')">Properties</div>
+          <div class="rp-tab" id="tab-bom" onclick="switchTab('bom')">
+            BOM <span class="rp-tab-badge" id="bomTabBadge">0</span>
+          </div>
+        </div>
+        <!-- Body -->
+        <div class="rp-body">
+          <!-- Properties pane -->
+          <div class="props-pane" id="propsPane">
+            <div class="props-hdr">
+              <div class="props-title" id="propsTitle">Properties</div>
+              <div class="props-sub" id="propsSub">Select a device to configure</div>
+            </div>
+            <div class="props-empty" id="propsEmpty">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+              <div class="props-empty-txt">Select a camera on the canvas to view and edit its properties.</div>
+            </div>
+            <div id="propsContent" style="display:none"></div>
+          </div>
+          <!-- BOM pane -->
+          <div class="bom-pane" id="bomPane" style="display:none"></div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="statusbar">
+      <div class="sb-item">
+        <div class="sb-dot" style="background:#7c3aed"></div>
+        Cameras: <span class="sb-val" id="sb-cameras">0</span>
+      </div>
+      <div class="sb-sep"></div>
+      <div class="sb-item">
+        Storage: <span class="sb-val" id="sb-storage">0 TB</span>
+      </div>
+      <div class="sb-sep"></div>
+      <div class="sb-item">
+        Bandwidth: <span class="sb-val" id="sb-bw">0 Mbps</span>
+      </div>
+      <div class="sb-sep"></div>
+      <div class="sb-item" id="sb-scale-info">
+        Scale: <span class="sb-val" id="sb-scale">Not calibrated</span>
+      </div>
+      <div class="sb-sep"></div>
+      <div class="sb-item" style="margin-left:auto;color:#98a2b3">
+        V · Select &nbsp; C · Camera &nbsp; W · Wall &nbsp; S · Scale &nbsp; Del · Delete
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Share Modal -->
+<div class="share-overlay" id="shareOverlay" onclick="closeShareModal()"></div>
+<div class="share-modal" id="shareModal">
+  <div class="share-modal-hdr">
+    <div class="share-modal-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+    </div>
+    <span class="share-modal-title">Share Plan</span>
+    <button class="share-modal-close" onclick="closeShareModal()">✕</button>
+  </div>
+  <div class="share-modal-body">
+    <div>
+      <div class="share-label">Share link</div>
+      <div class="share-desc">Anyone with this link can open and edit this plan in their browser. The full plan is encoded in the URL — no account needed.</div>
+    </div>
+    <div class="share-url-row">
+      <input class="share-url-input" id="shareUrlInput" type="text" readonly placeholder="Generating link…">
+      <button class="share-copy-btn" id="shareCopyBtn" onclick="copyShareLink()">Copy link</button>
+    </div>
+    <div class="share-divider">or</div>
+    <div class="share-file-row">
+      <div class="share-file-btn" onclick="saveDesign()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download JSON
+      </div>
+      <div class="share-file-btn" onclick="document.getElementById('openFileInput').click()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+        Open saved file
+      </div>
+    </div>
+  </div>
+  <div class="share-modal-footer">
+    Plan data is stored entirely in the URL — nothing is sent to a server. Large plans may produce long URLs.
+  </div>
+</div>
+
+<!-- Camera Model Picker Modal -->
+<div class="mp-overlay" id="mpOverlay" onclick="closeModelPicker()"></div>
+<div class="mp-modal" id="mpModal">
+  <div class="mp-hdr">
+    <div class="mp-hdr-title">Camera Model Picker</div>
+    <button class="mp-close" onclick="closeModelPicker()">✕</button>
+  </div>
+  <div class="mp-filters">
+    <div class="mp-search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="mpSearchInput" placeholder="Search by model name, SKU, or resolution…" oninput="applyMpFilters()">
+    </div>
+    <div class="mp-filter-row">
+      <div class="ff-chips" id="mpFfChips"></div>
+      <div class="mp-toggles">
+        <div class="mp-toggle" id="mpToggleNdaa" onclick="toggleMpNdaa()" title="Show NDAA-compliant cameras only">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          NDAA Only
+        </div>
+      </div>
+    </div>
+    <div class="mp-slider-row">
+      <span class="mp-slider-label">Min range</span>
+      <div class="mp-slider-wrap">
+        <input type="range" id="mpRangeSlider" min="0" max="400" value="0" step="20" oninput="applyMpFilters()">
+      </div>
+      <span class="mp-slider-val" id="mpRangeVal">Any</span>
+    </div>
+  </div>
+  <div class="mp-body">
+    <div class="mp-brands" id="mpBrands"></div>
+    <div class="mp-models">
+      <div class="mp-models-hdr" id="mpModelsHdr">All Models</div>
+      <div id="mpModelList"></div>
+    </div>
+    <div class="mp-info" id="mpInfo"></div>
+  </div>
+  <div class="mp-ftr">
+    <span class="mp-count" id="mpCount"><strong>0</strong> models</span>
+    <div class="mp-ftr-actions">
+      <button class="btn" onclick="closeModelPicker()">Cancel</button>
+      <button class="btn btn-primary" id="mpPlaceBtn" onclick="placeFromPicker()" style="opacity:0.4;pointer-events:none">Place Camera</button>
+    </div>
+  </div>
+</div>
+
+<!-- Camera name floating input -->
+<div id="camNameOverlay">
+  <div class="cam-name-wrap">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+    <input id="camNameField" class="cam-name-field" type="text" placeholder="Camera name" autocomplete="off" spellcheck="false">
+    <span class="cam-name-hint">↵ confirm</span>
+  </div>
+</div>
+
+<!-- Floor plan input -->
+<input type="file" id="floorPlanInput" accept=".jpg,.jpeg,.png,.pdf" onchange="loadFloorPlan(event)">
+<input type="file" id="openFileInput" accept=".json" style="display:none" onchange="openDesignFile(event)">
+
+<!-- Scale popup -->
+<div class="scale-popup" id="scalePopup">
+  <div class="scale-popup-title">📏 Calibrate Scale</div>
+  <p style="font-size:11px;color:#667085;margin-bottom:10px">Draw a line over a known distance on the floor plan, then enter the real-world length:</p>
+  <div class="scale-row">
+    <input type="number" id="scaleValue" value="10" min="0.1" step="0.1" placeholder="Length">
+    <select id="scaleUnit">
+      <option value="ft">feet</option>
+      <option value="m">meters</option>
+    </select>
+  </div>
+  <div class="scale-actions">
+    <button class="btn" onclick="cancelScale()">Cancel</button>
+    <button class="btn btn-primary" onclick="applyScale()">Apply</button>
+  </div>
+</div>
+
+<!-- Context menu -->
+<div class="ctx-menu" id="ctxMenu">
+  <div class="ctx-item" onclick="ctxDuplicate()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+    Duplicate
+  </div>
+  <div class="ctx-item" onclick="ctxProperties()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    Properties
+  </div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item danger" onclick="ctxDelete()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+    Delete
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// CAMERA CATALOG DATA
+// ═══════════════════════════════════════════════
+const CATALOG = [
+  { id:'indoor-dome',  cat:'video', name:'Indoor Dome',    model:'CD63',   price:699,  fov:90,  detR:160, recR:80,  idR:36, iconType:'dome',    color:'#7c3aed' },
+  { id:'outdoor-dome', cat:'video', name:'Outdoor Dome',   model:'CD63-E', price:899,  fov:100, detR:200, recR:100, idR:46, iconType:'dome',    color:'#7c3aed' },
+  { id:'bullet',       cat:'video', name:'Bullet Camera',  model:'CB62',   price:799,  fov:55,  detR:280, recR:140, idR:64, iconType:'bullet',  color:'#2563eb' },
+  { id:'fisheye',      cat:'video', name:'Fisheye 360°',   model:'CF81',   price:1199, fov:360, detR:100, recR:50,  idR:22, iconType:'fisheye', color:'#0891b2' },
+  { id:'multisensor',  cat:'video', name:'Multisensor',    model:'CM8X',   price:1999, fov:270, detR:180, recR:90,  idR:40, iconType:'dome',    color:'#0891b2' },
+];
+
+// ═══════════════════════════════════════════════
+// EXTENDED CAMERA DATABASE (~40 models, 8 brands)
+// ═══════════════════════════════════════════════
+const CAMERA_DB = [
+  // ── Verkada ──
+  { id:'vk-cd63',    brand:'Verkada',   name:'CD63',             formFactor:'dome',    resolution:'4K',    fov:90,  detR:160, recR:80,  idR:36,  price:699,  ndaa:true,  iconType:'dome',    color:'#7c3aed' },
+  { id:'vk-cd63e',   brand:'Verkada',   name:'CD63-E',           formFactor:'dome',    resolution:'4K',    fov:100, detR:200, recR:100, idR:46,  price:899,  ndaa:true,  iconType:'dome',    color:'#7c3aed' },
+  { id:'vk-cb62',    brand:'Verkada',   name:'CB62',             formFactor:'bullet',  resolution:'4K',    fov:55,  detR:280, recR:140, idR:64,  price:799,  ndaa:true,  iconType:'bullet',  color:'#2563eb' },
+  { id:'vk-cb51',    brand:'Verkada',   name:'CB51',             formFactor:'bullet',  resolution:'2K',    fov:62,  detR:200, recR:100, idR:46,  price:599,  ndaa:true,  iconType:'bullet',  color:'#2563eb' },
+  { id:'vk-cf81',    brand:'Verkada',   name:'CF81',             formFactor:'fisheye', resolution:'12MP',  fov:360, detR:100, recR:50,  idR:22,  price:1199, ndaa:true,  iconType:'fisheye', color:'#0891b2' },
+  { id:'vk-cm8x',    brand:'Verkada',   name:'CM8X',             formFactor:'multi',   resolution:'32MP',  fov:270, detR:180, recR:90,  idR:40,  price:1999, ndaa:true,  iconType:'dome',    color:'#0891b2' },
+  { id:'vk-td52',    brand:'Verkada',   name:'TD52',             formFactor:'ptz',     resolution:'2K',    fov:62,  detR:380, recR:190, idR:88,  price:2499, ndaa:true,  iconType:'dome',    color:'#7c3aed' },
+  // ── Axis ──
+  { id:'ax-p3245',   brand:'Axis',      name:'P3245-V',          formFactor:'dome',    resolution:'2MP',   fov:100, detR:140, recR:70,  idR:32,  price:549,  ndaa:false, iconType:'dome',    color:'#dc6026' },
+  { id:'ax-p1448',   brand:'Axis',      name:'P1448-LE',         formFactor:'bullet',  resolution:'8MP',   fov:50,  detR:320, recR:160, idR:74,  price:1249, ndaa:false, iconType:'bullet',  color:'#dc6026' },
+  { id:'ax-m3106',   brand:'Axis',      name:'M3106-L MK II',    formFactor:'dome',    resolution:'4MP',   fov:106, detR:120, recR:60,  idR:28,  price:379,  ndaa:false, iconType:'dome',    color:'#dc6026' },
+  { id:'ax-p3719',   brand:'Axis',      name:'P3719-PLE',        formFactor:'multi',   resolution:'4×5MP', fov:180, detR:200, recR:100, idR:46,  price:2199, ndaa:false, iconType:'dome',    color:'#dc6026' },
+  { id:'ax-f4005',   brand:'Axis',      name:'F4005-E',          formFactor:'fisheye', resolution:'2MP',   fov:180, detR:80,  recR:40,  idR:18,  price:299,  ndaa:false, iconType:'fisheye', color:'#dc6026' },
+  { id:'ax-q6135',   brand:'Axis',      name:'Q6135-LE',         formFactor:'ptz',     resolution:'2MP',   fov:62,  detR:420, recR:210, idR:96,  price:4299, ndaa:false, iconType:'dome',    color:'#dc6026' },
+  // ── Hanwha ──
+  { id:'hw-qno8080', brand:'Hanwha',    name:'QNO-8080R',        formFactor:'bullet',  resolution:'5MP',   fov:110, detR:240, recR:120, idR:56,  price:499,  ndaa:false, iconType:'bullet',  color:'#0f6ea1' },
+  { id:'hw-xnv8080', brand:'Hanwha',    name:'XNV-8080R',        formFactor:'dome',    resolution:'5MP',   fov:115, detR:200, recR:100, idR:46,  price:579,  ndaa:false, iconType:'dome',    color:'#0f6ea1' },
+  { id:'hw-pnm9322', brand:'Hanwha',    name:'PNM-9322VQP',      formFactor:'multi',   resolution:'4×2MP', fov:270, detR:160, recR:80,  idR:36,  price:1599, ndaa:false, iconType:'dome',    color:'#0f6ea1' },
+  { id:'hw-qnf8010', brand:'Hanwha',    name:'QNF-8010',         formFactor:'fisheye', resolution:'5MP',   fov:360, detR:90,  recR:45,  idR:20,  price:449,  ndaa:false, iconType:'fisheye', color:'#0f6ea1' },
+  { id:'hw-xnp9300', brand:'Hanwha',    name:'XNP-9300RW',       formFactor:'ptz',     resolution:'4K',    fov:58,  detR:400, recR:200, idR:92,  price:3199, ndaa:false, iconType:'dome',    color:'#0f6ea1' },
+  // ── Bosch ──
+  { id:'bs-flex5100', brand:'Bosch',    name:'FLEXIDOME 5100i',  formFactor:'dome',    resolution:'2MP',   fov:100, detR:130, recR:65,  idR:30,  price:639,  ndaa:false, iconType:'dome',    color:'#e42313' },
+  { id:'bs-dinion',  brand:'Bosch',     name:'DINION 7100i',     formFactor:'bullet',  resolution:'8MP',   fov:55,  detR:300, recR:150, idR:68,  price:1099, ndaa:false, iconType:'bullet',  color:'#e42313' },
+  { id:'bs-autodome',brand:'Bosch',     name:'AutoDome 7000i',   formFactor:'ptz',     resolution:'2MP',   fov:60,  detR:380, recR:190, idR:86,  price:3799, ndaa:false, iconType:'dome',    color:'#e42313' },
+  // ── Hikvision ──
+  { id:'hk-2cd2185', brand:'Hikvision', name:'DS-2CD2185G0-I',   formFactor:'dome',    resolution:'8MP',   fov:103, detR:160, recR:80,  idR:36,  price:189,  ndaa:false, iconType:'dome',    color:'#c00d0d' },
+  { id:'hk-2cd2t87', brand:'Hikvision', name:'DS-2CD2T87G2-L',   formFactor:'bullet',  resolution:'8MP',   fov:106, detR:280, recR:140, idR:64,  price:259,  ndaa:false, iconType:'bullet',  color:'#c00d0d' },
+  { id:'hk-2de4a220',brand:'Hikvision', name:'DS-2DE4A220IWG-E', formFactor:'ptz',     resolution:'2MP',   fov:58,  detR:350, recR:175, idR:80,  price:449,  ndaa:false, iconType:'dome',    color:'#c00d0d' },
+  { id:'hk-2cd2955', brand:'Hikvision', name:'DS-2CD2955FWD-I',  formFactor:'fisheye', resolution:'5MP',   fov:360, detR:80,  recR:40,  idR:18,  price:179,  ndaa:false, iconType:'fisheye', color:'#c00d0d' },
+  { id:'hk-2cd2387', brand:'Hikvision', name:'DS-2CD2387G2-LU',  formFactor:'dome',    resolution:'8MP',   fov:95,  detR:170, recR:85,  idR:38,  price:249,  ndaa:false, iconType:'dome',    color:'#c00d0d' },
+  // ── Dahua ──
+  { id:'da-hdw3849',  brand:'Dahua',    name:'IPC-HDW3849H-ZAS', formFactor:'dome',    resolution:'8MP',   fov:94,  detR:150, recR:75,  idR:34,  price:149,  ndaa:false, iconType:'dome',    color:'#0265c4' },
+  { id:'da-hfw3849',  brand:'Dahua',    name:'IPC-HFW3849T-ZAS', formFactor:'bullet',  resolution:'8MP',   fov:55,  detR:260, recR:130, idR:60,  price:189,  ndaa:false, iconType:'bullet',  color:'#0265c4' },
+  { id:'da-sd49425',  brand:'Dahua',    name:'SD49425XB-HNR',    formFactor:'ptz',     resolution:'4MP',   fov:60,  detR:360, recR:180, idR:82,  price:789,  ndaa:false, iconType:'dome',    color:'#0265c4' },
+  { id:'da-psd81606', brand:'Dahua',    name:'PSD81606',         formFactor:'multi',   resolution:'4×4MP', fov:220, detR:170, recR:85,  idR:38,  price:1299, ndaa:false, iconType:'dome',    color:'#0265c4' },
+  // ── Avigilon ──
+  { id:'av-h5sl-d1',  brand:'Avigilon', name:'H5SL-D1',          formFactor:'dome',    resolution:'2MP',   fov:102, detR:140, recR:70,  idR:32,  price:399,  ndaa:true,  iconType:'dome',    color:'#1a6632' },
+  { id:'av-h5a-b2',   brand:'Avigilon', name:'H5A-B2',           formFactor:'bullet',  resolution:'2MP',   fov:72,  detR:240, recR:120, idR:56,  price:449,  ndaa:true,  iconType:'bullet',  color:'#1a6632' },
+  { id:'av-h6m-d4',   brand:'Avigilon', name:'H6M-D4',           formFactor:'dome',    resolution:'4MP',   fov:102, detR:180, recR:90,  idR:40,  price:699,  ndaa:true,  iconType:'dome',    color:'#1a6632' },
+  { id:'av-hd-ptz',   brand:'Avigilon', name:'H4PTZ-DP20-IR',    formFactor:'ptz',     resolution:'2MP',   fov:63,  detR:360, recR:180, idR:82,  price:2199, ndaa:true,  iconType:'dome',    color:'#1a6632' },
+  // ── Pelco ──
+  { id:'pl-ib20',     brand:'Pelco',    name:'Sarix IB20',       formFactor:'bullet',  resolution:'2MP',   fov:65,  detR:220, recR:110, idR:50,  price:349,  ndaa:false, iconType:'bullet',  color:'#6b5e00' },
+  { id:'pl-evo180',   brand:'Pelco',    name:'Evo 180',          formFactor:'multi',   resolution:'4×2MP', fov:180, detR:160, recR:80,  idR:36,  price:1199, ndaa:false, iconType:'dome',    color:'#6b5e00' },
+  { id:'pl-spectra',  brand:'Pelco',    name:'Spectra Pro',      formFactor:'ptz',     resolution:'4K',    fov:60,  detR:440, recR:220, idR:100, price:5199, ndaa:false, iconType:'dome',    color:'#6b5e00' },
+];
+
+const ALL_BRANDS = ['All', ...[ ...new Set(CAMERA_DB.map(m => m.brand)) ]];
+const FF_LABELS = { dome:'Dome', bullet:'Bullet', fisheye:'Fisheye', multi:'Multi-sensor', ptz:'PTZ' };
+
+const ICONS = {
+  dome: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><ellipse cx="12" cy="13" rx="9" ry="5"/><path d="M3 13V9a9 4 0 0118 0v4"/><circle cx="12" cy="10" r="2" fill="currentColor" opacity=".4"/></svg>`,
+  bullet: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="8" width="14" height="8" rx="2"/><circle cx="19" cy="12" r="3"/><line x1="17" y1="12" x2="22" y2="12" stroke-width="1.5"/></svg>`,
+  fisheye: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>`,
+  access: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="7" y="3" width="10" height="18" rx="2"/><circle cx="12" cy="14" r="2"/><line x1="12" y1="11" x2="12" y2="12"/></svg>`,
+  sensor: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6.34 6.34a8 8 0 000 11.32M17.66 6.34a8 8 0 010 11.32"/><path d="M9.17 9.17a4 4 0 000 5.66M14.83 9.17a4 4 0 010 5.66"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>`,
+  intercom: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="9" r="3"/><line x1="8" y1="17" x2="16" y2="17"/><line x1="8" y1="14" x2="16" y2="14"/></svg>`,
+};
+
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+const state = {
+  cameras: [],
+  userWalls: [],
+  selectedId: null,
+  tool: 'select',
+  scalePPM: 25,        // pixels per meter
+  scaleCalibrated: false,
+  undoStack: [],
+  redoStack: [],
+  nextId: 1,
+  dragType: null,
+  wallType: 'solid',   // active wall type for drawing: 'solid' | 'glass' | 'fence'
+  activeModel: null,   // CAMERA_DB model selected via picker (overrides dragType)
+  recentlyUsed: [],    // last 4 placed CAMERA_DB model ids
+  gridVisible: true,
+  showDori: { id: true, rec: true, det: true },
+  // Scale drawing
+  scaleLine: null,
+  scaleLineNode: null,
+  // Wall drawing
+  wallLine: null,
+  wallLineNode: null,
+  // Satellite map (Phase 8)
+  mapMode: 'canvas',   // 'canvas' | 'satellite' | 'both'
+  floorPlanOpacity: 0.7,
+};
+
+// Wall type visual configs
+const WALL_CONFIGS = {
+  solid: { stroke:'#ef4444', strokeWidth:3,   dash:[],      attenuation:0,    label:'Solid Wall'      },
+  glass: { stroke:'#3b82f6', strokeWidth:2,   dash:[8,5],   attenuation:0.55, label:'Glass / Window'  },
+  fence: { stroke:'#f59e0b', strokeWidth:2,   dash:[3,5],   attenuation:0.35, label:'Fence / Barrier' },
+};
+
+// Modal state
+const mpState = {
+  selectedBrand: 'All',
+  selectedModelId: null,
+  ffFilter: null,
+  ndaaOnly: false,
+  minRange: 0,
+  editCamId: null,   // if set, picker updates this camera instead of placing new one
+};
+
+// Demo floor plan wall segments (world coords, filled in after stage init)
+let DEMO_WALLS = [];
+
+// ═══════════════════════════════════════════════
+// KONVA SETUP
+// ═══════════════════════════════════════════════
+let stage, floorLayer, fovLayer, wallLayer, cameraLayer, overlayLayer, labelLayer;
+
+function initStage() {
+  const container = document.getElementById('konva-container');
+  const { width, height } = container.getBoundingClientRect();
+
+  stage = new Konva.Stage({ container: 'konva-container', width, height });
+  floorLayer  = new Konva.Layer();
+  fovLayer    = new Konva.Layer();
+  wallLayer   = new Konva.Layer();
+  cameraLayer = new Konva.Layer();
+  overlayLayer= new Konva.Layer();
+  labelLayer  = new Konva.Layer();
+
+  stage.add(floorLayer, fovLayer, wallLayer, cameraLayer, overlayLayer, labelLayer);
+
+  drawDemoFloor();
+  addDemoCameras();
+
+  // Stage click / mousemove
+  stage.on('click tap', onStageClick);
+  stage.on('mousemove', onStageMouseMove);
+
+  // Wheel zoom
+  stage.on('wheel', e => {
+    e.evt.preventDefault();
+    const scaleBy = 1.08;
+    const oldScale = stage.scaleX();
+    const pointer = stage.getPointerPosition();
+    const mousePointTo = { x: (pointer.x - stage.x()) / oldScale, y: (pointer.y - stage.y()) / oldScale };
+    const newScale = e.evt.deltaY < 0 ? oldScale * scaleBy : oldScale / scaleBy;
+    const clamped = Math.min(Math.max(newScale, 0.2), 6);
+    stage.scale({ x: clamped, y: clamped });
+    stage.position({ x: pointer.x - mousePointTo.x * clamped, y: pointer.y - mousePointTo.y * clamped });
+    updateZoomDisplay();
+  });
+
+  // Right-click context menu
+  stage.on('contextmenu', e => {
+    e.evt.preventDefault();
+    if (state.selectedId) showCtxMenu(e.evt.clientX, e.evt.clientY);
+  });
+
+  // Pan with middle button
+  let isPanning = false, panStart = { x: 0, y: 0 }, panOrigin = { x: 0, y: 0 };
+  stage.container().addEventListener('mousedown', e => {
+    if (e.button === 1) { e.preventDefault(); isPanning = true; panStart = { x: e.clientX, y: e.clientY }; panOrigin = { x: stage.x(), y: stage.y() }; }
+  });
+  window.addEventListener('mousemove', e => {
+    if (!isPanning) return;
+    stage.position({ x: panOrigin.x + e.clientX - panStart.x, y: panOrigin.y + e.clientY - panStart.y });
+  });
+  window.addEventListener('mouseup', e => { if (e.button === 1) isPanning = false; });
+
+  // Resize
+  new ResizeObserver(() => {
+    const r = container.getBoundingClientRect();
+    stage.width(r.width); stage.height(r.height);
+  }).observe(container);
+
+  updateZoomDisplay();
+}
+
+// ── Demo floor plan ──────────────────────────────
+function drawDemoFloor() {
+  const W = stage.width(), H = stage.height();
+  const cx = W / 2, cy = H / 2;
+  const rw = 520, rh = 360;
+  const rx = cx - rw / 2 - 40, ry = cy - rh / 2;
+
+  // Outer walls
+  const outer = [[rx,ry,rx+rw,ry],[rx+rw,ry,rx+rw,ry+rh],[rx+rw,ry+rh,rx,ry+rh],[rx,ry+rh,rx,ry]];
+  // Interior walls
+  const interior = [
+    [rx+170, ry,     rx+170, ry+220],  // vertical L
+    [rx+170, ry+220, rx+380, ry+220],  // horizontal mid
+    [rx+380, ry,     rx+380, ry+220],  // vertical R
+    [rx+380, ry+220, rx+380, ry+140+220], // extend right wall down? let's skip
+  ];
+  const intr2 = [
+    [rx+170, ry,     rx+170, ry+220],
+    [rx+170, ry+220, rx+380, ry+220],
+    [rx+380, ry,     rx+380, ry+220],
+  ];
+
+  DEMO_WALLS = [...outer, ...intr2].map(([x1,y1,x2,y2]) => ({ x1,y1,x2,y2, isDemo:true }));
+
+  const floorFill = new Konva.Rect({ x:rx, y:ry, width:rw, height:rh, fill:'#f8f9fb', listening:false });
+  floorLayer.add(floorFill);
+
+  // Room fills
+  const rooms = [
+    { x:rx, y:ry, w:170, h:220, fill:'#f0f4ff' },         // Office A
+    { x:rx+170, y:ry, w:210, h:220, fill:'#f0f9ff' },     // Office B
+    { x:rx+380, y:ry, w:rw-380, h:220, fill:'#f5f3ff' },  // Server
+    { x:rx, y:ry+220, w:rw, h:rh-220, fill:'#fafafa' },   // Lobby / Open
+  ];
+  rooms.forEach(r => {
+    floorLayer.add(new Konva.Rect({ x:r.x, y:r.y, width:r.w, height:r.h, fill:r.fill, listening:false }));
+  });
+
+  // Walls
+  [...outer, ...intr2].forEach(([x1,y1,x2,y2]) => {
+    floorLayer.add(new Konva.Line({ points:[x1,y1,x2,y2], stroke:'#1e2d45', strokeWidth:3, lineCap:'round', listening:false }));
+  });
+
+  // Door arcs
+  const doors = [
+    { x:rx+110, y:ry+220, r:30, startAngle:-90, endAngle:0 },
+    { x:rx+280, y:ry+220, r:30, startAngle:180, endAngle:270 },
+    { x:rx+440, y:ry+220, r:30, startAngle:-90, endAngle:0 },
+  ];
+  doors.forEach(d => {
+    const sa = d.startAngle * Math.PI / 180, ea = d.endAngle * Math.PI / 180;
+    floorLayer.add(new Konva.Arc({ x:d.x, y:d.y, innerRadius:0, outerRadius:d.r, angle:90, rotationDeg:d.startAngle, stroke:'#94a3b8', strokeWidth:1, fill:'rgba(148,163,184,0.1)', listening:false }));
+  });
+
+  // Furniture (simplified)
+  const furniture = [
+    // Desk Office A
+    { type:'rect', x:rx+20, y:ry+20, w:80, h:40, fill:'#dde3ed', stroke:'#aab4c4' },
+    { type:'rect', x:rx+20, y:ry+70, w:60, h:40, fill:'#dde3ed', stroke:'#aab4c4' },
+    // Desk Office B
+    { type:'rect', x:rx+200, y:ry+20, w:90, h:40, fill:'#dde3ed', stroke:'#aab4c4' },
+    { type:'rect', x:rx+310, y:ry+20, w:50, h:40, fill:'#dde3ed', stroke:'#aab4c4' },
+    // Conference table (lobby)
+    { type:'rect', x:rx+200, y:ry+260, w:180, h:80, fill:'#e2e8f0', stroke:'#94a3b8', rx:4 },
+    // Chairs around table
+    { type:'circle', x:rx+220, y:ry+258, r:8, fill:'#cbd5e1' },
+    { type:'circle', x:rx+260, y:ry+258, r:8, fill:'#cbd5e1' },
+    { type:'circle', x:rx+300, y:ry+258, r:8, fill:'#cbd5e1' },
+    { type:'circle', x:rx+340, y:ry+258, r:8, fill:'#cbd5e1' },
+    { type:'circle', x:rx+220, y:ry+342, r:8, fill:'#cbd5e1' },
+    { type:'circle', x:rx+260, y:ry+342, r:8, fill:'#cbd5e1' },
+    { type:'circle', x:rx+300, y:ry+342, r:8, fill:'#cbd5e1' },
+    { type:'circle', x:rx+340, y:ry+342, r:8, fill:'#cbd5e1' },
+    // Sofa area lobby left
+    { type:'rect', x:rx+20, y:ry+250, w:100, h:40, fill:'#dde3ed', stroke:'#aab4c4', rx:4 },
+    { type:'rect', x:rx+20, y:ry+295, w:40, h:50, fill:'#dde3ed', stroke:'#aab4c4', rx:4 },
+    { type:'rect', x:rx+80, y:ry+295, w:40, h:50, fill:'#dde3ed', stroke:'#aab4c4', rx:4 },
+  ];
+  furniture.forEach(f => {
+    if (f.type === 'rect') {
+      floorLayer.add(new Konva.Rect({ x:f.x, y:f.y, width:f.w, height:f.h, fill:f.fill, stroke:f.stroke, strokeWidth:1, cornerRadius:f.rx||2, listening:false }));
+    } else if (f.type === 'circle') {
+      floorLayer.add(new Konva.Circle({ x:f.x, y:f.y, radius:f.r, fill:f.fill, listening:false }));
+    }
+  });
+
+  // Room labels
+  const labels = [
+    { text:'OFFICE A', x:rx+85, y:ry+140 },
+    { text:'OFFICE B', x:rx+275, y:ry+140 },
+    { text:'SERVER', x:rx+450, y:ry+100 },
+    { text:'OPEN AREA', x:rx+80, y:ry+310 },
+    { text:'CONFERENCE', x:rx+280, y:ry+300 },
+  ];
+  labels.forEach(l => {
+    floorLayer.add(new Konva.Text({ x:l.x-50, y:l.y, width:100, text:l.text, fontSize:9, fontFamily:'system-ui', fill:'#94a3b8', align:'center', listening:false }));
+  });
+
+  floorLayer.draw();
+}
+
+// ═══════════════════════════════════════════════
+// CAMERA RENDERING
+// ═══════════════════════════════════════════════
+function lookupCameraModel(typeId) {
+  // Check full DB first, then fallback to quick CATALOG
+  return CAMERA_DB.find(m => m.id === typeId) || CATALOG.find(c => c.id === typeId);
+}
+
+function addCamera(typeId, x, y, skipNameInput) {
+  const def = lookupCameraModel(typeId);
+  if (!def) return;
+  // Track recently used (CAMERA_DB models only)
+  if (CAMERA_DB.find(m => m.id === typeId)) {
+    state.recentlyUsed = [typeId, ...state.recentlyUsed.filter(id => id !== typeId)].slice(0, 4);
+    renderLeftPanel();
+  }
+
+  saveUndo();
+  const cam = {
+    id: state.nextId++,
+    typeId, x, y,
+    rotation: -30,       // degrees (0=right)
+    fovAngle: def.fov,
+    detR: def.detR,
+    recR: def.recR,
+    idR: def.idR,
+    color: def.color,
+    name: def.brand ? `${def.brand} ${def.name}` : def.name,
+    model: def.model || def.name,
+    price: def.price,
+    iconType: def.iconType,
+    // Focal length (derived from model FoV; fisheye stays fixed at 1.8mm)
+    focalLength:     def.fov < 360 ? focalFromFov(def.fov) : 1.8,
+    baseFocalLength: def.fov < 360 ? focalFromFov(def.fov) : 1.8,
+    baseDetR: def.detR,
+    baseRecR: def.recR,
+    baseIdR:  def.idR,
+    // Config
+    resolution: def.resolution || '4K',
+    mountHeight: 9,
+    tiltAngle: 15,
+    retention: 30,
+    license: 'Standard',
+    // DORI visibility
+    showDet: true, showRec: true, showId: true,
+  };
+  state.cameras.push(cam);
+  renderCamera(cam);
+  selectCamera(cam.id);
+  updateUI();
+  if (!skipNameInput) showCamNameInput(cam);
+  return cam;
+}
+
+function renderCamera(cam) {
+  // Remove existing group if redrawing
+  const existing = cameraLayer.findOne('#cam-' + cam.id);
+  if (existing) existing.destroy();
+  const existingFov = fovLayer.findOne('#fov-' + cam.id);
+  if (existingFov) existingFov.destroy();
+
+  // ── FOV Layer ──
+  if (cam.fovAngle > 0) {
+    drawFov(cam);
+  }
+
+  // ── Camera Icon Group ──
+  const group = new Konva.Group({ x:cam.x, y:cam.y, id:'cam-'+cam.id, draggable:true });
+
+  // Camera body circle
+  const circle = new Konva.Circle({ x:0, y:0, radius:14, fill:cam.color, shadowColor:'rgba(0,0,0,0.4)', shadowBlur:8, shadowOffset:{x:0,y:2}, shadowOpacity:1 });
+  group.add(circle);
+
+  // Camera icon (white)
+  const iconPath = getCameraIconPath(cam.iconType);
+  iconPath.forEach(shape => group.add(shape));
+
+  // Selection ring (hidden by default)
+  const selRing = new Konva.Circle({ x:0, y:0, radius:17, stroke:'#fff', strokeWidth:2, fill:'transparent', id:'sel-ring', visible:false, listening:false });
+  group.add(selRing);
+
+  // Rotate handle (hidden by default)
+  const handleDist = Math.max(cam.detR * 0.5, 30);
+  const rotHandle = new Konva.Circle({ x:0, y:-handleDist, radius:6, fill:'#fff', stroke:cam.color, strokeWidth:2, id:'rot-handle', visible:false, cursor:'grab' });
+  group.add(rotHandle);
+
+  // Rotate handle line
+  const rotLine = new Konva.Line({ points:[0,0,0,-handleDist], stroke:'rgba(255,255,255,0.5)', strokeWidth:1, dash:[4,3], id:'rot-line', visible:false, listening:false });
+  group.add(rotLine);
+
+  // Rotate the group to match camera rotation
+  group.rotation(cam.rotation + 90); // +90 because handle is at -Y
+
+  // ── Drag ──
+  group.on('dragmove', () => {
+    cam.x = group.x(); cam.y = group.y();
+    drawFov(cam);
+    renderCamLabel(cam);
+  });
+  group.on('dragend', () => { saveUndo(); });
+
+  // ── Click / select ──
+  group.on('click tap', e => {
+    e.cancelBubble = true;
+    selectCamera(cam.id);
+  });
+
+  // ── Rotate handle drag ──
+  rotHandle.on('mousedown touchstart', e => {
+    e.cancelBubble = true;
+    const startAngle = Math.atan2(stage.getPointerPosition().y - cam.y, stage.getPointerPosition().x - cam.x) * 180 / Math.PI;
+    const startRot = cam.rotation;
+
+    const onMove = () => {
+      const p = stage.getPointerPosition();
+      if (!p) return;
+      const angle = Math.atan2((p.y - cam.y) * stage.scaleY(), (p.x - cam.x) * stage.scaleX()) * 180 / Math.PI;
+      cam.rotation = angle;
+      group.rotation(cam.rotation + 90);
+      drawFov(cam);
+      renderCamLabel(cam);
+    };
+    const onUp = () => {
+      stage.off('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      saveUndo();
+    };
+    stage.on('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  });
+
+  cameraLayer.add(group);
+  cameraLayer.draw();
+}
+
+function getCameraIconPath(type) {
+  const shapes = [];
+  const w = { stroke:'#fff', strokeWidth:1.8, fill:'transparent', listening:false };
+  if (type === 'dome') {
+    shapes.push(new Konva.Arc({ x:0, y:2, innerRadius:4, outerRadius:7, angle:180, rotationDeg:0, ...w, fill:'rgba(255,255,255,0.25)' }));
+    shapes.push(new Konva.Circle({ x:0, y:0, radius:2.5, fill:'rgba(255,255,255,0.9)', listening:false }));
+  } else if (type === 'bullet') {
+    shapes.push(new Konva.Rect({ x:-6, y:-3, width:10, height:6, cornerRadius:1.5, ...w }));
+    shapes.push(new Konva.Circle({ x:6, y:0, radius:3, ...w }));
+  } else if (type === 'fisheye') {
+    shapes.push(new Konva.Circle({ x:0, y:0, radius:7, ...w }));
+    shapes.push(new Konva.Circle({ x:0, y:0, radius:3.5, ...w }));
+    shapes.push(new Konva.Circle({ x:0, y:0, radius:1.5, fill:'rgba(255,255,255,0.9)', listening:false }));
+  } else if (type === 'access') {
+    shapes.push(new Konva.Rect({ x:-4, y:-6, width:8, height:12, cornerRadius:1, ...w }));
+    shapes.push(new Konva.Circle({ x:0, y:2, radius:1.5, fill:'rgba(255,255,255,0.9)', listening:false }));
+  } else if (type === 'sensor') {
+    shapes.push(new Konva.Circle({ x:0, y:0, radius:3, fill:'rgba(255,255,255,0.9)', listening:false }));
+    shapes.push(new Konva.Arc({ x:0, y:0, innerRadius:5, outerRadius:5, angle:180, rotationDeg:-90, ...w, strokeWidth:1.5 }));
+    shapes.push(new Konva.Arc({ x:0, y:0, innerRadius:8, outerRadius:8, angle:180, rotationDeg:-90, ...w, strokeWidth:1.5 }));
+  } else if (type === 'intercom') {
+    shapes.push(new Konva.Rect({ x:-5, y:-7, width:10, height:14, cornerRadius:1.5, ...w }));
+    shapes.push(new Konva.Circle({ x:0, y:-2, radius:2.5, ...w }));
+  }
+  return shapes;
+}
+
+// ── Hex → "r,g,b" helper ──────────────────────────
+function hexToRgb(hex) {
+  hex = hex.replace('#','');
+  if (hex.length === 3) hex = hex.split('').map(c => c+c).join('');
+  return `${parseInt(hex.slice(0,2),16)},${parseInt(hex.slice(2,4),16)},${parseInt(hex.slice(4,6),16)}`;
+}
+function hexToRgbArr(hex) {
+  hex = hex.replace('#','');
+  if (hex.length === 3) hex = hex.split('').map(c => c+c).join('');
+  return [parseInt(hex.slice(0,2),16), parseInt(hex.slice(2,4),16), parseInt(hex.slice(4,6),16)];
+}
+
+// ── FOV cone — single-color gradient layers ───────
+// Zones are drawn back→front. Additive source-over blending produces:
+//   Detection-only area   ≈ 12% opacity  (outer, faintest)
+//   Recognition area      ≈ 28% opacity  (Det + Rec stacked)
+//   Identification area   ≈ 43% opacity  (Det + Rec + Id stacked — richest, nearest camera)
+function drawFov(cam) {
+  const existing = fovLayer.findOne('#fov-' + cam.id);
+  if (existing) existing.destroy();
+
+  const fovGroup = new Konva.Group({ id:'fov-'+cam.id, listening:false });
+  const walls = [...DEMO_WALLS, ...state.userWalls];
+  const rgb = hexToRgb(cam.color);
+
+  if (cam.fovAngle >= 360) {
+    // Fisheye — full radial circles, back-to-front
+    const zones = [
+      { r: cam.detR, show: cam.showDet, fillA: 0.12, strokeA: 0.30 },
+      { r: cam.recR, show: cam.showRec, fillA: 0.18, strokeA: 0    },
+      { r: cam.idR,  show: cam.showId,  fillA: 0.22, strokeA: 0.50 },
+    ];
+    zones.forEach(({ r, show, fillA, strokeA }) => {
+      if (!show || r <= 0) return;
+      const pts = computeFovPolygon(cam.x, cam.y, cam.rotation, 360, r, walls);
+      fovGroup.add(new Konva.Line({
+        points: pts, closed: true,
+        fill:   `rgba(${rgb},${fillA})`,
+        stroke: strokeA > 0 ? `rgba(${rgb},${strokeA})` : 'transparent',
+        strokeWidth: strokeA > 0 ? 1 : 0,
+        listening: false,
+      }));
+    });
+  } else {
+    // Normal cameras — wedge polygons, back-to-front (Det → Rec → Id)
+    if (cam.showDet && cam.detR > 0) {
+      const pts = computeFovPolygon(cam.x, cam.y, cam.rotation, cam.fovAngle, cam.detR, walls);
+      fovGroup.add(new Konva.Line({
+        points: [cam.x, cam.y, ...pts], closed: true,
+        fill:   `rgba(${rgb},0.12)`,
+        stroke: `rgba(${rgb},0.30)`, strokeWidth: 0.8,
+        listening: false,
+      }));
+    }
+    if (cam.showRec && cam.recR > 0) {
+      const pts = computeFovPolygon(cam.x, cam.y, cam.rotation, cam.fovAngle, cam.recR, walls);
+      fovGroup.add(new Konva.Line({
+        points: [cam.x, cam.y, ...pts], closed: true,
+        fill:   `rgba(${rgb},0.18)`,
+        stroke: 'transparent', strokeWidth: 0,
+        listening: false,
+      }));
+    }
+    if (cam.showId && cam.idR > 0) {
+      const pts = computeFovPolygon(cam.x, cam.y, cam.rotation, cam.fovAngle, cam.idR, walls);
+      fovGroup.add(new Konva.Line({
+        points: [cam.x, cam.y, ...pts], closed: true,
+        fill:   `rgba(${rgb},0.22)`,
+        stroke: `rgba(${rgb},0.55)`, strokeWidth: 1,
+        listening: false,
+      }));
+    }
+  }
+
+  fovLayer.add(fovGroup);
+  fovLayer.draw();
+}
+
+// ── Ray-cast FoV polygon ──────────────────────────
+function computeFovPolygon(cx, cy, rotation, fovAngle, range, walls) {
+  const numRays = Math.max(40, Math.round(fovAngle * 0.8));
+  const halfFov = fovAngle / 2;
+  const pts = [];
+  for (let i = 0; i <= numRays; i++) {
+    const angleDeg = rotation - halfFov + (i / numRays) * fovAngle;
+    const rad = angleDeg * Math.PI / 180;
+    const dist = castRay(cx, cy, Math.cos(rad), Math.sin(rad), range, walls);
+    pts.push(cx + Math.cos(rad) * dist, cy + Math.sin(rad) * dist);
+  }
+  return pts;
+}
+
+// Cast a single ray, respecting wall attenuation types.
+// Solid walls stop the ray; glass/fence reduce remaining range proportionally.
+function castRay(ox, oy, dx, dy, range, walls) {
+  // Collect all hits within range and sort by distance
+  const hits = [];
+  for (const w of walls) {
+    const t = raySegIntersect(ox, oy, dx, dy, w.x1, w.y1, w.x2, w.y2);
+    if (t !== null && t > 1) hits.push({ t, type: w.type || 'solid' });
+  }
+  hits.sort((a, b) => a.t - b.t);
+
+  let maxDist = range;
+  for (const { t, type } of hits) {
+    if (t >= maxDist) break;           // wall is beyond current range — done
+    if (type === 'solid') return t;    // full stop
+    const cfg = WALL_CONFIGS[type];
+    if (cfg && cfg.attenuation > 0) {
+      // Reduce the remaining distance beyond this wall
+      maxDist = t + (maxDist - t) * cfg.attenuation;
+    }
+  }
+  return maxDist;
+}
+
+function raySegIntersect(ox, oy, dx, dy, x1, y1, x2, y2) {
+  const ex = x2-x1, ey = y2-y1;
+  const denom = dx*ey - dy*ex;
+  if (Math.abs(denom) < 1e-8) return null;
+  const t = ((x1-ox)*ey - (y1-oy)*ex) / denom;
+  const u = ((x1-ox)*dy  - (y1-oy)*dx) / denom;
+  if (t >= 0 && u >= 0 && u <= 1) return t;
+  return null;
+}
+
+// ─── Demo cameras ────────────────────────────────
+function addDemoCameras() {
+  const W = stage.width(), H = stage.height();
+  const cx = W/2 - 40, cy = H/2;
+  // Office A — dome facing lobby
+  addCamera('indoor-dome',  cx - 140, cy - 60,  true);
+  // Office B — bullet facing entry
+  addCamera('bullet',       cx + 100, cy - 50,  true);
+  // Lobby — dome watching entrance
+  addCamera('outdoor-dome', cx - 20,  cy + 170, true);
+
+  // Deselect after demo
+  setTimeout(() => { selectCamera(null); }, 50);
+}
+
+// ═══════════════════════════════════════════════
+// SELECTION
+// ═══════════════════════════════════════════════
+function selectCamera(id) {
+  // Deselect all
+  state.cameras.forEach(c => {
+    const g = cameraLayer.findOne('#cam-'+c.id);
+    if (g) {
+      g.findOne('#sel-ring').visible(false);
+      g.findOne('#rot-handle').visible(false);
+      g.findOne('#rot-line').visible(false);
+    }
+  });
+
+  // Clear all labels
+  if (labelLayer) { labelLayer.destroyChildren(); labelLayer.draw(); }
+
+  state.selectedId = id;
+
+  if (id !== null) {
+    const g = cameraLayer.findOne('#cam-'+id);
+    if (g) {
+      g.findOne('#sel-ring').visible(true);
+      g.findOne('#rot-handle').visible(true);
+      g.findOne('#rot-line').visible(true);
+    }
+    cameraLayer.draw();
+    const cam = state.cameras.find(c => c.id === id);
+    if (cam) renderCamLabel(cam);
+    renderProperties(id);
+  } else {
+    renderPropertiesEmpty();
+  }
+  hideCtxMenu();
+}
+
+// ═══════════════════════════════════════════════
+// TOOLS
+// ═══════════════════════════════════════════════
+function setTool(tool) {
+  state.tool = tool;
+  document.querySelectorAll('.tool-btn[data-tool]').forEach(el => el.classList.toggle('active', el.dataset.tool === tool));
+  const ca = document.getElementById('canvasArea');
+  ca.className = 'canvas-area';
+  if (tool === 'camera' || tool === 'wall' || tool === 'scale') ca.classList.add('cursor-crosshair');
+  // Show wall sub-toolbar only when wall tool active
+  document.getElementById('wallSubtoolbar').classList.toggle('show', tool === 'wall');
+  // Cancel any in-progress drawing
+  state.scaleLine = null; state.wallLine = null;
+  clearOverlay();
+}
+
+function setWallType(type) {
+  state.wallType = type;
+  ['solid','glass','fence'].forEach(t => document.getElementById('wt-'+t).classList.toggle('active', t === type));
+  // Update in-progress preview line if drawing
+  if (state.wallLineNode) {
+    const cfg = WALL_CONFIGS[type];
+    state.wallLineNode.stroke(cfg.stroke);
+    state.wallLineNode.strokeWidth(cfg.strokeWidth);
+    state.wallLineNode.dash(cfg.dash);
+    overlayLayer.draw();
+  }
+}
+
+function onStageClick(e) {
+  if (e.target === stage) {
+    if (state.tool === 'select') {
+      selectCamera(null);
+    }
+  }
+  if (state.tool === 'camera' && e.target === stage) {
+    const p = getScaledPos(stage.getPointerPosition());
+    addCamera(state.dragType || 'indoor-dome', p.x, p.y);
+  }
+  if (state.tool === 'scale') {
+    const p = getScaledPos(stage.getPointerPosition());
+    if (!state.scaleLine) {
+      state.scaleLine = { x1:p.x, y1:p.y };
+      const line = new Konva.Line({ points:[p.x,p.y,p.x,p.y], stroke:'#fbbf24', strokeWidth:2, dash:[6,4], listening:false, id:'scale-temp' });
+      const dot = new Konva.Circle({ x:p.x, y:p.y, radius:4, fill:'#fbbf24', listening:false, id:'scale-dot' });
+      overlayLayer.add(line, dot); overlayLayer.draw();
+      state.scaleLineNode = line;
+    } else {
+      // Second click — open popup
+      state.scaleLine.x2 = p.x; state.scaleLine.y2 = p.y;
+      state.scaleLineNode.points([state.scaleLine.x1,state.scaleLine.y1,p.x,p.y]);
+      overlayLayer.draw();
+      const evtPos = e.evt ? { clientX:e.evt.clientX, clientY:e.evt.clientY } : { clientX:p.x, clientY:p.y };
+      showScalePopup(evtPos.clientX, evtPos.clientY);
+    }
+  }
+  if (state.tool === 'wall') {
+    const p = getScaledPos(stage.getPointerPosition());
+    if (!state.wallLine) {
+      const cfg = WALL_CONFIGS[state.wallType || 'solid'];
+      state.wallLine = { x1:p.x, y1:p.y };
+      const line = new Konva.Line({
+        points:[p.x,p.y,p.x,p.y], stroke:cfg.stroke,
+        strokeWidth:cfg.strokeWidth, dash:cfg.dash,
+        lineCap:'round', listening:false, id:'wall-temp',
+      });
+      const dot = new Konva.Circle({ x:p.x, y:p.y, radius:4, fill:cfg.stroke, listening:false });
+      overlayLayer.add(line, dot); overlayLayer.draw();
+      state.wallLineNode = line;
+    } else {
+      const w = { x1:state.wallLine.x1, y1:state.wallLine.y1, x2:p.x, y2:p.y, isDemo:false, type:state.wallType || 'solid' };
+      saveUndo();
+      state.userWalls.push(w);
+      drawUserWall(w);
+      state.wallLine = null; state.wallLineNode = null;
+      clearOverlay();
+      state.cameras.forEach(c => drawFov(c));
+      updateUI();
+    }
+  }
+}
+
+function onStageMouseMove(e) {
+  const p = getScaledPos(stage.getPointerPosition());
+  if (!p) return;
+  if (state.scaleLine && state.scaleLineNode) {
+    state.scaleLineNode.points([state.scaleLine.x1,state.scaleLine.y1,p.x,p.y]);
+    overlayLayer.draw();
+  }
+  if (state.wallLine && state.wallLineNode) {
+    state.wallLineNode.points([state.wallLine.x1,state.wallLine.y1,p.x,p.y]);
+    overlayLayer.draw();
+  }
+}
+
+function getScaledPos(pos) {
+  if (!pos) return { x:0, y:0 };
+  return { x:(pos.x - stage.x()) / stage.scaleX(), y:(pos.y - stage.y()) / stage.scaleY() };
+}
+
+function clearOverlay() {
+  overlayLayer.destroyChildren(); overlayLayer.draw();
+}
+
+function drawUserWall(w) {
+  const cfg = WALL_CONFIGS[w.type || 'solid'];
+  wallLayer.add(new Konva.Line({
+    points: [w.x1, w.y1, w.x2, w.y2],
+    stroke: cfg.stroke, strokeWidth: cfg.strokeWidth,
+    dash: cfg.dash, lineCap: 'round', lineJoin: 'round',
+    listening: false,
+  }));
+  wallLayer.draw();
+}
+
+// ═══════════════════════════════════════════════
+// FLOOR PLAN UPLOAD
+// ═══════════════════════════════════════════════
+function loadFloorPlan(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      floorLayer.destroyChildren();
+      DEMO_WALLS = [];
+      const W = stage.width(), H = stage.height();
+      const scale = Math.min((W - 80) / img.width, (H - 80) / img.height);
+      const kImg = new Konva.Image({ image:img, x:(W-img.width*scale)/2, y:(H-img.height*scale)/2, width:img.width*scale, height:img.height*scale, listening:false });
+      floorLayer.add(kImg);
+      floorLayer.draw();
+      document.getElementById('canvasEmpty').classList.add('hidden');
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+  e.target.value = '';
+}
+
+// ═══════════════════════════════════════════════
+// 3D PREVIEW (Phase 9)
+// ═══════════════════════════════════════════════
+let three3d = { renderer: null, scene: null, camera: null, animId: null, orbitAz: 30, orbitEl: 25, orbitDist: 10 };
+let target3dDist = 3; // meters
+
+function toggle3DPanel() {
+  const panel = document.getElementById('preview3d');
+  const btn   = document.getElementById('tool-3d');
+  const show  = !panel.classList.contains('show');
+  panel.classList.toggle('show', show);
+  btn.classList.toggle('active', show);
+  if (show) {
+    init3DRenderer();
+    update3DScene();
+  } else {
+    if (three3d.animId) { cancelAnimationFrame(three3d.animId); three3d.animId = null; }
+  }
+}
+
+function init3DRenderer() {
+  const canvas = document.getElementById('threeCanvas');
+  const panel  = document.getElementById('preview3d');
+  const w = panel.offsetWidth;
+  const h = panel.offsetHeight - 38 - 36; // header + footer heights
+
+  if (three3d.renderer) {
+    three3d.renderer.setSize(w, h);
+    three3d.camera.aspect = w / h;
+    three3d.camera.updateProjectionMatrix();
+    if (!three3d.animId) startRender3DLoop();
+    return;
+  }
+
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setSize(w, h);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setClearColor(0x0f1923);
+
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x0f1923, 0.025);
+  scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+  const sun = new THREE.DirectionalLight(0xffffff, 0.9);
+  sun.position.set(6, 10, 4);
+  scene.add(sun);
+  scene.add(new THREE.GridHelper(40, 40, 0x1c2d3e, 0x162030));
+
+  const threeCamera = new THREE.PerspectiveCamera(45, w / h, 0.05, 200);
+  three3d = { renderer, scene, camera: threeCamera, animId: null, orbitAz: 30, orbitEl: 25, orbitDist: 10 };
+  updateOrbit3D();
+  setupOrbit3D(canvas);
+  startRender3DLoop();
+}
+
+function startRender3DLoop() {
+  function loop() {
+    three3d.animId = requestAnimationFrame(loop);
+    three3d.renderer.render(three3d.scene, three3d.camera);
+  }
+  loop();
+}
+
+function updateOrbit3D() {
+  const az = three3d.orbitAz * Math.PI / 180;
+  const el = three3d.orbitEl * Math.PI / 180;
+  const d  = three3d.orbitDist;
+  three3d.camera.position.set(
+    d * Math.sin(az) * Math.cos(el),
+    d * Math.sin(el),
+    d * Math.cos(az) * Math.cos(el)
+  );
+  three3d.camera.lookAt(0, 1.5, 0);
+}
+
+function setupOrbit3D(canvas) {
+  let down = false, lx = 0, ly = 0;
+  canvas.addEventListener('mousedown', e => { down = true; lx = e.clientX; ly = e.clientY; });
+  window.addEventListener('mouseup', () => { down = false; });
+  canvas.addEventListener('mousemove', e => {
+    if (!down) return;
+    three3d.orbitAz += (e.clientX - lx) * 0.5;
+    three3d.orbitEl  = Math.max(5, Math.min(78, three3d.orbitEl - (e.clientY - ly) * 0.3));
+    lx = e.clientX; ly = e.clientY;
+    updateOrbit3D();
+  });
+  canvas.addEventListener('wheel', e => {
+    three3d.orbitDist = Math.max(2, Math.min(30, three3d.orbitDist + e.deltaY * 0.02));
+    updateOrbit3D();
+  }, { passive: true });
+}
+
+function setTarget3D(val) {
+  target3dDist = val;
+  document.getElementById('target3dVal').textContent = val.toFixed(1) + ' m';
+  update3DScene();
+}
+
+function update3DScene() {
+  if (!three3d.renderer) return;
+  if (!document.getElementById('preview3d').classList.contains('show')) return;
+
+  const scene = three3d.scene;
+
+  // Remove all removable objects, disposing geometry/material
+  const toRemove = scene.children.filter(c => c.userData.r);
+  toRemove.forEach(c => {
+    scene.remove(c);
+    c.traverse(obj => {
+      if (obj.geometry) obj.geometry.dispose();
+      if (obj.material) {
+        (Array.isArray(obj.material) ? obj.material : [obj.material]).forEach(m => m.dispose());
+      }
+    });
+  });
+
+  const cam      = state.cameras.find(c => c.id === state.selectedId);
+  const mountM   = ((cam ? cam.mountHeight : 9) * 0.3048); // ft → m
+  const tiltDeg  = cam ? cam.tiltAngle : 15;
+  const tiltRad  = tiltDeg * Math.PI / 180;
+  const fovHalf  = cam ? (Math.min(cam.fovAngle, 170) / 2) * Math.PI / 180 : 45 * Math.PI / 180;
+  const isFish   = cam && cam.fovAngle >= 360;
+  const ppm      = state.scalePPM || 25;
+  const detR     = cam ? cam.detR / ppm : 8;
+  const recR     = cam ? cam.recR / ppm : 4;
+  const idR      = cam ? cam.idR  / ppm : 2;
+  const colorHex = cam ? parseInt(cam.color.replace('#', ''), 16) : 0x7c3aed;
+
+  const add = obj => { obj.userData.r = true; scene.add(obj); return obj; };
+
+  // ── Mounting pole ──
+  const pole = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.04, 0.05, mountM, 8),
+    new THREE.MeshStandardMaterial({ color: 0x4b5563, roughness: 0.7 })
+  );
+  pole.position.y = mountM / 2;
+  add(pole);
+
+  // ── Camera body (group, tilted) ──
+  const bodyGrp = new THREE.Group();
+  bodyGrp.position.set(0, mountM, 0);
+  bodyGrp.rotation.x = tiltRad;
+  const body = new THREE.Mesh(
+    new THREE.BoxGeometry(0.26, 0.14, 0.22),
+    new THREE.MeshStandardMaterial({ color: 0x1d2939, roughness: 0.6 })
+  );
+  bodyGrp.add(body);
+  const lens = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.038, 0.038, 0.09, 16),
+    new THREE.MeshStandardMaterial({ color: colorHex, metalness: 0.7, roughness: 0.25 })
+  );
+  lens.rotation.x = Math.PI / 2;
+  lens.position.z = -0.16;
+  bodyGrp.add(lens);
+  add(bodyGrp);
+
+  // ── FoV frustum cones ──
+  if (!isFish) {
+    const buildFrustum = (range, opacity) => {
+      const r = range * Math.tan(fovHalf);
+      const geo = new THREE.CylinderGeometry(r, 0.001, range, 48, 1, true);
+      const mat = new THREE.MeshBasicMaterial({
+        color: colorHex, opacity, transparent: true, side: THREE.DoubleSide, depthWrite: false,
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      // Rotate: cylinder Y-axis → view direction (-Z tilted down by tiltRad)
+      mesh.rotation.x = -(Math.PI / 2 - tiltRad);
+      // Shift center along view axis so apex sits at camera position
+      mesh.position.set(0, mountM + Math.sin(tiltRad) * (range / 2), -Math.cos(tiltRad) * (range / 2));
+      return mesh;
+    };
+    if (!cam || cam.showDet) add(buildFrustum(detR, 0.07));
+    if (!cam || cam.showRec) add(buildFrustum(recR, 0.13));
+    if (!cam || cam.showId)  add(buildFrustum(idR,  0.22));
+  } else {
+    // Fisheye: downward-opening hemisphere
+    add(new THREE.Mesh(
+      new THREE.SphereGeometry(detR, 32, 16, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2),
+      new THREE.MeshBasicMaterial({ color: colorHex, opacity: 0.07, transparent: true, side: THREE.DoubleSide, depthWrite: false })
+    )).position.y = mountM;
+  }
+
+  // ── Dead zone at ground (blind spot directly under camera) ──
+  const dzRaw = Math.PI / 2 - fovHalf - tiltRad;
+  const dzRadius = dzRaw > 0 ? mountM * Math.tan(dzRaw) : 0;
+  if (dzRadius > 0.05 && dzRadius < 20) {
+    const dzMesh = new THREE.Mesh(
+      new THREE.CircleGeometry(dzRadius, 48),
+      new THREE.MeshBasicMaterial({ color: 0xef4444, opacity: 0.14, transparent: true, depthWrite: false })
+    );
+    dzMesh.rotation.x = -Math.PI / 2;
+    dzMesh.position.y = 0.005;
+    add(dzMesh);
+    // Ring outline
+    const pts = Array.from({ length: 65 }, (_, i) => {
+      const a = (i / 64) * Math.PI * 2;
+      return new THREE.Vector3(Math.cos(a) * dzRadius, 0.01, Math.sin(a) * dzRadius);
+    });
+    add(new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints(pts),
+      new THREE.LineBasicMaterial({ color: 0xef4444, opacity: 0.4, transparent: true })
+    ));
+  }
+
+  // ── DORI range rings on ground ──
+  [[idR, colorHex, 0.6], [recR, colorHex, 0.35], [detR, colorHex, 0.2]].forEach(([r, c, op]) => {
+    const pts = Array.from({ length: 81 }, (_, i) => {
+      const a = (i / 80) * Math.PI * 2;
+      return new THREE.Vector3(Math.cos(a) * r, 0.008, Math.sin(a) * r);
+    });
+    add(new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints(pts),
+      new THREE.LineBasicMaterial({ color: c, opacity: op, transparent: true })
+    ));
+  });
+
+  // ── Test target (person) ──
+  const dist = Math.min(target3dDist, detR * 2 + 2);
+  const pGrp = add(new THREE.Group());
+  pGrp.position.set(0, 0, -dist);
+  const bH = 1.75, bR = 0.2;
+  pGrp.add(Object.assign(new THREE.Mesh(
+    new THREE.CylinderGeometry(bR, bR * 0.85, bH, 12),
+    new THREE.MeshStandardMaterial({ color: 0xfbbf24, roughness: 0.8 })
+  ), { position: new THREE.Vector3(0, bH / 2, 0) }));
+  const head = new THREE.Mesh(
+    new THREE.SphereGeometry(bR * 1.1, 12, 8),
+    new THREE.MeshStandardMaterial({ color: 0xfde68a, roughness: 0.7 })
+  );
+  head.position.y = bH + bR * 1.05;
+  pGrp.add(head);
+
+  // Sight-line from camera to target's head
+  add(new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(0, mountM, 0),
+      new THREE.Vector3(0, bH * 0.9, -dist),
+    ]),
+    new THREE.LineBasicMaterial({ color: 0x6b7280, opacity: 0.35, transparent: true })
+  ));
+
+  updateInfo3D(cam, dist, detR, recR, idR);
+}
+
+function updateInfo3D(cam, dist, detR, recR, idR) {
+  const el = document.getElementById('info3d');
+  if (!cam) {
+    el.textContent = 'Select a camera to preview';
+    return;
+  }
+  const zone = dist <= idR  ? '<span style="color:#a78bfa;font-weight:600">● ID zone</span>'
+             : dist <= recR ? '<span style="color:#7c3aed;font-weight:600">● REC zone</span>'
+             : dist <= detR ? '<span style="color:#6d28d9;font-weight:600">● DET zone</span>'
+             :                '<span style="color:#4b5563">● Out of range</span>';
+  el.innerHTML = `<span style="color:#9ca3af">${cam.model}</span>&ensp;${dist.toFixed(1)} m&ensp;${zone}`;
+}
+
+// ═══════════════════════════════════════════════
+// SATELLITE MAP (Phase 8)
+// ═══════════════════════════════════════════════
+let leafletMap = null;
+
+function initLeafletMap() {
+  if (leafletMap) return;
+  const el = document.getElementById('map-container');
+  el.style.display = 'block';
+
+  leafletMap = L.map('map-container', {
+    zoomControl: false,
+    attributionControl: true,
+  }).setView([37.7749, -122.4194], 18); // default: San Francisco
+
+  // ESRI World Imagery (satellite, no API key)
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    attribution: 'Tiles © Esri — Source: Esri, Maxar, GeoEye, Earthstar Geographics, CNES/Airbus DS, USDA, USGS, AeroGRID, IGN',
+    maxZoom: 22,
+  }).addTo(leafletMap);
+
+  // Sync Konva scroll/zoom so map tiles don't interact with Konva pan
+  // Disable map pointer interaction — Konva handles mouse events
+  leafletMap.dragging.disable();
+  leafletMap.scrollWheelZoom.disable();
+  leafletMap.doubleClickZoom.disable();
+  leafletMap.touchZoom.disable();
+  leafletMap.boxZoom.disable();
+  leafletMap.keyboard.disable();
+
+  leafletMap.on('zoomend moveend', syncScaleFromMap);
+}
+
+function setMapMode(mode) {
+  state.mapMode = mode;
+  const ca = document.getElementById('canvasArea');
+  const mapEl = document.getElementById('map-container');
+  const opacityGroup = document.getElementById('satOpacityGroup');
+
+  // Update mode button states
+  ['canvas','satellite','both'].forEach(m => {
+    document.getElementById('mmode-' + m).classList.toggle('active', m === mode);
+  });
+
+  if (mode === 'canvas') {
+    mapEl.style.display = 'none';
+    ca.classList.remove('map-active');
+    opacityGroup.style.display = 'none';
+    updateStatusBar();
+    return;
+  }
+
+  // Satellite or Both — init map if needed
+  initLeafletMap();
+  mapEl.style.display = 'block';
+  ca.classList.add('map-active');
+
+  if (mode === 'satellite') {
+    opacityGroup.style.display = 'none';
+    // Hide floor plan layer
+    setFloorLayerOpacity(0);
+  } else {
+    // Both — show floor plan over satellite
+    opacityGroup.style.display = 'flex';
+    setFloorLayerOpacity(state.floorPlanOpacity);
+  }
+
+  // Trigger Leaflet to resize now that its container is visible
+  setTimeout(() => leafletMap.invalidateSize(), 50);
+  syncScaleFromMap();
+}
+
+function toggleSatSubtoolbar() {
+  const tb = document.getElementById('satSubtoolbar');
+  const btn = document.getElementById('tool-map');
+  const show = !tb.classList.contains('show');
+  tb.classList.toggle('show', show);
+  btn.classList.toggle('active', show);
+}
+
+async function geocodeAddress() {
+  const q = document.getElementById('satAddressInput').value.trim();
+  if (!q) return;
+
+  // Ensure map is initialised and visible
+  if (state.mapMode === 'canvas') setMapMode('satellite');
+
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`,
+      { headers: { 'Accept-Language': 'en' } }
+    );
+    const data = await res.json();
+    if (data.length === 0) {
+      alert('Address not found. Try a more specific search.');
+      return;
+    }
+    leafletMap.setView([+data[0].lat, +data[0].lon], 18);
+  } catch (e) {
+    alert('Geocoding failed. Check your connection and try again.');
+  }
+}
+
+function syncScaleFromMap() {
+  if (!leafletMap || state.mapMode === 'canvas') return;
+  const zoom = leafletMap.getZoom();
+  const lat = leafletMap.getCenter().lat;
+  // Web Mercator: meters per pixel = 156543.03392 × cos(lat) / 2^zoom
+  const mPerPx = 156543.03392 * Math.cos(lat * Math.PI / 180) / Math.pow(2, zoom);
+  state.scalePPM = 1 / mPerPx;
+  state.scaleCalibrated = true;
+  updateStatusBar();
+}
+
+function setFloorPlanOpacity(val) {
+  state.floorPlanOpacity = val;
+  document.getElementById('satOpacityVal').textContent = Math.round(val * 100) + '%';
+  setFloorLayerOpacity(val);
+}
+
+function setFloorLayerOpacity(val) {
+  if (typeof floorLayer !== 'undefined') {
+    floorLayer.opacity(val);
+    floorLayer.draw();
+  }
+}
+
+// ═══════════════════════════════════════════════
+// PROPERTIES PANEL
+// ═══════════════════════════════════════════════
+function renderProperties(id) {
+  const cam = state.cameras.find(c => c.id === id);
+  if (!cam) return;
+
+  // Panel header state: camera selected
+  document.getElementById('rpCamHeader').style.display = 'flex';
+  document.getElementById('rpBomHeader').style.display = 'none';
+  document.querySelector('.rp-total').style.display = 'none';
+  document.querySelector('.rp-tabs').style.display = 'none';
+  document.getElementById('propsPane').style.display = '';
+  document.getElementById('bomPane').style.display = 'none';
+
+  document.getElementById('propsEmpty').style.display = 'none';
+  document.getElementById('propsContent').style.display = 'block';
+  document.getElementById('propsTitle').textContent = cam.name;
+  document.getElementById('propsSub').textContent = cam.model + ' · $' + cam.price.toLocaleString();
+
+  const c = document.getElementById('propsContent');
+  c.innerHTML = `
+    <div class="props-section">
+      <div class="props-section-title">Camera Config</div>
+      <div class="prop-row">
+        <span class="prop-label">Name</span>
+        <div class="prop-ctrl"><input class="prop-input" value="${escHtml(cam.name)}" oninput="updateCamProp(${id},'name',this.value)"></div>
+      </div>
+      <div class="prop-row">
+        <span class="prop-label">Model</span>
+        <div class="prop-ctrl" style="display:flex;align-items:center;gap:6px">
+          ${(()=>{ const dbM = CAMERA_DB.find(m => m.id === cam.typeId); const disp = dbM ? escHtml(cam.model || cam.name) : 'Generic'; return `<span style="font-size:12px;color:${dbM?'#344054':'#98a2b3'};flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${disp}">${disp}</span>${dbM ? `<button onclick="clearCamModel(${id})" title="Remove model" style="width:18px;height:18px;display:flex;align-items:center;justify-content:center;border:none;background:transparent;color:#98a2b3;cursor:pointer;flex-shrink:0;padding:0;border-radius:3px" onmouseover="this.style.background='#f2f4f7';this.style.color='#667085'" onmouseout="this.style.background='transparent';this.style.color='#98a2b3'"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>` : ''}`;})()}
+          <button style="font-size:12px;padding:5px 12px;flex-shrink:0;background:#7f56d9;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:500;white-space:nowrap" onmouseover="this.style.background='#6941c6'" onmouseout="this.style.background='#7f56d9'" onclick="openModelPickerForEdit(${id})">Select model</button>
+        </div>
+      </div>
+      <div class="prop-row">
+        <span class="prop-label">Color</span>
+        <div class="prop-ctrl">
+          <div style="display:flex;gap:5px;flex-wrap:wrap">
+            ${['#7c3aed','#2563eb','#059669','#d97706','#dc2626','#db2777','#0891b2','#374151'].map(col=>`
+              <div onclick="updateCamColor(${id},'${col}')" title="${col}" style="width:20px;height:20px;border-radius:4px;background:${col};cursor:pointer;border:2px solid ${cam.color===col?'#fff':'transparent'};outline:2px solid ${cam.color===col?col:'transparent'};box-sizing:border-box;transition:all 0.1s"></div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+      <div class="prop-row">
+        <span class="prop-label">Resolution</span>
+        <div class="prop-ctrl">
+          <select class="prop-select" onchange="updateCamProp(${id},'resolution',this.value)">
+            ${['1080p','4K','8MP','12MP'].map(r=>`<option ${cam.resolution===r?'selected':''}>${r}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      ${cam.fovAngle < 360 ? `
+      <div class="prop-row">
+        <span class="prop-label">Focal Length</span>
+        <div class="prop-ctrl">
+          <div class="prop-range-row">
+            <input type="range" id="fl-slider-${id}" min="1.8" max="25" step="0.2"
+              value="${cam.focalLength.toFixed(1)}"
+              oninput="updateFocalLength(${id},+this.value)">
+            <span class="prop-range-val" id="fl-val-${id}">${cam.focalLength.toFixed(1)}mm</span>
+          </div>
+          <div class="fl-presets" id="fl-presets-${id}">
+            ${[2.8,4,6,8,12,25].map(f=>`<span class="fl-chip ${Math.abs(cam.focalLength-f)<0.25?'active':''}" data-f="${f}" onclick="updateFocalLength(${id},${f})">${f}mm</span>`).join('')}
+          </div>
+        </div>
+      </div>
+      <div class="prop-row">
+        <span class="prop-label">FoV Angle</span>
+        <div class="prop-ctrl">
+          <div class="prop-range-row">
+            <input type="range" min="10" max="180" value="${cam.fovAngle}" oninput="updateFov(${id},this.value,this)">
+            <span class="prop-range-val" id="fov-val-${id}">${cam.fovAngle}°</span>
+          </div>
+        </div>
+      </div>` : `
+      <div class="prop-row">
+        <span class="prop-label">Optics</span>
+        <div class="prop-ctrl" style="font-size:12px;color:#667085">Fixed fisheye — 360°</div>
+      </div>`}
+      <div class="prop-row">
+        <span class="prop-label">Mount Height</span>
+        <div class="prop-ctrl">
+          <div class="prop-range-row">
+            <input type="range" min="6" max="30" value="${cam.mountHeight}" oninput="updateCamProp(${id},'mountHeight',+this.value);document.getElementById('mh-val-${id}').textContent=this.value+'ft'">
+            <span class="prop-range-val" id="mh-val-${id}">${cam.mountHeight}ft</span>
+          </div>
+        </div>
+      </div>
+      <div class="prop-row">
+        <span class="prop-label">Tilt Angle</span>
+        <div class="prop-ctrl">
+          <div class="prop-range-row">
+            <input type="range" min="0" max="60" value="${cam.tiltAngle}" oninput="updateCamProp(${id},'tiltAngle',+this.value);document.getElementById('tilt-val-${id}').textContent=this.value+'°'">
+            <span class="prop-range-val" id="tilt-val-${id}">${cam.tiltAngle}°</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="props-section">
+      <div class="props-section-title">Recording & License</div>
+      <div class="prop-row">
+        <span class="prop-label">Retention</span>
+        <div class="prop-ctrl">
+          <select class="prop-select" onchange="updateCamProp(${id},'retention',+this.value)">
+            ${[30,60,90,365].map(r=>`<option value="${r}" ${cam.retention===r?'selected':''}>${r} days</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="prop-row">
+        <span class="prop-label">License</span>
+        <div class="prop-ctrl">
+          <select class="prop-select" onchange="updateCamProp(${id},'license',this.value)">
+            ${['Standard','Enterprise'].map(l=>`<option ${cam.license===l?'selected':''}>${l}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="props-section">
+      <div class="props-section-title">Bandwidth & Storage</div>
+      <div class="storage-stats">
+        <div class="storage-stat">
+          <div class="storage-stat-val">${calcBandwidth(cam)} Mbps</div>
+          <div class="storage-stat-lbl">Bandwidth</div>
+        </div>
+        <div class="storage-stat">
+          <div class="storage-stat-val">${calcStorage(cam)} GB</div>
+          <div class="storage-stat-lbl">Per day</div>
+        </div>
+        <div class="storage-stat">
+          <div class="storage-stat-val">${(parseFloat(calcStorage(cam)) * cam.retention / 1024).toFixed(2)} TB</div>
+          <div class="storage-stat-lbl">${cam.retention}d total</div>
+        </div>
+      </div>
+      <div class="storage-bar-wrap">
+        <div class="storage-bar-label">
+          <span>Storage usage</span>
+          <span>${(parseFloat(calcStorage(cam)) * cam.retention).toFixed(0)} GB / ${cam.retention} days</span>
+        </div>
+        <div class="storage-bar-track">
+          <div class="storage-bar-fill" style="width:${Math.min(100, parseFloat(calcStorage(cam)) * cam.retention / 20)}%"></div>
+        </div>
+      </div>
+    </div>
+    <div class="props-section">
+      <div class="props-section-title">Coverage</div>
+      <div class="prop-row"><span class="prop-label">Dead Zone</span><div class="prop-ctrl" style="font-size:12px;color:#344054">${calcDeadZone(cam)}</div></div>
+      <div class="prop-row"><span class="prop-label">ID Range</span><div class="prop-ctrl" style="font-size:12px;color:#7c3aed;font-weight:500">${(cam.idR / state.scalePPM).toFixed(1)}m</div></div>
+    </div>
+    <div class="props-section">
+      <div class="props-section-title">Coverage Zones</div>
+      <div class="dori-zones">
+        <div class="dori-z dori-id ${cam.showId?'on':''}" onclick="toggleDori(${id},'id')" title="Identification zone — faces &amp; plates readable (inner, darkest)">ID</div>
+        <div class="dori-z dori-rec ${cam.showRec?'on':''}" onclick="toggleDori(${id},'rec')" title="Recognition zone — person identifiable (middle)">REC</div>
+        <div class="dori-z dori-det ${cam.showDet?'on':''}" onclick="toggleDori(${id},'det')" title="Detection zone — presence detected (outer, faintest)">DET</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderPropertiesEmpty() {
+  // Panel header state: nothing selected — show MSRP + BOM header, hide cam header + tabs
+  document.getElementById('rpCamHeader').style.display = 'none';
+  document.getElementById('rpBomHeader').style.display = 'flex';
+  document.querySelector('.rp-total').style.display = '';
+  document.querySelector('.rp-tabs').style.display = 'none';
+  document.getElementById('propsPane').style.display = 'none';
+  document.getElementById('bomPane').style.display = '';
+
+  document.getElementById('propsEmpty').style.display = 'flex';
+  document.getElementById('propsContent').style.display = 'none';
+  document.getElementById('propsTitle').textContent = 'Properties';
+  document.getElementById('propsSub').textContent = 'Select a device to configure';
+  renderBOMPane();
+  update3DScene();
+}
+
+function toggleDori(id, zone) {
+  const cam = state.cameras.find(c => c.id === id);
+  if (!cam) return;
+  const key = zone === 'id' ? 'showId' : zone === 'rec' ? 'showRec' : 'showDet';
+  cam[key] = !cam[key];
+  drawFov(cam);
+  renderProperties(id);
+}
+
+function updateFov(id, val, el) {
+  const cam = state.cameras.find(c => c.id === id);
+  if (!cam) return;
+  cam.fovAngle = +val;
+  // Keep focal length in sync when FoV is dragged directly
+  if (cam.fovAngle < 360) {
+    cam.focalLength = focalFromFov(cam.fovAngle);
+    const flSlider = document.getElementById('fl-slider-'+id);
+    const flVal    = document.getElementById('fl-val-'+id);
+    if (flSlider) flSlider.value = cam.focalLength;
+    if (flVal)    flVal.textContent = cam.focalLength.toFixed(1) + 'mm';
+    // Refresh preset chip highlights
+    document.querySelectorAll(`#fl-presets-${id} .fl-chip`).forEach(chip => {
+      chip.classList.toggle('active', Math.abs(cam.focalLength - parseFloat(chip.dataset.f)) < 0.25);
+    });
+  }
+  const disp = document.getElementById('fov-val-'+id);
+  if (disp) disp.textContent = val + '°';
+  drawFov(cam);
+  updateUI();
+}
+
+function updateCamProp(id, key, val) {
+  const cam = state.cameras.find(c => c.id === id);
+  if (!cam) return;
+  cam[key] = val;
+  if (key === 'name') renderCamLabel(cam);
+  updateUI();
+}
+
+function updateCamColor(id, color) {
+  const cam = state.cameras.find(c => c.id === id);
+  if (!cam) return;
+  saveUndo();
+  cam.color = color;
+  renderCamera(cam);
+  drawFov(cam);
+  renderProperties(id);
+  updateUI();
+}
+
+// ═══════════════════════════════════════════════
+// FOCAL LENGTH ↔ FoV MATH
+// Using 1/2.8" sensor (6.4mm horizontal width) — most common for IP cameras
+// ═══════════════════════════════════════════════
+const SENSOR_W = 6.4; // mm
+
+function fovFromFocal(fMm) {
+  return Math.round(2 * Math.atan(SENSOR_W / (2 * fMm)) * 180 / Math.PI);
+}
+function focalFromFov(fovDeg) {
+  return parseFloat((SENSOR_W / (2 * Math.tan(fovDeg * Math.PI / 360))).toFixed(2));
+}
+
+function updateFocalLength(id, fMm) {
+  const cam = state.cameras.find(c => c.id === id);
+  if (!cam || cam.fovAngle >= 360) return;
+  fMm = Math.max(1.8, Math.min(25, +fMm));
+  cam.focalLength = fMm;
+  cam.fovAngle = fovFromFocal(fMm);
+  // Scale DORI ranges proportionally from the baseline
+  const ratio = fMm / cam.baseFocalLength;
+  cam.detR = Math.round(cam.baseDetR * ratio);
+  cam.recR = Math.round(cam.baseRecR * ratio);
+  cam.idR  = Math.round(cam.baseIdR  * ratio);
+  drawFov(cam);
+  renderProperties(id);
+  updateUI();
+}
+
+// ═══════════════════════════════════════════════
+// CALCULATIONS
+// ═══════════════════════════════════════════════
+function calcDeadZone(cam) {
+  const dz = cam.mountHeight * Math.tan(cam.tiltAngle * Math.PI / 180);
+  return dz.toFixed(1) + 'ft radius';
+}
+function calcStorage(cam) {
+  const bps = { '1080p': 4, '4K': 16, '8MP': 10, '12MP': 14 };
+  const mbps = bps[cam.resolution] || 8;
+  return ((mbps * 3600 * 24) / 8 / 1024).toFixed(2);
+}
+function calcBandwidth(cam) {
+  const bps = { '1080p': 4, '4K': 16, '8MP': 10, '12MP': 14 };
+  return bps[cam.resolution] || 8;
+}
+function calcNVR(totalGB) {
+  if (totalGB <= 0) return '—';
+  const tiers = [[2048,'2TB'],[4096,'4TB'],[8192,'8TB'],[16384,'16TB']];
+  for (const [gb, label] of tiers) {
+    const n = Math.ceil(totalGB / gb);
+    if (n <= 4) return `${n} × ${label} drive${n > 1 ? 's' : ''}`;
+  }
+  return `${Math.ceil(totalGB / 16384)} × 16TB drives`;
+}
+
+// ═══════════════════════════════════════════════
+// RIGHT PANEL — TABS, BOM, PROJECT TOTAL
+// ═══════════════════════════════════════════════
+const LICENSE_PRICE = { Standard: 199, Enterprise: 299 };
+let _activeTab = 'props';
+
+function switchTab(tab) {
+  _activeTab = tab;
+  document.getElementById('tab-props').classList.toggle('active', tab === 'props');
+  document.getElementById('tab-bom').classList.toggle('active', tab === 'bom');
+  document.getElementById('propsPane').style.display = tab === 'props' ? '' : 'none';
+  const bomPane = document.getElementById('bomPane');
+  bomPane.style.display = tab === 'bom' ? '' : 'none';
+  if (tab === 'bom') renderBOMPane();
+}
+
+function renderBOMPane() {
+  const pane = document.getElementById('bomPane');
+  const cams = state.cameras;
+
+  if (cams.length === 0) {
+    pane.innerHTML = `
+      <div class="bom-empty-pane">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
+          <rect x="9" y="3" width="6" height="4" rx="1"/>
+        </svg>
+        <p>Add cameras to the canvas<br>to generate a Bill of Materials.</p>
+      </div>`;
+    return;
+  }
+
+  const camTotal = cams.reduce((s, c) => s + c.price, 0);
+
+  // Licensing (Standard per camera)
+  const licQty = cams.length;
+  const licUnit = LICENSE_PRICE.Standard;
+  const licTotal = licQty * licUnit;
+
+  const grandTotal = camTotal + licTotal;
+
+  // Storage & network
+  const totalBW = cams.reduce((s, c) => s + calcBandwidth(c), 0);
+  const totalGB = cams.reduce((s, c) => s + parseFloat(calcStorage(c)) * c.retention, 0);
+  const totalTB = (totalGB / 1024).toFixed(2);
+  const nvrRec = calcNVR(totalGB);
+  // Retention label (use most common retention across cameras)
+  const retentionMode = cams.reduce((acc, c) => { acc[c.retention] = (acc[c.retention]||0)+1; return acc; }, {});
+  const commonRetention = Object.entries(retentionMode).sort((a,b)=>b[1]-a[1])[0][0];
+
+  const camLines = cams.map((c, idx) => `
+    <div class="bom-line bom-line-clickable" onclick="selectCamera(${c.id})" title="Select camera">
+      <span style="width:8px;height:8px;border-radius:50%;background:${c.color};flex-shrink:0;display:inline-block"></span>
+      <span class="bom-line-name" title="${escHtml(c.name)}">${escHtml(c.name)}</span>
+      <span class="bom-line-unit" style="font-size:10px;color:#d0d5dd">${escHtml(c.model || 'Generic')}</span>
+      <span class="bom-line-total">$${c.price.toLocaleString()}</span>
+    </div>`).join('');
+
+  pane.innerHTML = `
+    <div class="bom-section">
+      <div class="bom-section-hdr">
+        <span class="bom-section-icon">📷</span>
+        <span class="bom-section-title">Cameras</span>
+        <span class="bom-section-sub">$${camTotal.toLocaleString()}</span>
+      </div>
+      ${camLines}
+    </div>
+    <div class="bom-section">
+      <div class="bom-section-hdr">
+        <span class="bom-section-icon">🔑</span>
+        <span class="bom-section-title">Licensing</span>
+        <span class="bom-section-sub">$${licTotal.toLocaleString()}</span>
+      </div>
+      <div class="bom-line">
+        <span class="bom-line-name">Lumana Standard License</span>
+        <span class="bom-line-qty">×${licQty}</span>
+        <span class="bom-line-unit">$${licUnit.toLocaleString()}/yr</span>
+        <span class="bom-line-total">$${licTotal.toLocaleString()}/yr</span>
+      </div>
+    </div>
+    <div class="bom-section">
+      <div class="bom-section-hdr">
+        <span class="bom-section-icon">💾</span>
+        <span class="bom-section-title">Storage & Network</span>
+        <span class="bom-section-sub">${totalTB} TB</span>
+      </div>
+      <div class="bom-line">
+        <span class="bom-line-name">Total Bandwidth</span>
+        <span class="bom-line-total">${totalBW} Mbps</span>
+      </div>
+      <div class="bom-line">
+        <span class="bom-line-name">Storage Required (${commonRetention}d retention)</span>
+        <span class="bom-line-total">${totalTB} TB</span>
+      </div>
+      <div class="bom-line">
+        <span class="bom-line-name">NVR Recommendation</span>
+        <span class="bom-line-total" style="color:#7c3aed;font-weight:700">${nvrRec}</span>
+      </div>
+    </div>
+    <div class="bom-grand">
+      <span class="bom-grand-label">Grand Total</span>
+      <span class="bom-grand-val">$${grandTotal.toLocaleString()}</span>
+    </div>
+    <div class="bom-export" onclick="exportCSV()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      Export CSV
+    </div>`;
+}
+
+function exportCSV() {
+  const cams = state.cameras;
+  const groups = {};
+  cams.forEach(c => {
+    if (!groups[c.typeId]) groups[c.typeId] = { name: c.name, model: c.model, price: c.price, qty: 0 };
+    groups[c.typeId].qty++;
+  });
+  const rows = [['Item', 'Model', 'Qty', 'Unit Price', 'Total']];
+  Object.values(groups).forEach(i => {
+    rows.push([i.name, i.model || i.name, i.qty, i.price, i.price * i.qty]);
+  });
+  rows.push(['Lumana Standard License', '', cams.length, LICENSE_PRICE.Standard, cams.length * LICENSE_PRICE.Standard]);
+  const grandTotal = Object.values(groups).reduce((s,i) => s + i.price*i.qty, 0) + cams.length * LICENSE_PRICE.Standard;
+  // Storage & Network
+  const totalBW = cams.reduce((s,c) => s + calcBandwidth(c), 0);
+  const totalGB = cams.reduce((s,c) => s + parseFloat(calcStorage(c)) * c.retention, 0);
+  rows.push(['--- Storage & Network ---','','','','']);
+  rows.push(['Total Bandwidth','','','', totalBW + ' Mbps']);
+  rows.push(['Storage Required','','','', (totalGB/1024).toFixed(2) + ' TB']);
+  rows.push(['NVR Recommendation','','','', calcNVR(totalGB)]);
+  rows.push(['', '', '', 'Grand Total', grandTotal]);
+
+  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'site-planner-bom.csv';
+  a.click();
+}
+
+function updateProjectTotal() {
+  const cams = state.cameras;
+  const groups = {};
+  cams.forEach(c => {
+    if (!groups[c.typeId]) groups[c.typeId] = { price: c.price, qty: 0 };
+    groups[c.typeId].qty++;
+  });
+  const camTotal = Object.values(groups).reduce((s,i) => s + i.price * i.qty, 0);
+  const licTotal = cams.length * LICENSE_PRICE.Standard;
+  const grand = camTotal + licTotal;
+
+  document.getElementById('rpTotalVal').textContent = '$' + grand.toLocaleString();
+  const avgPrice = cams.length ? Math.round(camTotal / cams.length) : 0;
+  document.getElementById('rpTotalMeta').textContent =
+    cams.length + ' camera' + (cams.length !== 1 ? 's' : '') + ' · $' + avgPrice.toLocaleString() + ' avg';
+
+  // Progress bar: scale 0–100 based on $0–$50k
+  const pct = Math.min(100, (grand / 50000) * 100);
+  document.getElementById('rpTotalFill').style.width = pct + '%';
+
+  // BOM tab badge + BOM header badge
+  document.getElementById('bomTabBadge').textContent = cams.length;
+  const bomHdrBadge = document.getElementById('rpBomHeaderBadge');
+  if (bomHdrBadge) bomHdrBadge.textContent = cams.length;
+
+  // If BOM pane is open (via tab or via no-selection mode), refresh it
+  if (_activeTab === 'bom' || (!state.selectedId && document.getElementById('bomPane').style.display !== 'none')) renderBOMPane();
+}
+
+// ═══════════════════════════════════════════════
+// STATUS BAR
+// ═══════════════════════════════════════════════
+function updateStatusBar() {
+  const cams = state.cameras;
+  const sensors = state.cameras.filter(c => CATALOG.find(d => d.id === c.typeId)?.cat === 'sensor');
+
+  document.getElementById('sb-cameras').textContent = cams.length;
+
+  const totalStorageGB = state.cameras.reduce((s, c) => s + parseFloat(calcStorage(c)) * c.retention, 0);
+  const totalBW = state.cameras.reduce((s, c) => s + calcBandwidth(c), 0);
+
+  document.getElementById('sb-storage').textContent = (totalStorageGB / 1024).toFixed(2) + ' TB';
+  document.getElementById('sb-bw').textContent = totalBW + ' Mbps';
+  const scaleLabel = !state.scaleCalibrated ? 'Not calibrated'
+    : state.mapMode !== 'canvas' ? `${state.scalePPM.toFixed(1)} px/m (map)`
+    : `${state.scalePPM.toFixed(1)} px/m`;
+  document.getElementById('sb-scale').textContent = scaleLabel;
+}
+
+function updateUI() {
+  updateProjectTotal();
+  updateStatusBar();
+  // Show wall legend when any typed user walls exist
+  const hasWalls = state.userWalls.length > 0;
+  document.getElementById('wallLegend').classList.toggle('show', hasWalls);
+  update3DScene();
+}
+
+// ═══════════════════════════════════════════════
+// SCALE CALIBRATION
+// ═══════════════════════════════════════════════
+function showScalePopup(cx, cy) {
+  const popup = document.getElementById('scalePopup');
+  popup.style.left = Math.min(cx, window.innerWidth - 260) + 'px';
+  popup.style.top = Math.min(cy + 10, window.innerHeight - 160) + 'px';
+  popup.classList.add('show');
+}
+function cancelScale() {
+  document.getElementById('scalePopup').classList.remove('show');
+  state.scaleLine = null; clearOverlay();
+  setTool('select');
+}
+function applyScale() {
+  if (!state.scaleLine || !state.scaleLine.x2) return;
+  const val = parseFloat(document.getElementById('scaleValue').value);
+  const unit = document.getElementById('scaleUnit').value;
+  const meters = unit === 'ft' ? val * 0.3048 : val;
+  const px = Math.hypot(state.scaleLine.x2 - state.scaleLine.x1, state.scaleLine.y2 - state.scaleLine.y1);
+  if (meters > 0 && px > 0) {
+    state.scalePPM = px / meters;
+    state.scaleCalibrated = true;
+  }
+  document.getElementById('scalePopup').classList.remove('show');
+  state.scaleLine = null; clearOverlay();
+  setTool('select');
+  updateUI();
+}
+
+// ═══════════════════════════════════════════════
+// UNDO / REDO
+// ═══════════════════════════════════════════════
+function saveUndo() {
+  state.undoStack.push(JSON.stringify({ cameras: state.cameras, userWalls: state.userWalls }));
+  if (state.undoStack.length > 40) state.undoStack.shift();
+  state.redoStack = [];
+}
+function undo() {
+  if (!state.undoStack.length) return;
+  state.redoStack.push(JSON.stringify({ cameras: state.cameras, userWalls: state.userWalls }));
+  const prev = JSON.parse(state.undoStack.pop());
+  restoreState(prev);
+}
+function redo() {
+  if (!state.redoStack.length) return;
+  state.undoStack.push(JSON.stringify({ cameras: state.cameras, userWalls: state.userWalls }));
+  const next = JSON.parse(state.redoStack.pop());
+  restoreState(next);
+}
+function restoreState(s) {
+  state.cameras = s.cameras;
+  state.userWalls = s.userWalls;
+  rebuildCanvas();
+  selectCamera(null);
+  updateUI();
+}
+function rebuildCanvas() {
+  fovLayer.destroyChildren(); cameraLayer.destroyChildren(); wallLayer.destroyChildren();
+  if (labelLayer) labelLayer.destroyChildren();
+  state.userWalls.forEach(w => drawUserWall(w));
+  state.cameras.forEach(cam => { renderCamera(cam); drawFov(cam); });
+  fovLayer.draw(); cameraLayer.draw(); wallLayer.draw();
+  if (labelLayer) {
+    const sel = state.cameras.find(c => c.id === state.selectedId);
+    if (sel) renderCamLabel(sel);
+  }
+}
+
+// ── Camera name floating input ───────────────────
+function showCamNameInput(cam) {
+  const rect    = stage.container().getBoundingClientRect();
+  const screenX = rect.left + stage.x() + cam.x * stage.scaleX();
+  const screenY = rect.top  + stage.y() + cam.y * stage.scaleY() + 26 * stage.scaleY();
+
+  const overlay = document.getElementById('camNameOverlay');
+  const input   = document.getElementById('camNameField');
+
+  overlay.style.left = screenX + 'px';
+  overlay.style.top  = screenY + 'px';
+  overlay.classList.add('show');
+  input.value = '';
+
+  let committed = false;
+  const commit = () => {
+    if (committed) return;
+    committed = true;
+    overlay.classList.remove('show');
+    const name = input.value.trim();
+    if (name) {
+      cam.name = name;
+      renderCamLabel(cam);
+      if (state.selectedId === cam.id) renderProperties(cam.id);
+    }
+    input.removeEventListener('keydown', onKey);
+  };
+  const onKey = (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); commit(); }
+    if (e.key === 'Escape') { committed = true; overlay.classList.remove('show'); input.removeEventListener('keydown', onKey); }
+  };
+  input.addEventListener('keydown', onKey);
+  input.addEventListener('blur', () => setTimeout(commit, 120), { once: true });
+  setTimeout(() => input.focus(), 60);
+}
+
+// ── Camera name label (Konva, non-rotating) ──────
+function renderCamLabel(cam) {
+  if (!labelLayer) return;
+  const existing = labelLayer.findOne('#lbl-' + cam.id);
+  if (existing) existing.destroy();
+  if (state.selectedId !== cam.id) { labelLayer.draw(); return; }
+
+  const lbl = new Konva.Label({ x: cam.x, y: cam.y + 24, id: 'lbl-' + cam.id, listening: false });
+  lbl.add(new Konva.Tag({ fill: 'rgba(17,24,39,0.78)', cornerRadius: 4, pointerDirection: 'none' }));
+  const txt = new Konva.Text({
+    text: cam.name,
+    fontSize: 11,
+    fontFamily: 'system-ui, -apple-system, sans-serif',
+    fill: '#fff',
+    padding: 4,
+  });
+  lbl.add(txt);
+  labelLayer.add(lbl);
+  labelLayer.draw();
+  // Center horizontally after measuring
+  lbl.x(cam.x - txt.width() / 2);
+  labelLayer.draw();
+}
+
+// ── Catalog collapse / expand ────────────────────
+function toggleCatalog() {
+  document.getElementById('catalogPanel').classList.toggle('collapsed');
+}
+
+// ── Properties panel collapse / expand ──────────
+function toggleProperties() {
+  document.querySelector('.properties').classList.toggle('collapsed');
+}
+
+// ═══════════════════════════════════════════════
+// CAMERA OPERATIONS
+// ═══════════════════════════════════════════════
+function deleteCamera(id) {
+  saveUndo();
+  state.cameras = state.cameras.filter(c => c.id !== id);
+  const g = cameraLayer.findOne('#cam-'+id);
+  if (g) g.destroy();
+  const f = fovLayer.findOne('#fov-'+id);
+  if (f) f.destroy();
+  cameraLayer.draw(); fovLayer.draw();
+  selectCamera(null);
+  updateUI();
+}
+function duplicateCamera(id) {
+  const cam = state.cameras.find(c => c.id === id);
+  if (!cam) return;
+  const newCam = addCamera(cam.typeId, cam.x + 30, cam.y + 30, true);
+  if (newCam) {
+    newCam.rotation = cam.rotation;
+    newCam.fovAngle = cam.fovAngle;
+    newCam.resolution = cam.resolution;
+    newCam.retention = cam.retention;
+    newCam.license = cam.license;
+    drawFov(newCam);
+    renderCamera(newCam);
+  }
+}
+function clearAll() {
+  if (!state.cameras.length && !state.userWalls.length) return;
+  if (!confirm('Clear all cameras and walls?')) return;
+  saveUndo();
+  state.cameras = []; state.userWalls = [];
+  fovLayer.destroyChildren(); cameraLayer.destroyChildren(); wallLayer.destroyChildren();
+  fovLayer.draw(); cameraLayer.draw(); wallLayer.draw();
+  selectCamera(null);
+  updateUI();
+}
+
+// ═══════════════════════════════════════════════
+// CONTEXT MENU
+// ═══════════════════════════════════════════════
+function showCtxMenu(cx, cy) {
+  const m = document.getElementById('ctxMenu');
+  m.style.left = cx + 'px'; m.style.top = cy + 'px';
+  m.classList.add('show');
+}
+function hideCtxMenu() { document.getElementById('ctxMenu').classList.remove('show'); }
+function ctxDuplicate() { hideCtxMenu(); duplicateCamera(state.selectedId); }
+function ctxDelete()    { hideCtxMenu(); deleteCamera(state.selectedId); }
+function ctxProperties(){ hideCtxMenu(); renderProperties(state.selectedId); }
+document.addEventListener('click', () => hideCtxMenu());
+
+// ═══════════════════════════════════════════════
+// ZOOM
+// ═══════════════════════════════════════════════
+function zoomIn()    { applyZoom(1.25); }
+function zoomOut()   { applyZoom(0.8); }
+function resetZoom() { stage.scale({x:1,y:1}); stage.position({x:0,y:0}); updateZoomDisplay(); }
+function applyZoom(factor) {
+  const newScale = Math.min(Math.max(stage.scaleX() * factor, 0.2), 6);
+  const center = { x: stage.width()/2, y: stage.height()/2 };
+  const pointTo = { x:(center.x - stage.x()) / stage.scaleX(), y:(center.y - stage.y()) / stage.scaleY() };
+  stage.scale({x:newScale,y:newScale});
+  stage.position({ x:center.x - pointTo.x*newScale, y:center.y - pointTo.y*newScale });
+  updateZoomDisplay();
+}
+function updateZoomDisplay() {
+  document.getElementById('zoom-display').textContent = Math.round(stage.scaleX()*100) + '%';
+}
+
+// ═══════════════════════════════════════════════
+// GRID TOGGLE
+// ═══════════════════════════════════════════════
+function toggleGrid() {
+  state.gridVisible = !state.gridVisible;
+  const ca = document.getElementById('canvasArea');
+  ca.style.backgroundImage = state.gridVisible
+    ? 'radial-gradient(circle, #283048 1.5px, transparent 1.5px)'
+    : 'none';
+  document.getElementById('grid-toggle').classList.toggle('active', state.gridVisible);
+}
+
+// ═══════════════════════════════════════════════
+// LEFT PANEL — Quick-Add Tiles + Recently Used
+// ═══════════════════════════════════════════════
+const FF_TILES = [
+  { id:'indoor-dome',  label:'Indoor Dome',   iconType:'dome'    },
+  { id:'outdoor-dome', label:'Outdoor Dome',  iconType:'dome'    },
+  { id:'bullet',       label:'Bullet',        iconType:'bullet'  },
+  { id:'fisheye',      label:'Fisheye 360°',  iconType:'fisheye' },
+  { id:'multisensor',  label:'Multi-sensor',  iconType:'dome'    },
+];
+
+function renderLeftPanel() {
+  const body = document.getElementById('catalogBody');
+  let html = '';
+
+  if (state.recentlyUsed.length) {
+    html += '<div class="ff-section-label" style="padding-top:6px">Add recent cameras</div>';
+    state.recentlyUsed.forEach(id => {
+      const m = CAMERA_DB.find(x => x.id === id);
+      if (!m) return;
+      html += `<div class="recent-tile" draggable="true"
+        ondragstart="state.dragType='${m.id}';state.activeModel=null;event.dataTransfer.setData('text','${m.id}')"
+        onclick="setTool('camera');state.dragType='${m.id}';state.activeModel=null"
+        title="${m.brand} ${m.name} — drag or click to place">
+        <div class="recent-tile-icon" style="background:${m.color}">${ICONS[m.iconType] || ICONS.dome}</div>
+        <div class="recent-tile-info">
+          <div class="recent-tile-name">${m.name}</div>
+          <div class="recent-tile-sub">${m.brand} · $${m.price.toLocaleString()}</div>
+        </div>
+        <div class="recent-tile-drag">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="5" r="1" fill="currentColor"/><circle cx="15" cy="5" r="1" fill="currentColor"/><circle cx="9" cy="12" r="1" fill="currentColor"/><circle cx="15" cy="12" r="1" fill="currentColor"/><circle cx="9" cy="19" r="1" fill="currentColor"/><circle cx="15" cy="19" r="1" fill="currentColor"/></svg>
+        </div>
+      </div>`;
+    });
+  }
+  body.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════
+// CAMERA MODEL PICKER MODAL
+// ═══════════════════════════════════════════════
+function openModelPicker(editCamId) {
+  mpState.selectedBrand = 'All';
+  mpState.selectedModelId = null;
+  mpState.ffFilter = null;
+  mpState.ndaaOnly = false;
+  mpState.minRange = 0;
+  mpState.editCamId = editCamId || null;
+  document.getElementById('mpSearchInput').value = '';
+  document.getElementById('mpRangeSlider').value = 0;
+  document.getElementById('mpRangeVal').textContent = 'Any';
+  document.getElementById('mpToggleNdaa').classList.remove('active');
+  const placeBtn = document.getElementById('mpPlaceBtn');
+  placeBtn.style.opacity = '0.4';
+  placeBtn.style.pointerEvents = 'none';
+  placeBtn.textContent = mpState.editCamId ? 'Select Model' : 'Place Camera';
+  renderMpFfChips();
+  renderMpBrands();
+  renderMpModels();
+  renderMpInfo(null);
+  document.getElementById('mpOverlay').classList.add('show');
+  document.getElementById('mpModal').classList.add('show');
+  setTimeout(() => document.getElementById('mpSearchInput').focus(), 100);
+}
+
+function openModelPickerForEdit(camId) {
+  openModelPicker(camId);
+}
+
+function clearCamModel(id) {
+  const cam = state.cameras.find(c => c.id === id);
+  if (!cam) return;
+  saveUndo();
+  // Revert typeId to the matching CATALOG form-factor
+  const ff = cam.iconType === 'bullet' ? 'bullet' : cam.iconType === 'fisheye' ? 'fisheye' : 'indoor-dome';
+  const fallback = CATALOG.find(c => c.id === ff) || CATALOG[0];
+  cam.typeId = fallback.id;
+  renderProperties(id);
+}
+
+function closeModelPicker() {
+  document.getElementById('mpOverlay').classList.remove('show');
+  document.getElementById('mpModal').classList.remove('show');
+}
+
+function getMpFilteredModels() {
+  const q = (document.getElementById('mpSearchInput').value || '').toLowerCase();
+  const minR = parseInt(document.getElementById('mpRangeSlider').value) || 0;
+  return CAMERA_DB.filter(m => {
+    if (mpState.selectedBrand !== 'All' && m.brand !== mpState.selectedBrand) return false;
+    if (mpState.ffFilter && m.formFactor !== mpState.ffFilter) return false;
+    if (mpState.ndaaOnly && !m.ndaa) return false;
+    if (minR > 0 && m.detR < minR) return false;
+    if (q && !m.name.toLowerCase().includes(q) && !m.brand.toLowerCase().includes(q) && !m.resolution.toLowerCase().includes(q)) return false;
+    return true;
+  });
+}
+
+function renderMpFfChips() {
+  const ffs = ['dome','bullet','fisheye','multi','ptz'];
+  let html = `<div class="ff-chip ${!mpState.ffFilter ? 'active' : ''}" onclick="setMpFf(null)">All</div>`;
+  ffs.forEach(ff => {
+    const label = FF_LABELS[ff] || ff;
+    const icon = ff === 'dome'    ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="13" rx="9" ry="5"/><path d="M3 13V9a9 4 0 0118 0v4"/></svg>` :
+                 ff === 'bullet'  ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="14" height="8" rx="2"/><circle cx="19" cy="12" r="3"/></svg>` :
+                 ff === 'fisheye' ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg>` :
+                 ff === 'multi'   ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>` :
+                                    `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="6"/></svg>`;
+    html += `<div class="ff-chip ${mpState.ffFilter === ff ? 'active' : ''}" onclick="setMpFf('${ff}')">${icon} ${label}</div>`;
+  });
+  document.getElementById('mpFfChips').innerHTML = html;
+}
+
+function renderMpBrands() {
+  const models = getMpFilteredModels();
+  const brandCounts = {};
+  models.forEach(m => { brandCounts[m.brand] = (brandCounts[m.brand] || 0) + 1; });
+  let html = `<div class="brand-row ${mpState.selectedBrand === 'All' ? 'active' : ''}" onclick="selectMpBrand('All')">All Brands <span style="color:#98a2b3;font-size:11px;margin-left:auto">${models.length}</span></div>`;
+  ALL_BRANDS.slice(1).forEach(b => {
+    const cnt = brandCounts[b] || 0;
+    if (cnt === 0 && mpState.selectedBrand !== b) return;
+    html += `<div class="brand-row ${mpState.selectedBrand === b ? 'active' : ''}" style="display:flex;justify-content:space-between;align-items:center" onclick="selectMpBrand('${b}')"><span>${b}</span><span style="color:#98a2b3;font-size:11px">${cnt}</span></div>`;
+  });
+  document.getElementById('mpBrands').innerHTML = html;
+}
+
+function renderMpModels() {
+  const models = getMpFilteredModels();
+  document.getElementById('mpModelsHdr').textContent = mpState.selectedBrand === 'All' ? `All Models` : mpState.selectedBrand;
+  document.getElementById('mpCount').innerHTML = `<strong>${models.length}</strong> model${models.length !== 1 ? 's' : ''}`;
+  if (!models.length) {
+    document.getElementById('mpModelList').innerHTML = `<div style="padding:24px 16px;text-align:center;color:#98a2b3;font-size:12px">No models match your filters</div>`;
+    return;
+  }
+  let html = '';
+  models.forEach(m => {
+    const active = m.id === mpState.selectedModelId;
+    html += `<div class="model-row ${active ? 'active' : ''}" onclick="selectMpModel('${m.id}')">
+      <div class="model-form-icon">${ICONS[m.iconType] || ICONS.dome}</div>
+      <span class="model-name">${m.name}</span>
+      <div class="model-tags">
+        ${m.ndaa ? '<span class="tag tag-ndaa">NDAA</span>' : ''}
+      </div>
+      <span class="model-price">$${m.price.toLocaleString()}</span>
+    </div>`;
+  });
+  document.getElementById('mpModelList').innerHTML = html;
+}
+
+function renderMpInfo(modelId) {
+  const panel = document.getElementById('mpInfo');
+  if (!modelId) {
+    panel.innerHTML = `<div class="mp-info-empty">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+      <div class="mp-info-empty-title">Select a Camera</div>
+      <div class="mp-info-empty-sub">Choose a model from the list to see specs, pricing, and DORI range data.</div>
+    </div>`;
+    return;
+  }
+  const m = CAMERA_DB.find(x => x.id === modelId);
+  if (!m) return;
+  const fovSvg = renderFovPreview(m);
+  panel.innerHTML = `
+    <div class="mp-info-name">${m.name}</div>
+    <div class="mp-info-brand">${m.brand} · ${FF_LABELS[m.formFactor] || m.formFactor}</div>
+    <div class="mp-info-badges">
+      ${m.ndaa ? '<span class="mp-badge mp-badge-ndaa">✓ NDAA Compliant</span>' : ''}
+      <span class="mp-badge mp-badge-form">${FF_LABELS[m.formFactor] || m.formFactor}</span>
+      <span class="mp-badge mp-badge-res">${m.resolution}</span>
+    </div>
+    <div class="mp-fov-preview">${fovSvg}</div>
+    <div class="mp-spec-grid">
+      <div class="mp-spec"><div class="mp-spec-label">FoV</div><div class="mp-spec-val">${m.fov}°</div></div>
+      <div class="mp-spec"><div class="mp-spec-label">Resolution</div><div class="mp-spec-val">${m.resolution}</div></div>
+      <div class="mp-spec"><div class="mp-spec-label">Detection</div><div class="mp-spec-val">${m.detR} ft</div></div>
+      <div class="mp-spec"><div class="mp-spec-label">Recognition</div><div class="mp-spec-val">${m.recR} ft</div></div>
+      <div class="mp-spec"><div class="mp-spec-label">Identification</div><div class="mp-spec-val">${m.idR} ft</div></div>
+      <div class="mp-spec"><div class="mp-spec-label">Form Factor</div><div class="mp-spec-val">${FF_LABELS[m.formFactor] || m.formFactor}</div></div>
+    </div>
+    <div class="mp-price">$${m.price.toLocaleString()}</div>
+    <p style="font-size:12px;color:#667085;line-height:1.6">DORI ranges at 1080p threshold. Detection: person visible. Recognition: face features distinguishable. Identification: individual identifiable.</p>
+  `;
+}
+
+function renderFovPreview(m) {
+  // SVG FoV cone preview — gradient layers in camera brand color
+  const W = 240, H = 80, cx = 28, cy = 40;
+  const fovDeg = Math.min(m.fov, 170);
+  const range = 195;
+  const halfRad = (fovDeg / 2) * Math.PI / 180;
+  const largeArc = fovDeg > 180 ? 1 : 0;
+  const det = range;
+  const rec = (m.recR / m.detR) * range;
+  const idr = (m.idR  / m.detR) * range;
+  // Parse brand color to rgb
+  const hex = (m.color || '#7c3aed').replace('#','');
+  const r = parseInt(hex.slice(0,2),16), g = parseInt(hex.slice(2,4),16), b = parseInt(hex.slice(4,6),16);
+  function wedge(radius, opacity) {
+    const ax1 = cx + Math.cos(-halfRad) * radius, ay1 = cy + Math.sin(-halfRad) * radius;
+    const ax2 = cx + Math.cos(halfRad)  * radius, ay2 = cy + Math.sin(halfRad)  * radius;
+    return `<path d="M${cx},${cy} L${ax1.toFixed(1)},${ay1.toFixed(1)} A${radius.toFixed(1)},${radius.toFixed(1)} 0 ${largeArc},1 ${ax2.toFixed(1)},${ay2.toFixed(1)} Z" fill="rgba(${r},${g},${b},${opacity})"/>`;
+  }
+  // Range labels
+  const lx = cx + det * 0.78, ly = cy - 6;
+  const rx2 = cx + rec * 0.66, ry2 = cy + 11;
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:100%">
+    ${wedge(det,  0.12)}
+    ${wedge(rec,  0.18)}
+    ${wedge(idr,  0.22)}
+    <path d="M${cx},${cy} L${(cx+Math.cos(-halfRad)*det).toFixed(1)},${(cy+Math.sin(-halfRad)*det).toFixed(1)} A${det},${det} 0 ${largeArc},1 ${(cx+Math.cos(halfRad)*det).toFixed(1)},${(cy+Math.sin(halfRad)*det).toFixed(1)} Z" fill="none" stroke="rgba(${r},${g},${b},0.35)" stroke-width="1"/>
+    <circle cx="${cx}" cy="${cy}" r="5" fill="rgba(${r},${g},${b},1)"/>
+    <text x="${lx.toFixed(0)}" y="${ly}" fill="rgba(${r},${g},${b},0.9)" font-size="8.5" font-family="system-ui,sans-serif" font-weight="600">Det ${m.detR}ft</text>
+    <text x="${rx2.toFixed(0)}" y="${ry2}" fill="rgba(${r},${g},${b},0.75)" font-size="8" font-family="system-ui,sans-serif">Rec ${m.recR}ft</text>
+  </svg>`;
+}
+
+function selectMpBrand(brand) {
+  mpState.selectedBrand = brand;
+  renderMpBrands();
+  renderMpModels();
+}
+
+function selectMpModel(modelId) {
+  mpState.selectedModelId = modelId;
+  renderMpModels();
+  renderMpInfo(modelId);
+  const btn = document.getElementById('mpPlaceBtn');
+  btn.style.opacity = '1';
+  btn.style.pointerEvents = 'auto';
+  btn.textContent = mpState.editCamId ? 'Select Model' : 'Place Camera';
+}
+
+function setMpFf(ff) {
+  mpState.ffFilter = ff;
+  renderMpFfChips();
+  renderMpBrands();
+  renderMpModels();
+}
+
+function toggleMpNdaa() {
+  mpState.ndaaOnly = !mpState.ndaaOnly;
+  document.getElementById('mpToggleNdaa').classList.toggle('active', mpState.ndaaOnly);
+  renderMpBrands();
+  renderMpModels();
+}
+
+function applyMpFilters() {
+  const val = parseInt(document.getElementById('mpRangeSlider').value) || 0;
+  mpState.minRange = val;
+  document.getElementById('mpRangeVal').textContent = val > 0 ? `${val} ft` : 'Any';
+  renderMpBrands();
+  renderMpModels();
+}
+
+function placeFromPicker() {
+  if (!mpState.selectedModelId) return;
+  const modelId = mpState.selectedModelId;
+  const editId  = mpState.editCamId;
+  closeModelPicker();
+
+  // Edit mode — update existing camera's model & specs
+  if (editId) {
+    const cam = state.cameras.find(c => c.id === editId);
+    const def = CAMERA_DB.find(m => m.id === modelId);
+    if (cam && def) {
+      saveUndo();
+      cam.typeId      = def.id;
+      cam.model       = def.name;
+      cam.price       = def.price;
+      cam.color       = def.color;
+      cam.iconType    = def.iconType;
+      cam.fovAngle    = def.fov;
+      cam.detR        = def.detR;
+      cam.recR        = def.recR;
+      cam.idR         = def.idR;
+      cam.resolution  = def.resolution || cam.resolution;
+      cam.focalLength     = def.fov < 360 ? focalFromFov(def.fov) : 1.8;
+      cam.baseFocalLength = cam.focalLength;
+      cam.baseDetR = def.detR; cam.baseRecR = def.recR; cam.baseIdR = def.idR;
+      renderCamera(cam);
+      drawFov(cam);
+      renderCamLabel(cam);
+      renderProperties(editId);
+      updateUI();
+      // Track recently used
+      state.recentlyUsed = [modelId, ...state.recentlyUsed.filter(id => id !== modelId)].slice(0, 4);
+      renderLeftPanel();
+    }
+    return;
+  }
+
+  // Place mode
+  state.dragType = modelId;
+  state.activeModel = null;
+  setTool('camera');
+  // Show hint
+  const m = CAMERA_DB.find(x => x.id === modelId);
+  if (m) {
+    const tip = document.createElement('span');
+    tip.style.cssText = 'position:fixed;bottom:40px;left:50%;transform:translateX(-50%);background:#1d2939;color:#fff;font-size:12px;padding:6px 14px;border-radius:6px;pointer-events:none;z-index:999';
+    tip.textContent = `Click canvas to place ${m.brand} ${m.name}`;
+    document.body.appendChild(tip);
+    setTimeout(() => tip.remove(), 3000);
+  }
+}
+
+// ─── Drop onto canvas ───────────────────────────
+function onCanvasDrop(e) {
+  e.preventDefault();
+  const typeId = e.dataTransfer.getData('text') || state.dragType;
+  if (!typeId) return;
+  const rect = document.getElementById('konva-container').getBoundingClientRect();
+  const rawX = e.clientX - rect.left, rawY = e.clientY - rect.top;
+  const x = (rawX - stage.x()) / stage.scaleX();
+  const y = (rawY - stage.y()) / stage.scaleY();
+  addCamera(typeId, x, y);
+  setTool('select');
+}
+
+// ═══════════════════════════════════════════════
+// TOPBAR ACTIONS (Stubs)
+// ═══════════════════════════════════════════════
+function shareLink() {
+  if (typeof LZString === 'undefined') { alert('Compression library still loading — please try again in a moment.'); return; }
+  const json       = JSON.stringify(planSnapshot());
+  const compressed = LZString.compressToEncodedURIComponent(json);
+  const url        = location.href.split('#')[0] + '#plan=' + compressed;
+  document.getElementById('shareUrlInput').value = url;
+  openShareModal();
+}
+async function exportPDF() {
+  if (typeof jspdf === 'undefined') { alert('PDF library still loading — please try again in a moment.'); return; }
+
+  const btn = document.querySelector('button[onclick="exportPDF()"]');
+  const origHTML = btn.innerHTML;
+  btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Generating…';
+  btn.disabled = true;
+
+  try {
+    const { jsPDF } = jspdf;
+    const doc  = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const PW   = 210, PH = 297, M = 14;
+    const PURPLE = [124, 58, 237], DARK = [29, 41, 57], GRAY = [102, 112, 133], LIGHT = [234, 236, 240];
+
+    const projectName = document.querySelector('.topbar-breadcrumb .current')?.textContent || 'Site Plan';
+    const dateStr     = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+    const cams        = state.cameras;
+
+    // Aggregate totals (reused across pages)
+    const groups = {};
+    cams.forEach(c => {
+      if (!groups[c.typeId]) groups[c.typeId] = { name:c.name, model:c.model, price:c.price, qty:0 };
+      groups[c.typeId].qty++;
+    });
+    const camItems  = Object.values(groups);
+    const camTotal  = camItems.reduce((s,i) => s + i.price * i.qty, 0);
+    const licTotal  = cams.length * LICENSE_PRICE.Standard;
+    const grand     = camTotal + licTotal;
+    const totalBW   = cams.reduce((s,c) => s + calcBandwidth(c), 0);
+    const totalGB   = cams.reduce((s,c) => s + parseFloat(calcStorage(c)) * c.retention, 0);
+    const totalTB   = (totalGB / 1024).toFixed(2);
+    const nvrRec    = calcNVR(totalGB);
+
+    // ── Shared helpers ──────────────────────────────
+    const pageFooter = (n, total) => {
+      doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(120,120,140);
+      doc.text(`Lumana Site Planner — ${dateStr}`, M, PH - 5);
+      doc.text(`Page ${n} of ${total}`, PW - M, PH - 5, { align:'right' });
+    };
+    const pageHeader = (label) => {
+      doc.setFillColor(...PURPLE);
+      doc.rect(0, 0, PW, 11, 'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(255,255,255);
+      doc.text('LUMANA', M, 7.5);
+      doc.setFont('helvetica','normal');
+      doc.text(label, PW - M, 7.5, { align:'right' });
+      doc.setFontSize(7); doc.setTextColor(210, 190, 255);
+      doc.text(projectName, PW / 2, 7.5, { align:'center' });
+    };
+    const sectionBand = (label, y) => {
+      doc.setFillColor(242, 240, 255);
+      doc.rect(M, y, PW - M*2, 7, 'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...PURPLE);
+      doc.text(label, M + 2, y + 5);
+      return y + 9;
+    };
+
+    // ═══════════════════════════════════════════════
+    // PAGE 1 — COVER
+    // ═══════════════════════════════════════════════
+    doc.setFillColor(...DARK);
+    doc.rect(0, 0, PW, PH, 'F');
+
+    // Hero band
+    doc.setFillColor(...PURPLE);
+    doc.rect(0, 0, PW, 55, 'F');
+
+    // Lumana wordmark
+    doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.setTextColor(255,255,255);
+    doc.text('LUMANA', M, 18);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(210,190,255);
+    doc.text('Video Management System', M, 25);
+
+    // Report title
+    doc.setFont('helvetica','bold'); doc.setFontSize(24); doc.setTextColor(255,255,255);
+    doc.text('Site Plan Report', M, 44);
+
+    // Project name + date
+    doc.setFont('helvetica','bold'); doc.setFontSize(14); doc.setTextColor(255,255,255);
+    doc.text(projectName, M, 72);
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(167,139,250);
+    doc.text('Generated ' + dateStr, M, 80);
+
+    // Stat cards
+    const cards = [
+      { label:'Cameras',          val: String(cams.length)        },
+      { label:'MSRP Estimate',    val: '$' + grand.toLocaleString()},
+      { label:'Storage Required', val: totalTB + ' TB'            },
+      { label:'Total Bandwidth',  val: totalBW + ' Mbps'          },
+    ];
+    const cardW = (PW - M*2 - 9) / 4;
+    cards.forEach((c, i) => {
+      const cx = M + i * (cardW + 3), cy = 90;
+      doc.setFillColor(36, 52, 75);
+      doc.roundedRect(cx, cy, cardW, 26, 2, 2, 'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(167,139,250);
+      doc.text(c.val, cx + cardW/2, cy + 11, { align:'center' });
+      doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(156,163,175);
+      doc.text(c.label.toUpperCase(), cx + cardW/2, cy + 20, { align:'center' });
+    });
+
+    // NVR line
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(156,163,175);
+    doc.text('NVR Recommendation: ', M, 128);
+    doc.setFont('helvetica','bold'); doc.setTextColor(167,139,250);
+    doc.text(nvrRec, M + 45, 128);
+
+    // Disclaimer
+    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(75,96,128);
+    doc.text('Prices are MSRP estimates only. Annual licensing fee recurs yearly.', M, PH - 10);
+    pageFooter(1, 3);
+
+    // ═══════════════════════════════════════════════
+    // PAGE 2 — FLOOR PLAN WITH CAMERA ANNOTATIONS
+    // ═══════════════════════════════════════════════
+    doc.addPage();
+    pageHeader('Floor Plan');
+
+    // Capture canvas — deselect first to hide selection rings
+    const prevSel = state.selectedId;
+    if (prevSel) { state.selectedId = null; cameraLayer.draw(); }
+    const imgDataUrl = stage.toDataURL({ pixelRatio: 2 });
+    if (prevSel) { state.selectedId = prevSel; cameraLayer.draw(); }
+
+    const imgTop = 14, imgBot = PH - 50;
+    const imgH   = imgBot - imgTop;
+    const imgW   = PW - M*2;
+    doc.addImage(imgDataUrl, 'PNG', M, imgTop, imgW, imgH);
+    doc.setDrawColor(...LIGHT); doc.setLineWidth(0.3);
+    doc.rect(M, imgTop, imgW, imgH);
+
+    // Camera dot + label overlay (mapped onto image)
+    const scX = imgW / stage.width();
+    const scY = imgH / stage.height();
+    cams.forEach((cam, idx) => {
+      const px = M + cam.x * scX;
+      const py = imgTop + cam.y * scY;
+      if (px < M || px > PW - M || py < imgTop || py > imgBot) return;
+      const rgb = hexToRgbArr(cam.color);
+      doc.setFillColor(...rgb);
+      doc.circle(px, py, 1.4, 'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(5.5); doc.setTextColor(...rgb);
+      doc.text(String(idx + 1), px + 2, py + 1);
+    });
+
+    // Camera index legend below image
+    let lx = M, ly = imgBot + 6;
+    doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(...DARK);
+    doc.text('Camera Index', M, ly); ly += 4;
+    const colsLeg = 3, colWLeg = (PW - M*2) / colsLeg;
+    cams.forEach((cam, idx) => {
+      const col = idx % colsLeg, row = Math.floor(idx / colsLeg);
+      const lxc = M + col * colWLeg, lyc = ly + row * 5;
+      if (lyc > PH - 10) return;
+      const rgb = hexToRgbArr(cam.color);
+      doc.setFillColor(...rgb);
+      doc.circle(lxc + 1.5, lyc - 0.8, 1.2, 'F');
+      doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(...DARK);
+      doc.text(`${idx+1}. ${cam.model}`, lxc + 4, lyc);
+    });
+    pageFooter(2, 3);
+
+    // ═══════════════════════════════════════════════
+    // PAGE 3 — BILL OF MATERIALS
+    // ═══════════════════════════════════════════════
+    doc.addPage();
+    pageHeader('Bill of Materials');
+
+    let y = 18;
+    const C1 = M, C2 = 105, C3 = 135, C4 = PW - M;
+
+    // Table header row
+    doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(...GRAY);
+    ['Model / Item', 'Qty', 'Unit Price', 'Total'].forEach((h, i) => {
+      doc.text(h, [C1,C2,C3,C4][i], y, { align: i === 3 ? 'right' : 'left' });
+    });
+    doc.setDrawColor(...LIGHT); doc.setLineWidth(0.25);
+    doc.line(M, y + 1.5, PW - M, y + 1.5);
+    y += 5;
+
+    // Cameras section
+    y = sectionBand('📷  CAMERAS', y);
+    doc.setFontSize(8);
+    camItems.forEach((item, i) => {
+      if (i % 2 === 0) { doc.setFillColor(249,250,251); doc.rect(M, y-1, PW-M*2, 6, 'F'); }
+      doc.setFont('helvetica','normal'); doc.setTextColor(...DARK);
+      doc.text(item.model || item.name, C1, y+3);
+      doc.text(String(item.qty),        C2, y+3);
+      doc.text('$' + item.price.toLocaleString(), C3, y+3);
+      doc.setFont('helvetica','bold');
+      doc.text('$' + (item.price*item.qty).toLocaleString(), C4, y+3, { align:'right' });
+      y += 6;
+    });
+    // Subtotal
+    doc.setFont('helvetica','bold'); doc.setTextColor(...PURPLE);
+    doc.text('Cameras subtotal', C3, y+3);
+    doc.text('$' + camTotal.toLocaleString(), C4, y+3, { align:'right' });
+    y += 9;
+
+    // Licensing section
+    y = sectionBand('🔑  LICENSING (Annual)', y);
+    doc.setFontSize(8);
+    doc.setFont('helvetica','normal'); doc.setTextColor(...DARK);
+    doc.text('Lumana Standard License — per camera/yr', C1, y+3);
+    doc.text(String(cams.length), C2, y+3);
+    doc.text('$' + LICENSE_PRICE.Standard.toLocaleString(), C3, y+3);
+    doc.setFont('helvetica','bold');
+    doc.text('$' + licTotal.toLocaleString(), C4, y+3, { align:'right' });
+    y += 9;
+
+    // Storage & Network section
+    y = sectionBand('💾  STORAGE & NETWORK', y);
+    doc.setFontSize(8);
+    [
+      ['Total Bandwidth', totalBW + ' Mbps'],
+      ['Storage Required (all cameras, full retention)', totalTB + ' TB'],
+      ['NVR Recommendation', nvrRec],
+    ].forEach(([label, val]) => {
+      doc.setFont('helvetica','normal'); doc.setTextColor(...DARK);
+      doc.text(label, C1, y+3);
+      doc.setFont('helvetica','bold'); doc.setTextColor(...PURPLE);
+      doc.text(val, C4, y+3, { align:'right' });
+      y += 6;
+    });
+    y += 4;
+
+    // Grand total bar
+    doc.setFillColor(...PURPLE);
+    doc.roundedRect(M, y, PW - M*2, 11, 2, 2, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(255,255,255);
+    doc.text('GRAND TOTAL  (Hardware + Year 1 Licensing)', M + 3, y + 7.5);
+    doc.text('$' + grand.toLocaleString(), C4, y + 7.5, { align:'right' });
+    y += 17;
+
+    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(156,163,175);
+    doc.text('* Prices are MSRP estimates only. Annual licensing recurs each year. Storage estimate based on configured retention.', M, y, { maxWidth: PW - M*2 });
+
+    pageFooter(3, 3);
+
+    // ── Save file ──
+    const filename = projectName.replace(/[^a-z0-9]/gi, '-').toLowerCase() + '-site-plan.pdf';
+    doc.save(filename);
+
+  } finally {
+    btn.innerHTML = origHTML;
+    btn.disabled  = false;
+  }
+}
+// ═══════════════════════════════════════════════
+// SAVE / LOAD / SHARE  (Phase 11)
+// ═══════════════════════════════════════════════
+function planSnapshot() {
+  return {
+    version: 2,
+    projectName: document.querySelector('.topbar-breadcrumb .current')?.textContent || 'Site Plan',
+    savedAt: new Date().toISOString(),
+    scalePPM: state.scalePPM,
+    scaleCalibrated: state.scaleCalibrated,
+    nextId: state.nextId,
+    cameras: state.cameras,
+    userWalls: state.userWalls,
+  };
+}
+
+function saveDesign() {
+  const data = planSnapshot();
+  const slug = data.projectName.replace(/[^a-z0-9]/gi, '-').toLowerCase() || 'site-plan';
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = slug + '.json';
+  a.click();
+}
+
+function openDesignFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => { loadDesign(ev.target.result); closeShareModal(); };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+function loadDesign(jsonStr) {
+  try {
+    const data = JSON.parse(jsonStr);
+    if (!data.cameras) throw new Error('Invalid plan file — missing cameras array.');
+    if (data.scalePPM)              state.scalePPM        = data.scalePPM;
+    if (data.scaleCalibrated !== undefined) state.scaleCalibrated = data.scaleCalibrated;
+    state.nextId = data.nextId || (data.cameras.reduce((m, c) => Math.max(m, c.id || 0), 0) + 1);
+    restoreState({ cameras: data.cameras, userWalls: data.userWalls || [] });
+    if (data.cameras.length > 0 || (data.userWalls || []).length > 0) {
+      document.getElementById('canvasEmpty').classList.add('hidden');
+    }
+  } catch (err) {
+    alert('Could not load plan:\n' + err.message);
+  }
+}
+
+function openShareModal() {
+  document.getElementById('shareOverlay').classList.add('show');
+  document.getElementById('shareModal').classList.add('show');
+  setTimeout(() => document.getElementById('shareUrlInput').select(), 80);
+}
+
+function closeShareModal() {
+  document.getElementById('shareOverlay').classList.remove('show');
+  document.getElementById('shareModal').classList.remove('show');
+}
+
+function copyShareLink() {
+  const val = document.getElementById('shareUrlInput').value;
+  if (!val) return;
+  const btn = document.getElementById('shareCopyBtn');
+  navigator.clipboard.writeText(val).then(() => {
+    btn.textContent = '✓ Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy link'; btn.classList.remove('copied'); }, 2200);
+  }).catch(() => {
+    document.getElementById('shareUrlInput').select();
+    document.execCommand('copy');
+  });
+}
+
+function checkHashPlan() {
+  if (!location.hash.startsWith('#plan=')) return;
+  if (typeof LZString === 'undefined') { setTimeout(checkHashPlan, 200); return; }
+  try {
+    const json = LZString.decompressFromEncodedURIComponent(location.hash.slice(6));
+    if (json) {
+      loadDesign(json);
+      history.replaceState(null, '', location.pathname + location.search);
+    }
+  } catch (e) { console.warn('Could not restore plan from URL hash:', e); }
+}
+
+// ═══════════════════════════════════════════════
+// KEYBOARD
+// ═══════════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  if (['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName)) return;
+  if (e.key === 'v' || e.key === 'V') setTool('select');
+  if (e.key === 'c' || e.key === 'C') { setTool('camera'); state.dragType = 'indoor-dome'; }
+  if (e.key === 'w' || e.key === 'W') setTool('wall');
+  if (e.key === 's' || e.key === 'S') setTool('scale');
+  if ((e.key === 'Delete' || e.key === 'Backspace') && state.selectedId) deleteCamera(state.selectedId);
+  if (e.key === 'z' && (e.metaKey || e.ctrlKey) && !e.shiftKey) { e.preventDefault(); undo(); }
+  if (e.key === 'z' && (e.metaKey || e.ctrlKey) && e.shiftKey)  { e.preventDefault(); redo(); }
+  if (e.key === 'Escape') { setTool('select'); selectCamera(null); }
+  // Arrow keys nudge selected camera
+  if (state.selectedId && ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {
+    e.preventDefault();
+    const cam = state.cameras.find(c => c.id === state.selectedId);
+    if (!cam) return;
+    const d = e.shiftKey ? 10 : 1;
+    if (e.key==='ArrowUp')    { cam.y -= d; }
+    if (e.key==='ArrowDown')  { cam.y += d; }
+    if (e.key==='ArrowLeft')  { cam.x -= d; }
+    if (e.key==='ArrowRight') { cam.x += d; }
+    const g = cameraLayer.findOne('#cam-'+cam.id);
+    if (g) { g.x(cam.x); g.y(cam.y); }
+    drawFov(cam);
+    cameraLayer.draw();
+  }
+});
+
+// ═══════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════
+function escHtml(s) { return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  renderLeftPanel();
+  initStage();
+  updateUI();
+  checkHashPlan();
+});
+</script>
+</body>
+</html>
