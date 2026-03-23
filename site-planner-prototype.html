@@ -34,6 +34,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 /* ── Top Bar ── */
 .topbar { height: 50px; flex-shrink: 0; background: #fff; border-bottom: 1px solid #eaecf0; display: flex; align-items: center; padding: 0 16px 0 20px; gap: 12px; z-index: 10; }
 .topbar-breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 14px; color: #667085; }
+.topbar-breadcrumb a { color: #667085; text-decoration: none; }
+.topbar-breadcrumb a:hover { color: #344054; text-decoration: underline; }
 .topbar-breadcrumb .sep { color: #d0d5dd; }
 .topbar-breadcrumb .current { color: #344054; font-weight: 500; }
 .topbar-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
@@ -570,9 +572,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
     <!-- Top Bar -->
     <header class="topbar">
       <div class="topbar-breadcrumb">
-        <span>Site Planner</span>
+        <a href="site-planner-sites.html" style="color:#667085;text-decoration:none">Sites</a>
         <span class="sep">›</span>
-        <span class="current">Acme HQ — Floor 2</span>
+        <a href="#" id="bc-site" style="color:#667085;text-decoration:none">Site: HQ Campus</a>
+        <span class="sep">›</span>
+        <a href="#" id="bc-location" style="color:#667085;text-decoration:none">Location: Main Building</a>
+        <span class="sep">›</span>
+        <a href="#" id="bc-plan" style="color:#667085;text-decoration:none">Plan: Level 1</a>
+        <span class="sep">›</span>
+        <span class="current">View plan</span>
       </div>
       <div class="topbar-actions">
         <button class="btn" onclick="shareLink()">
@@ -613,6 +621,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
       <div class="tool-group">
         <div class="tool-btn active" id="tool-select" data-tool="select" data-tip="Select (V)" onclick="setTool('select')">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 0l16 12-8 2-4 8L4 0z"/></svg>
+        </div>
+        <div class="tool-btn" id="tool-move" data-tool="move" data-tip="Move Canvas (H)" onclick="setTool('move')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 11V6a2 2 0 00-4 0v5m0 0V4a2 2 0 00-4 0v7m0 0V6a2 2 0 00-4 0v8c0 4.418 3.582 8 8 8s8-3.582 8-8v-4a2 2 0 00-4 0v3"/></svg>
         </div>
       </div>
       <div class="tool-group">
@@ -1123,7 +1134,7 @@ const state = {
   // Satellite map (Phase 8)
   mapMode: 'both',          // 'floorplan' | 'map' | 'both'
   mapType: 'satellite',     // 'standard' | 'satellite'
-  floorPlanFile: null,      // null | { name }
+  floorPlanFile: { name: 'floor-plan.png' },
   floorPlanOpacity: 0.7,
   floorPlanEditMode: false,
 };
@@ -1189,7 +1200,7 @@ function initStage() {
   stage.on('click tap', onStageClick);
   stage.on('mousemove', onStageMouseMove);
 
-  // Wheel zoom
+  // Wheel zoom — syncs both Konva stage and Leaflet map
   stage.on('wheel', e => {
     e.evt.preventDefault();
     const scaleBy = 1.08;
@@ -1201,6 +1212,7 @@ function initStage() {
     stage.scale({ x: clamped, y: clamped });
     stage.position({ x: pointer.x - mousePointTo.x * clamped, y: pointer.y - mousePointTo.y * clamped });
     updateZoomDisplay();
+    syncMapToStage();
   });
 
   // Right-click context menu
@@ -1209,16 +1221,36 @@ function initStage() {
     if (state.selectedId) showCtxMenu(e.evt.clientX, e.evt.clientY);
   });
 
-  // Pan with middle button
+  // Pan with middle button OR left-click when Move tool is active
+  // In edit mode, left-click lets Konva handle floor plan drag/transform only
   let isPanning = false, panStart = { x: 0, y: 0 }, panOrigin = { x: 0, y: 0 };
   stage.container().addEventListener('mousedown', e => {
     if (e.button === 1) { e.preventDefault(); isPanning = true; panStart = { x: e.clientX, y: e.clientY }; panOrigin = { x: stage.x(), y: stage.y() }; }
+    if (e.button === 0 && state.tool === 'move' && !state.floorPlanEditMode) {
+      e.preventDefault();
+      const ca = document.getElementById('canvasArea');
+      ca.classList.remove('cursor-grab');
+      ca.classList.add('cursor-grabbing');
+      isPanning = true;
+      panStart = { x: e.clientX, y: e.clientY };
+      panOrigin = { x: stage.x(), y: stage.y() };
+    }
   });
   window.addEventListener('mousemove', e => {
-    if (!isPanning) return;
-    stage.position({ x: panOrigin.x + e.clientX - panStart.x, y: panOrigin.y + e.clientY - panStart.y });
+    if (isPanning) {
+      stage.position({ x: panOrigin.x + e.clientX - panStart.x, y: panOrigin.y + e.clientY - panStart.y });
+      syncMapToStage();
+    }
   });
-  window.addEventListener('mouseup', e => { if (e.button === 1) isPanning = false; });
+  window.addEventListener('mouseup', e => {
+    if (e.button === 1) isPanning = false;
+    if (e.button === 0 && state.tool === 'move') {
+      isPanning = false;
+      const ca = document.getElementById('canvasArea');
+      ca.classList.remove('cursor-grabbing');
+      ca.classList.add('cursor-grab');
+    }
+  });
 
   // Resize
   new ResizeObserver(() => {
@@ -1236,15 +1268,12 @@ function drawDemoFloor() {
   const rw = 520, rh = 360;
   const rx = cx - rw / 2 - 40, ry = cy - rh / 2;
 
+  // Wrap everything in a group so Resize & Rotate works
+  const group = new Konva.Group({ x: 0, y: 0, listening: false });
+
   // Outer walls
   const outer = [[rx,ry,rx+rw,ry],[rx+rw,ry,rx+rw,ry+rh],[rx+rw,ry+rh,rx,ry+rh],[rx,ry+rh,rx,ry]];
   // Interior walls
-  const interior = [
-    [rx+170, ry,     rx+170, ry+220],  // vertical L
-    [rx+170, ry+220, rx+380, ry+220],  // horizontal mid
-    [rx+380, ry,     rx+380, ry+220],  // vertical R
-    [rx+380, ry+220, rx+380, ry+140+220], // extend right wall down? let's skip
-  ];
   const intr2 = [
     [rx+170, ry,     rx+170, ry+220],
     [rx+170, ry+220, rx+380, ry+220],
@@ -1253,23 +1282,22 @@ function drawDemoFloor() {
 
   DEMO_WALLS = [...outer, ...intr2].map(([x1,y1,x2,y2]) => ({ x1,y1,x2,y2, isDemo:true }));
 
-  const floorFill = new Konva.Rect({ x:rx, y:ry, width:rw, height:rh, fill:'#f8f9fb', listening:false });
-  floorLayer.add(floorFill);
+  group.add(new Konva.Rect({ x:rx, y:ry, width:rw, height:rh, fill:'#f8f9fb', listening:false }));
 
   // Room fills
   const rooms = [
-    { x:rx, y:ry, w:170, h:220, fill:'#f0f4ff' },         // Office A
-    { x:rx+170, y:ry, w:210, h:220, fill:'#f0f9ff' },     // Office B
-    { x:rx+380, y:ry, w:rw-380, h:220, fill:'#f5f3ff' },  // Server
-    { x:rx, y:ry+220, w:rw, h:rh-220, fill:'#fafafa' },   // Lobby / Open
+    { x:rx, y:ry, w:170, h:220, fill:'#f0f4ff' },
+    { x:rx+170, y:ry, w:210, h:220, fill:'#f0f9ff' },
+    { x:rx+380, y:ry, w:rw-380, h:220, fill:'#f5f3ff' },
+    { x:rx, y:ry+220, w:rw, h:rh-220, fill:'#fafafa' },
   ];
   rooms.forEach(r => {
-    floorLayer.add(new Konva.Rect({ x:r.x, y:r.y, width:r.w, height:r.h, fill:r.fill, listening:false }));
+    group.add(new Konva.Rect({ x:r.x, y:r.y, width:r.w, height:r.h, fill:r.fill, listening:false }));
   });
 
   // Walls
   [...outer, ...intr2].forEach(([x1,y1,x2,y2]) => {
-    floorLayer.add(new Konva.Line({ points:[x1,y1,x2,y2], stroke:'#1e2d45', strokeWidth:3, lineCap:'round', listening:false }));
+    group.add(new Konva.Line({ points:[x1,y1,x2,y2], stroke:'#1e2d45', strokeWidth:3, lineCap:'round', listening:false }));
   });
 
   // Door arcs
@@ -1279,21 +1307,16 @@ function drawDemoFloor() {
     { x:rx+440, y:ry+220, r:30, startAngle:-90, endAngle:0 },
   ];
   doors.forEach(d => {
-    const sa = d.startAngle * Math.PI / 180, ea = d.endAngle * Math.PI / 180;
-    floorLayer.add(new Konva.Arc({ x:d.x, y:d.y, innerRadius:0, outerRadius:d.r, angle:90, rotationDeg:d.startAngle, stroke:'#94a3b8', strokeWidth:1, fill:'rgba(148,163,184,0.1)', listening:false }));
+    group.add(new Konva.Arc({ x:d.x, y:d.y, innerRadius:0, outerRadius:d.r, angle:90, rotationDeg:d.startAngle, stroke:'#94a3b8', strokeWidth:1, fill:'rgba(148,163,184,0.1)', listening:false }));
   });
 
-  // Furniture (simplified)
+  // Furniture
   const furniture = [
-    // Desk Office A
     { type:'rect', x:rx+20, y:ry+20, w:80, h:40, fill:'#dde3ed', stroke:'#aab4c4' },
     { type:'rect', x:rx+20, y:ry+70, w:60, h:40, fill:'#dde3ed', stroke:'#aab4c4' },
-    // Desk Office B
     { type:'rect', x:rx+200, y:ry+20, w:90, h:40, fill:'#dde3ed', stroke:'#aab4c4' },
     { type:'rect', x:rx+310, y:ry+20, w:50, h:40, fill:'#dde3ed', stroke:'#aab4c4' },
-    // Conference table (lobby)
     { type:'rect', x:rx+200, y:ry+260, w:180, h:80, fill:'#e2e8f0', stroke:'#94a3b8', rx:4 },
-    // Chairs around table
     { type:'circle', x:rx+220, y:ry+258, r:8, fill:'#cbd5e1' },
     { type:'circle', x:rx+260, y:ry+258, r:8, fill:'#cbd5e1' },
     { type:'circle', x:rx+300, y:ry+258, r:8, fill:'#cbd5e1' },
@@ -1302,16 +1325,15 @@ function drawDemoFloor() {
     { type:'circle', x:rx+260, y:ry+342, r:8, fill:'#cbd5e1' },
     { type:'circle', x:rx+300, y:ry+342, r:8, fill:'#cbd5e1' },
     { type:'circle', x:rx+340, y:ry+342, r:8, fill:'#cbd5e1' },
-    // Sofa area lobby left
     { type:'rect', x:rx+20, y:ry+250, w:100, h:40, fill:'#dde3ed', stroke:'#aab4c4', rx:4 },
     { type:'rect', x:rx+20, y:ry+295, w:40, h:50, fill:'#dde3ed', stroke:'#aab4c4', rx:4 },
     { type:'rect', x:rx+80, y:ry+295, w:40, h:50, fill:'#dde3ed', stroke:'#aab4c4', rx:4 },
   ];
   furniture.forEach(f => {
     if (f.type === 'rect') {
-      floorLayer.add(new Konva.Rect({ x:f.x, y:f.y, width:f.w, height:f.h, fill:f.fill, stroke:f.stroke, strokeWidth:1, cornerRadius:f.rx||2, listening:false }));
+      group.add(new Konva.Rect({ x:f.x, y:f.y, width:f.w, height:f.h, fill:f.fill, stroke:f.stroke, strokeWidth:1, cornerRadius:f.rx||2, listening:false }));
     } else if (f.type === 'circle') {
-      floorLayer.add(new Konva.Circle({ x:f.x, y:f.y, radius:f.r, fill:f.fill, listening:false }));
+      group.add(new Konva.Circle({ x:f.x, y:f.y, radius:f.r, fill:f.fill, listening:false }));
     }
   });
 
@@ -1324,9 +1346,11 @@ function drawDemoFloor() {
     { text:'CONFERENCE', x:rx+280, y:ry+300 },
   ];
   labels.forEach(l => {
-    floorLayer.add(new Konva.Text({ x:l.x-50, y:l.y, width:100, text:l.text, fontSize:9, fontFamily:'system-ui', fill:'#94a3b8', align:'center', listening:false }));
+    group.add(new Konva.Text({ x:l.x-50, y:l.y, width:100, text:l.text, fontSize:9, fontFamily:'system-ui', fill:'#94a3b8', align:'center', listening:false }));
   });
 
+  floorLayer.add(group);
+  floorPlanNode = group;
   floorLayer.draw();
 }
 
@@ -1678,6 +1702,7 @@ function setTool(tool) {
   const ca = document.getElementById('canvasArea');
   ca.className = 'canvas-area';
   if (tool === 'camera' || tool === 'wall' || tool === 'scale') ca.classList.add('cursor-crosshair');
+  if (tool === 'move') ca.classList.add('cursor-grab');
   // Show wall sub-toolbar only when wall tool active
   document.getElementById('wallSubtoolbar').classList.toggle('show', tool === 'wall');
   // Cancel any in-progress drawing
@@ -1699,6 +1724,7 @@ function setWallType(type) {
 }
 
 function onStageClick(e) {
+  if (state.tool === 'move') return; // Move tool — clicks handled by pan, not stage actions
   if (e.target === stage) {
     if (state.tool === 'select') {
       selectCamera(null);
@@ -2102,6 +2128,7 @@ function initLeafletMap() {
   leafletMap = L.map('map-container', {
     zoomControl: false,
     attributionControl: true,
+    zoomSnap: 0,
   }).setView([37.7749, -122.4194], 18);
 
   const cfg = TILE_LAYERS[state.mapType];
@@ -2195,6 +2222,9 @@ async function geocodeAddress() {
   }
 }
 
+const BASE_MAP_CENTER = [37.7749, -122.4194];
+const BASE_MAP_ZOOM = 18;
+
 function syncScaleFromMap() {
   if (!leafletMap || state.mapMode === 'floorplan') return;
   const zoom = leafletMap.getZoom();
@@ -2202,6 +2232,19 @@ function syncScaleFromMap() {
   const mPerPx = 156543.03392 * Math.cos(lat * Math.PI / 180) / Math.pow(2, zoom);
   state.scalePPM = 1 / mPerPx;
   state.scaleCalibrated = true;
+}
+
+function syncMapToStage() {
+  if (!leafletMap || state.mapMode === 'floorplan') return;
+  const sc = stage.scaleX();
+  const targetZoom = BASE_MAP_ZOOM + Math.log2(sc);
+  const W = stage.width(), H = stage.height();
+  const worldCX = (W / 2 - stage.x()) / sc;
+  const worldCY = (H / 2 - stage.y()) / sc;
+  const basePt = leafletMap.project(L.latLng(BASE_MAP_CENTER), BASE_MAP_ZOOM);
+  const offsetPt = L.point(basePt.x + (worldCX - W / 2), basePt.y + (worldCY - H / 2));
+  const newCenter = leafletMap.unproject(offsetPt, BASE_MAP_ZOOM);
+  leafletMap.setView(newCenter, targetZoom, { animate: false });
 }
 
 function setFloorPlanOpacity(val) {
@@ -2237,6 +2280,10 @@ function enableFloorPlanEdit() {
   state.floorPlanEditMode = true;
   floorPlanNode.listening(true);
   floorPlanNode.draggable(true);
+  // Enable hit-detection on children for Group nodes
+  if (floorPlanNode.getChildren) {
+    floorPlanNode.getChildren().forEach(c => c.listening(true));
+  }
 
   if (!floorTransformer) {
     floorTransformer = new Konva.Transformer({
@@ -2273,6 +2320,10 @@ function disableFloorPlanEdit() {
   if (floorPlanNode) {
     floorPlanNode.listening(false);
     floorPlanNode.draggable(false);
+    // Disable hit-detection on children for Group nodes
+    if (floorPlanNode.getChildren) {
+      floorPlanNode.getChildren().forEach(c => c.listening(false));
+    }
   }
   if (typeof floorLayer !== 'undefined') floorLayer.batchDraw();
 
@@ -3035,7 +3086,7 @@ document.addEventListener('click', () => hideCtxMenu());
 // ═══════════════════════════════════════════════
 function zoomIn()    { applyZoom(1.25); }
 function zoomOut()   { applyZoom(0.8); }
-function resetZoom() { stage.scale({x:1,y:1}); stage.position({x:0,y:0}); updateZoomDisplay(); }
+function resetZoom() { stage.scale({x:1,y:1}); stage.position({x:0,y:0}); updateZoomDisplay(); syncMapToStage(); }
 function applyZoom(factor) {
   const newScale = Math.min(Math.max(stage.scaleX() * factor, 0.2), 6);
   const center = { x: stage.width()/2, y: stage.height()/2 };
@@ -3043,6 +3094,7 @@ function applyZoom(factor) {
   stage.scale({x:newScale,y:newScale});
   stage.position({ x:center.x - pointTo.x*newScale, y:center.y - pointTo.y*newScale });
   updateZoomDisplay();
+  syncMapToStage();
 }
 function updateZoomDisplay() {
   document.getElementById('zoom-display').textContent = Math.round(stage.scaleX()*100) + '%';
@@ -3839,6 +3891,7 @@ function checkHashPlan() {
 document.addEventListener('keydown', e => {
   if (['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName)) return;
   if (e.key === 'v' || e.key === 'V') setTool('select');
+  if (e.key === 'h' || e.key === 'H') setTool('move');
   if (e.key === 'c' || e.key === 'C') { setTool('camera'); state.dragType = 'indoor-dome'; }
   if (e.key === 'w' || e.key === 'W') setTool('wall');
   if (e.key === 's' || e.key === 'S') setTool('scale');
@@ -3881,6 +3934,24 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('canvasArea').classList.add('map-active');
   document.getElementById('map-container').style.display = 'block';
   setTimeout(() => leafletMap && leafletMap.invalidateSize(), 100);
+  renderPanel();
+
+  // Wire breadcrumb from URL params
+  const params = new URLSearchParams(window.location.search);
+  const siteId = params.get('siteId') || '1';
+  const locationId = params.get('locationId') || '1';
+  const planId = params.get('planId') || '1';
+
+  const bcSiteNames = { '1': 'HQ Campus', '2': 'Warehouse District', '3': 'Downtown Office' };
+  const bcLocNames = { '1': 'Main Building', '2': 'Parking Garage', '3': 'Loading Dock', '4': 'Tower A', '5': 'Tower B', '6': 'Retail Floor' };
+  const bcPlanNames = { '1': 'Level 1', '2': 'Level 2', '3': 'P1 Parking', '4': 'Ground Floor', '5': 'Floor 1', '6': 'Floor 2', '7': 'Floor 1', '8': 'Level 1' };
+
+  const bcSite = document.getElementById('bc-site');
+  const bcLoc = document.getElementById('bc-location');
+  const bcPlan = document.getElementById('bc-plan');
+  if (bcSite) { bcSite.href = `site-planner-location.html?siteId=${siteId}`; bcSite.textContent = 'Site: ' + (bcSiteNames[siteId] || 'Site'); }
+  if (bcLoc) { bcLoc.href = `site-planner-location.html?siteId=${siteId}&locationId=${locationId}`; bcLoc.textContent = 'Location: ' + (bcLocNames[locationId] || 'Location'); }
+  if (bcPlan) { bcPlan.href = `site-planner-location.html?siteId=${siteId}&locationId=${locationId}&planId=${planId}`; bcPlan.textContent = 'Plan: ' + (bcPlanNames[planId] || 'Plan'); }
 });
 </script>
 </body>

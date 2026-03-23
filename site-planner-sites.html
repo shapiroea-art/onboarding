@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lumana — Site Planner · Sites</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f9fafb; color: #344054; height: 100vh; overflow: hidden; }
+
+.app { display: flex; height: 100vh; }
+
+/* ── Left Nav ── */
+.nav { width: 64px; flex-shrink: 0; background: #f9fafb; border-right: 1px solid #eaecf0; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 16px 0 20px; z-index: 20; }
+.nav-logo { width: 32px; height: 32px; background: #7c3aed; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 4px; }
+.nav-logo svg { width: 18px; height: 18px; color: #fff; }
+.nav-top, .nav-bottom { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.nav-sep { width: 32px; height: 1px; background: #eaecf0; margin: 6px 0; }
+.nav-icon { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 8px; color: #667085; cursor: pointer; transition: all 0.15s; }
+.nav-icon:hover { background: #f2f4f7; color: #344054; }
+.nav-icon.active { background: #ede9fe; color: #7c3aed; }
+.nav-icon svg { width: 20px; height: 20px; }
+.nav-avatar { width: 32px; height: 32px; border-radius: 50%; background: #bbf7d0; color: #344054; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+/* ── Main ── */
+.main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+/* ── Top Bar ── */
+.topbar { height: 50px; flex-shrink: 0; background: #fff; border-bottom: 1px solid #eaecf0; display: flex; align-items: center; padding: 0 16px 0 20px; gap: 12px; z-index: 10; }
+.topbar-breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 14px; color: #667085; }
+.topbar-breadcrumb .current { color: #344054; font-weight: 500; }
+.topbar-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid #d0d5dd; background: #fff; color: #344054; transition: all 0.15s; white-space: nowrap; }
+.btn:hover { background: #f9fafb; }
+.btn-primary { background: #7c3aed; border-color: #7c3aed; color: #fff; }
+.btn-primary:hover { background: #6d28d9; }
+
+/* ── Content Area ── */
+.content { flex: 1; overflow-y: auto; padding: 28px 32px; }
+
+/* ── Table ── */
+.table-wrap { background: #fff; border: 1px solid #eaecf0; border-radius: 10px; overflow: hidden; }
+table { width: 100%; border-collapse: collapse; }
+thead th { padding: 11px 16px; font-size: 12px; font-weight: 600; color: #667085; text-align: left; background: #fcfcfd; border-bottom: 1px solid #eaecf0; text-transform: uppercase; letter-spacing: 0.4px; user-select: none; }
+tbody td { padding: 14px 16px; font-size: 13px; color: #344054; border-bottom: 1px solid #f2f4f7; vertical-align: middle; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: #f9fafb; cursor: pointer; }
+tbody tr { transition: background 0.12s; }
+
+.site-name { font-weight: 600; color: #7c3aed; }
+
+.badge { display: inline-flex; align-items: center; justify-content: center; min-width: 28px; padding: 2px 8px; border-radius: 12px; background: #f2f4f7; color: #344054; font-size: 12px; font-weight: 500; }
+
+/* ── Actions Dropdown ── */
+.actions-cell { position: relative; }
+.actions-btn { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: 1px solid transparent; border-radius: 6px; background: transparent; cursor: pointer; color: #667085; transition: all 0.15s; font-size: 18px; letter-spacing: 2px; line-height: 1; }
+.actions-btn:hover { background: #f2f4f7; border-color: #eaecf0; color: #344054; }
+
+.dropdown { position: absolute; top: calc(100% + 4px); right: 0; width: 160px; background: #fff; border: 1px solid #e4e7ec; border-radius: 8px; box-shadow: 0 8px 20px rgba(16,24,40,0.1); z-index: 300; display: none; flex-direction: column; overflow: hidden; }
+.dropdown.show { display: flex; }
+.dropdown-item { display: flex; align-items: center; gap: 9px; padding: 9px 13px; font-size: 13px; color: #344054; cursor: pointer; transition: background 0.12s; border: none; background: none; width: 100%; text-align: left; font-family: inherit; }
+.dropdown-item:hover { background: #f9fafb; }
+.dropdown-item svg { width: 15px; height: 15px; color: #667085; flex-shrink: 0; }
+.dropdown-item.danger { color: #d92d20; }
+.dropdown-item.danger svg { color: #d92d20; }
+.dropdown-item.danger:hover { background: #fef3f2; }
+
+/* ── Empty state ── */
+.empty-state { padding: 60px 20px; text-align: center; color: #98a2b3; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- Left Nav -->
+<nav class="nav">
+  <div class="nav-top">
+    <div class="nav-logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5"/><line x1="12" y1="22" x2="12" y2="15.5"/><polyline points="22 8.5 12 15.5 2 8.5"/></svg>
+    </div>
+    <div class="nav-sep"></div>
+    <div class="nav-icon" title="Cameras">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+    </div>
+    <div class="nav-icon" title="Live View">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+    </div>
+    <div class="nav-icon" title="Alerts">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+    </div>
+    <div class="nav-icon" title="Analytics">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    </div>
+    <div class="nav-icon active" title="Site Planner">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
+    </div>
+    <div class="nav-icon" title="Access Control">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+    </div>
+    <div class="nav-icon" title="Reports">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    </div>
+  </div>
+  <div class="nav-bottom">
+    <div class="nav-icon" title="Help">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    </div>
+    <div class="nav-icon" title="Settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    </div>
+    <div class="nav-avatar">OR</div>
+  </div>
+</nav>
+
+<!-- Main Content -->
+<div class="main">
+
+  <!-- Top Bar -->
+  <div class="topbar">
+    <div class="topbar-breadcrumb">
+      <span class="current">Sites</span>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-primary" id="newSiteBtn">
+        <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="3" x2="8" y2="13"/><line x1="3" y1="8" x2="13" y2="8"/></svg>
+        New Site
+      </button>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Site name</th>
+            <th>Locations</th>
+            <th>Devices</th>
+            <th style="width: 56px;"></th>
+          </tr>
+        </thead>
+        <tbody id="sitesBody"></tbody>
+      </table>
+      <div class="empty-state" id="emptyState" style="display:none;">No sites yet. Click "+ New Site" to get started.</div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+// ── Demo Data ──
+const SITES = [
+  { id: 1, name: 'HQ Campus' },
+  { id: 2, name: 'Warehouse District' },
+  { id: 3, name: 'Downtown Office' },
+];
+const LOCATIONS = [
+  { id: 1, siteId: 1, name: 'Main Building', address: 'San Francisco, CA' },
+  { id: 2, siteId: 1, name: 'Parking Garage', address: 'San Francisco, CA' },
+  { id: 3, siteId: 2, name: 'Loading Dock', address: 'Oakland, CA' },
+  { id: 4, siteId: 3, name: 'Tower A', address: 'San Francisco, CA' },
+  { id: 5, siteId: 3, name: 'Tower B', address: 'San Francisco, CA' },
+  { id: 6, siteId: 3, name: 'Retail Floor', address: 'San Francisco, CA' },
+];
+const PLANS = [
+  { id: 1, locationId: 1, name: 'Level 1' },
+  { id: 2, locationId: 1, name: 'Level 2' },
+  { id: 3, locationId: 2, name: 'P1 Parking' },
+  { id: 4, locationId: 3, name: 'Ground Floor' },
+  { id: 5, locationId: 4, name: 'Floor 1' },
+  { id: 6, locationId: 4, name: 'Floor 2' },
+  { id: 7, locationId: 5, name: 'Floor 1' },
+  { id: 8, locationId: 6, name: 'Level 1' },
+];
+const DEVICES = [
+  { planId: 1, category: 'Video Security', model: 'CD52-E', qty: 2, accessories: 'ACC-MNT-CJBOX-1 INJ-POE-PLUS', retention: '60 day retention', license: '1 year license', price: 890 },
+  { planId: 1, category: 'Video Security', model: 'Bullet 4K', qty: 1, accessories: 'Wall mount bracket', retention: '30 day retention', license: '1 year license', price: 650 },
+  { planId: 1, category: 'Access Control', model: 'Wired Door', qty: 1, accessories: 'AD34', license: '1 year license', price: 320 },
+  { planId: 2, category: 'Video Security', model: 'Dome 8MP', qty: 3, accessories: 'Corner mount', retention: '90 day retention', license: '1 year license', price: 720 },
+  { planId: 2, category: 'Intercom', model: 'TD33', qty: 1, accessories: 'No accessories.', retention: '30 day retention', license: '1 year license', price: 190 },
+  { planId: 3, category: 'Video Security', model: 'PTZ Pro', qty: 2, accessories: 'Pole mount', retention: '60 day retention', license: '1 year license', price: 1450 },
+  { planId: 4, category: 'Video Security', model: 'Bullet 4K', qty: 2, accessories: 'Wall mount bracket', retention: '30 day retention', license: '1 year license', price: 650 },
+  { planId: 4, category: 'Video Security', model: 'PTZ Pro', qty: 1, accessories: 'Pole mount', retention: '60 day retention', license: '1 year license', price: 1450 },
+  { planId: 4, category: 'Access Control', model: 'Card Reader', qty: 1, accessories: 'Mullion mount', license: '1 year license', price: 280 },
+  { planId: 4, category: 'Connectivity', model: 'Switch 8-Port', qty: 1, accessories: 'Rack ears', license: '1 year license', price: 350 },
+  { planId: 5, category: 'Video Security', model: 'CD52-E', qty: 2, accessories: 'ACC-MNT-CJBOX-1 INJ-POE-PLUS', retention: '60 day retention', license: '1 year license', price: 890 },
+  { planId: 5, category: 'Access Control', model: 'Wired Door', qty: 1, accessories: 'AD34', license: '1 year license', price: 320 },
+  { planId: 6, category: 'Video Security', model: 'Dome 8MP', qty: 2, accessories: 'Corner mount', retention: '90 day retention', license: '1 year license', price: 720 },
+  { planId: 6, category: 'Intercom', model: 'TD33', qty: 1, accessories: 'No accessories.', retention: '30 day retention', license: '1 year license', price: 190 },
+  { planId: 7, category: 'Video Security', model: 'Bullet 4K', qty: 2, accessories: 'Wall mount bracket', retention: '30 day retention', license: '1 year license', price: 650 },
+  { planId: 7, category: 'Access Control', model: 'Card Reader', qty: 1, accessories: 'Mullion mount', license: '1 year license', price: 280 },
+  { planId: 7, category: 'Connectivity', model: 'Switch 8-Port', qty: 1, accessories: 'Rack ears', license: '1 year license', price: 350 },
+  { planId: 8, category: 'Video Security', model: 'PTZ Pro', qty: 1, accessories: 'Pole mount', retention: '60 day retention', license: '1 year license', price: 1450 },
+  { planId: 8, category: 'Video Security', model: 'CD52-E', qty: 2, accessories: 'ACC-MNT-CJBOX-1 INJ-POE-PLUS', retention: '60 day retention', license: '1 year license', price: 890 },
+  { planId: 8, category: 'Access Control', model: 'Wired Door', qty: 1, accessories: 'AD34', license: '1 year license', price: 320 },
+];
+
+let sites = [...SITES];
+let nextId = 4;
+let openDropdown = null;
+
+function renderTable() {
+  const tbody = document.getElementById('sitesBody');
+  const empty = document.getElementById('emptyState');
+
+  if (sites.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+
+  empty.style.display = 'none';
+  tbody.innerHTML = sites.map(s => {
+    const locCount = LOCATIONS.filter(l => l.siteId === s.id).length;
+    const siteLocIds = LOCATIONS.filter(l => l.siteId === s.id).map(l => l.id);
+    const sitePlanIds = PLANS.filter(p => siteLocIds.includes(p.locationId)).map(p => p.id);
+    const deviceCount = DEVICES.filter(d => sitePlanIds.includes(d.planId)).reduce((sum, d) => sum + d.qty, 0);
+    return `
+    <tr data-id="${s.id}" data-href="site-planner-location.html?siteId=${s.id}">
+      <td><span class="site-name">${escapeHtml(s.name)}</span></td>
+      <td><span class="badge">${locCount}</span></td>
+      <td>${deviceCount}</td>
+      <td class="actions-cell">
+        <button class="actions-btn" data-id="${s.id}" title="Actions">&middot;&middot;&middot;</button>
+        <div class="dropdown" id="dropdown-${s.id}">
+          <button class="dropdown-item" data-action="edit" data-id="${s.id}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Edit
+          </button>
+          <button class="dropdown-item" data-action="share" data-id="${s.id}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            Share
+          </button>
+          <button class="dropdown-item" data-action="export" data-id="${s.id}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export
+          </button>
+          <button class="dropdown-item danger" data-action="delete" data-id="${s.id}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+            Delete
+          </button>
+        </div>
+      </td>
+    </tr>
+  `}).join('');
+}
+
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function closeAllDropdowns() {
+  document.querySelectorAll('.dropdown.show').forEach(d => d.classList.remove('show'));
+  openDropdown = null;
+}
+
+// ── Toggle dropdown ──
+document.addEventListener('click', function(e) {
+  const actionsBtn = e.target.closest('.actions-btn');
+  if (actionsBtn) {
+    e.stopPropagation();
+    const id = actionsBtn.dataset.id;
+    const dd = document.getElementById('dropdown-' + id);
+    if (dd.classList.contains('show')) {
+      closeAllDropdowns();
+    } else {
+      closeAllDropdowns();
+      dd.classList.add('show');
+      openDropdown = dd;
+    }
+    return;
+  }
+
+  // ── Dropdown item actions ──
+  const item = e.target.closest('.dropdown-item');
+  if (item) {
+    e.stopPropagation();
+    const action = item.dataset.action;
+    const id = parseInt(item.dataset.id);
+    closeAllDropdowns();
+
+    if (action === 'edit') {
+      const site = sites.find(s => s.id === id);
+      if (site) {
+        const newName = prompt('Rename site:', site.name);
+        if (newName && newName.trim()) {
+          site.name = newName.trim();
+          renderTable();
+        }
+      }
+    } else if (action === 'share') {
+      alert('Share link copied to clipboard (placeholder).');
+    } else if (action === 'export') {
+      alert('Site exported (placeholder).');
+    } else if (action === 'delete') {
+      const site = sites.find(s => s.id === id);
+      if (site && confirm('Delete "' + site.name + '"? This cannot be undone.')) {
+        sites = sites.filter(s => s.id !== id);
+        renderTable();
+      }
+    }
+    return;
+  }
+
+  // ── Row click navigates ──
+  const row = e.target.closest('tr[data-href]');
+  if (row) {
+    window.location.href = row.dataset.href;
+    return;
+  }
+
+  // ── Click outside closes dropdown ──
+  closeAllDropdowns();
+});
+
+// ── New Site ──
+document.getElementById('newSiteBtn').addEventListener('click', function() {
+  const name = prompt('Enter site name:');
+  if (name && name.trim()) {
+    sites.push({
+      id: nextId++,
+      name: name.trim(),
+    });
+    renderTable();
+  }
+});
+
+// ── Init ──
+renderTable();
+</script>
+</body>
+</html>

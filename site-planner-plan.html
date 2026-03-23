@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lumana — Site Planner · Plan</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f9fafb; color: #344054; height: 100vh; overflow: hidden; }
+
+.app { display: flex; height: 100vh; }
+
+/* ── Left Nav ── */
+.nav { width: 64px; flex-shrink: 0; background: #f9fafb; border-right: 1px solid #eaecf0; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 16px 0 20px; z-index: 20; }
+.nav-logo { width: 32px; height: 32px; background: #7c3aed; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 4px; }
+.nav-logo svg { width: 18px; height: 18px; color: #fff; }
+.nav-top, .nav-bottom { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.nav-sep { width: 32px; height: 1px; background: #eaecf0; margin: 6px 0; }
+.nav-icon { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 8px; color: #667085; cursor: pointer; transition: all 0.15s; }
+.nav-icon:hover { background: #f2f4f7; color: #344054; }
+.nav-icon.active { background: #ede9fe; color: #7c3aed; }
+.nav-icon svg { width: 20px; height: 20px; }
+.nav-avatar { width: 32px; height: 32px; border-radius: 50%; background: #bbf7d0; color: #344054; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+/* ── Sidebar ── */
+.sidebar { width: 220px; flex-shrink: 0; background: #fff; border-right: 1px solid #eaecf0; display: flex; flex-direction: column; overflow-y: auto; }
+.sidebar-tree { padding: 8px 8px; flex: 1; }
+.sidebar-location { padding: 8px 12px; font-size: 14px; font-weight: 500; color: #344054; border-radius: 6px; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 8px; }
+.sidebar-location:hover { background: #f2f4f7; }
+.sidebar-location.selected { background: #e0f2fe; color: #0369a1; }
+.sidebar-location-icon { width: 16px; height: 16px; flex-shrink: 0; }
+.sidebar-plans { padding-left: 24px; }
+.sidebar-plan { display: flex; align-items: center; gap: 6px; padding: 5px 12px; font-size: 12px; color: #667085; border-radius: 5px; cursor: pointer; transition: all 0.15s; text-decoration: none; }
+.sidebar-plan:hover { background: #f2f4f7; color: #344054; }
+.sidebar-plan.selected { background: #e0f2fe; color: #0369a1; }
+.sidebar-plan.selected .sidebar-plan-icon { color: #0369a1; }
+.sidebar-plan-icon { width: 14px; height: 14px; flex-shrink: 0; color: #98a2b3; }
+
+/* ── Right side (topbar + body) ── */
+.right { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+/* ── Top Bar ── */
+.topbar { height: 50px; flex-shrink: 0; background: #fff; border-bottom: 1px solid #eaecf0; display: flex; align-items: center; padding: 0 16px 0 20px; gap: 12px; z-index: 10; }
+.topbar-breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 14px; color: #667085; }
+.topbar-breadcrumb a { color: #667085; text-decoration: none; }
+.topbar-breadcrumb a:hover { color: #344054; text-decoration: underline; }
+.topbar-breadcrumb .sep { color: #d0d5dd; }
+.topbar-breadcrumb .current { color: #344054; font-weight: 500; }
+
+/* ── Body (sidebar + main) ── */
+.body { flex: 1; display: flex; min-height: 0; }
+
+/* ── Main content ── */
+.main { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow-y: auto; background: #fff; }
+
+/* ── Map Preview ── */
+.map-preview { position: relative; height: 280px; flex-shrink: 0; background: #e5e7eb; display: block; cursor: pointer; text-decoration: none; color: inherit; }
+.map-preview #previewMap { width: 100%; height: 100%; }
+.map-preview .leaflet-control-zoom,
+.map-preview .leaflet-control-attribution { display: none; }
+.floor-plan-overlay { position: absolute; top: 50%; left: 55%; transform: translate(-50%, -50%); z-index: 400; pointer-events: none; }
+.floor-plan-overlay svg { filter: drop-shadow(0 2px 8px rgba(0,0,0,0.2)); }
+.map-view-plan-btn { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 500; display: inline-flex; align-items: center; gap: 6px; padding: 8px 20px; font-size: 14px; font-weight: 600; color: #fff; background: #7c3aed; border: none; border-radius: 8px; cursor: pointer; transition: background 0.15s; text-decoration: none; box-shadow: 0 4px 12px rgba(124,58,237,0.35); }
+.map-view-plan-btn:hover { background: #6d28d9; }
+
+/* ── Header ── */
+.content-header { padding: 20px 28px 16px; border-bottom: 1px solid #eaecf0; }
+.header-row { display: flex; align-items: center; justify-content: space-between; }
+.header-row + .header-row { margin-top: 4px; }
+.header-msrp { font-size: 15px; font-weight: 700; color: #7c3aed; }
+.header-device-count { font-size: 11px; font-weight: 600; color: #98a2b3; text-transform: uppercase; letter-spacing: 0.6px; }
+.header-address { font-size: 13px; color: #667085; }
+.header-right { display: flex; align-items: center; gap: 8px; }
+.view-plan-btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; font-size: 13px; font-weight: 500; color: #fff; background: #7c3aed; border: none; border-radius: 6px; cursor: pointer; transition: background 0.15s; text-decoration: none; }
+.view-plan-btn:hover { background: #6d28d9; }
+.view-plan-btn svg { width: 14px; height: 14px; }
+
+/* ── Actions dropdown ── */
+.actions-cell { position: relative; }
+.actions-btn { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: 1px solid transparent; border-radius: 6px; background: transparent; cursor: pointer; color: #667085; transition: all 0.15s; font-size: 18px; letter-spacing: 2px; line-height: 1; }
+.actions-btn:hover { background: #f2f4f7; border-color: #eaecf0; color: #344054; }
+.dropdown { position: absolute; top: calc(100% + 4px); right: 0; width: 160px; background: #fff; border: 1px solid #e4e7ec; border-radius: 8px; box-shadow: 0 8px 20px rgba(16,24,40,0.1); z-index: 300; display: none; flex-direction: column; overflow: hidden; }
+.dropdown.show { display: flex; }
+.dropdown-item { display: flex; align-items: center; gap: 9px; padding: 9px 13px; font-size: 13px; color: #344054; cursor: pointer; transition: background 0.12s; border: none; background: none; width: 100%; text-align: left; font-family: inherit; }
+.dropdown-item:hover { background: #f9fafb; }
+.dropdown-item svg { width: 15px; height: 15px; color: #667085; flex-shrink: 0; }
+.dropdown-item.danger { color: #d92d20; }
+.dropdown-item.danger svg { color: #d92d20; }
+.dropdown-item.danger:hover { background: #fef3f2; }
+
+/* ── BOM Sections ── */
+.bom-content { padding: 12px 28px 28px; }
+.bom-section { margin-bottom: 4px; }
+.bom-section-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 0 10px; cursor: pointer; user-select: none; border-bottom: 1px solid #eaecf0; }
+.bom-section-title { font-size: 16px; font-weight: 600; color: #101828; }
+.bom-section-chevron { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 6px; color: #667085; transition: all 0.15s; }
+.bom-section-chevron svg { width: 16px; height: 16px; transition: transform 0.2s; }
+.bom-section-header:hover .bom-section-chevron { background: #f2f4f7; color: #344054; }
+.bom-section.collapsed .bom-section-chevron svg { transform: rotate(-90deg); }
+.bom-section.collapsed .bom-section-body { display: none; }
+.bom-section-body { padding: 4px 0; }
+
+/* ── Device Rows ── */
+.device-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f2f4f7; }
+.device-row:last-child { border-bottom: none; }
+.device-icon { width: 36px; height: 36px; border-radius: 8px; background: #f2f4f7; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.device-icon svg { width: 20px; height: 20px; color: #667085; }
+.device-qty { display: inline-flex; align-items: center; justify-content: center; min-width: 26px; height: 22px; padding: 0 7px; border-radius: 11px; background: #e0f2fe; color: #0369a1; font-size: 12px; font-weight: 600; flex-shrink: 0; }
+.device-info { flex: 1; min-width: 0; }
+.device-model { font-size: 13px; font-weight: 600; color: #344054; margin-bottom: 2px; }
+.device-accessories { font-size: 13px; color: #667085; }
+.device-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex-shrink: 0; }
+.device-price { font-size: 12px; color: #344054; font-weight: 600; }
+.device-retention { font-size: 12px; color: #667085; }
+.device-license { font-size: 12px; color: #667085; }
+
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- Left Nav -->
+  <nav class="nav">
+    <div class="nav-top">
+      <div class="nav-logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5"/><line x1="12" y1="22" x2="12" y2="15.5"/><polyline points="22 8.5 12 15.5 2 8.5"/></svg></div>
+      <div class="nav-sep"></div>
+      <div class="nav-icon" title="Cameras"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></div>
+      <div class="nav-icon" title="Live View"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+      <div class="nav-icon" title="Alerts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></div>
+      <div class="nav-icon" title="Analytics"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+      <div class="nav-icon active" title="Site Planner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg></div>
+      <div class="nav-icon" title="Access Control"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div>
+      <div class="nav-icon" title="Reports"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+    </div>
+    <div class="nav-bottom">
+      <div class="nav-icon" title="Help"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+      <div class="nav-icon" title="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg></div>
+      <div class="nav-avatar">OR</div>
+    </div>
+  </nav>
+
+  <!-- Right side -->
+  <div class="right">
+    <!-- Top Bar -->
+    <div class="topbar">
+      <div class="topbar-breadcrumb" id="topbarBreadcrumb"></div>
+    </div>
+
+    <!-- Body: sidebar + main -->
+    <div class="body">
+      <aside class="sidebar" id="sidebar"></aside>
+      <main class="main" id="mainContent"></main>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── Demo Data ── */
+const SITES = [
+  { id: 1, name: 'HQ Campus' },
+  { id: 2, name: 'Warehouse District' },
+  { id: 3, name: 'Downtown Office' },
+];
+const LOCATIONS = [
+  { id: 1, siteId: 1, name: 'Main Building', address: 'San Francisco, CA' },
+  { id: 2, siteId: 1, name: 'Parking Garage', address: 'San Francisco, CA' },
+  { id: 3, siteId: 2, name: 'Loading Dock', address: 'Oakland, CA' },
+  { id: 4, siteId: 3, name: 'Tower A', address: 'San Francisco, CA' },
+  { id: 5, siteId: 3, name: 'Tower B', address: 'San Francisco, CA' },
+  { id: 6, siteId: 3, name: 'Retail Floor', address: 'San Francisco, CA' },
+];
+const PLANS = [
+  { id: 1, locationId: 1, name: 'Level 1' },
+  { id: 2, locationId: 1, name: 'Level 2' },
+  { id: 3, locationId: 2, name: 'P1 Parking' },
+  { id: 4, locationId: 3, name: 'Ground Floor' },
+  { id: 5, locationId: 4, name: 'Floor 1' },
+  { id: 6, locationId: 4, name: 'Floor 2' },
+  { id: 7, locationId: 5, name: 'Floor 1' },
+  { id: 8, locationId: 6, name: 'Level 1' },
+];
+const DEVICES = [
+  { planId: 1, category: 'Video Security', model: 'CD52-E', qty: 2, accessories: 'ACC-MNT-CJBOX-1 INJ-POE-PLUS', retention: '60 day retention', license: '1 year license', price: 890 },
+  { planId: 1, category: 'Video Security', model: 'Bullet 4K', qty: 1, accessories: 'Wall mount bracket', retention: '30 day retention', license: '1 year license', price: 650 },
+  { planId: 1, category: 'Access Control', model: 'Wired Door', qty: 1, accessories: 'AD34', license: '1 year license', price: 320 },
+  { planId: 2, category: 'Video Security', model: 'Dome 8MP', qty: 3, accessories: 'Corner mount', retention: '90 day retention', license: '1 year license', price: 720 },
+  { planId: 2, category: 'Intercom', model: 'TD33', qty: 1, accessories: 'No accessories.', retention: '30 day retention', license: '1 year license', price: 190 },
+  { planId: 3, category: 'Video Security', model: 'PTZ Pro', qty: 2, accessories: 'Pole mount', retention: '60 day retention', license: '1 year license', price: 1450 },
+  { planId: 4, category: 'Video Security', model: 'Bullet 4K', qty: 2, accessories: 'Wall mount bracket', retention: '30 day retention', license: '1 year license', price: 650 },
+  { planId: 4, category: 'Video Security', model: 'PTZ Pro', qty: 1, accessories: 'Pole mount', retention: '60 day retention', license: '1 year license', price: 1450 },
+  { planId: 4, category: 'Access Control', model: 'Card Reader', qty: 1, accessories: 'Mullion mount', license: '1 year license', price: 280 },
+  { planId: 4, category: 'Connectivity', model: 'Switch 8-Port', qty: 1, accessories: 'Rack ears', license: '1 year license', price: 350 },
+  { planId: 5, category: 'Video Security', model: 'CD52-E', qty: 2, accessories: 'ACC-MNT-CJBOX-1 INJ-POE-PLUS', retention: '60 day retention', license: '1 year license', price: 890 },
+  { planId: 5, category: 'Access Control', model: 'Wired Door', qty: 1, accessories: 'AD34', license: '1 year license', price: 320 },
+  { planId: 6, category: 'Video Security', model: 'Dome 8MP', qty: 2, accessories: 'Corner mount', retention: '90 day retention', license: '1 year license', price: 720 },
+  { planId: 6, category: 'Intercom', model: 'TD33', qty: 1, accessories: 'No accessories.', retention: '30 day retention', license: '1 year license', price: 190 },
+  { planId: 7, category: 'Video Security', model: 'Bullet 4K', qty: 2, accessories: 'Wall mount bracket', retention: '30 day retention', license: '1 year license', price: 650 },
+  { planId: 7, category: 'Access Control', model: 'Card Reader', qty: 1, accessories: 'Mullion mount', license: '1 year license', price: 280 },
+  { planId: 7, category: 'Connectivity', model: 'Switch 8-Port', qty: 1, accessories: 'Rack ears', license: '1 year license', price: 350 },
+  { planId: 8, category: 'Video Security', model: 'PTZ Pro', qty: 1, accessories: 'Pole mount', retention: '60 day retention', license: '1 year license', price: 1450 },
+  { planId: 8, category: 'Video Security', model: 'CD52-E', qty: 2, accessories: 'ACC-MNT-CJBOX-1 INJ-POE-PLUS', retention: '60 day retention', license: '1 year license', price: 890 },
+  { planId: 8, category: 'Access Control', model: 'Wired Door', qty: 1, accessories: 'AD34', license: '1 year license', price: 320 },
+];
+
+/* ── Read URL params ── */
+const params = new URLSearchParams(window.location.search);
+const siteId = parseInt(params.get('siteId')) || 1;
+const locationId = parseInt(params.get('locationId')) || 1;
+const planId = parseInt(params.get('planId')) || null;
+
+const site = SITES.find(s => s.id === siteId) || SITES[0];
+const siteLocations = LOCATIONS.filter(l => l.siteId === siteId);
+const currentLocation = LOCATIONS.find(l => l.id === locationId) || LOCATIONS[0];
+const currentPlan = planId ? PLANS.find(p => p.id === planId) : PLANS.filter(p => p.locationId === locationId)[0];
+const activePlanId = currentPlan ? currentPlan.id : null;
+const planLocation = currentPlan ? LOCATIONS.find(l => l.id === currentPlan.locationId) : currentLocation;
+
+/* ── Gather devices for active plan ── */
+const planDevices = currentPlan ? DEVICES.filter(d => d.planId === currentPlan.id) : [];
+
+/* ── Group devices by category ── */
+const categories = {};
+const categoryOrder = ['Video Security', 'Connectivity'];
+planDevices.forEach(d => {
+  if (!categories[d.category]) categories[d.category] = [];
+  categories[d.category].push(d);
+});
+const sortedCategories = categoryOrder.filter(c => categories[c]);
+
+const totalDevices = planDevices.reduce((sum, d) => sum + d.qty, 0);
+const totalMSRP = planDevices.reduce((sum, d) => sum + (d.price * d.qty), 0);
+
+/* ── Build sidebar ── */
+function buildSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  let html = '<div class="sidebar-tree">';
+  html += `
+    <div class="sidebar-location" onclick="window.location.href='site-planner-location.html?siteId=${siteId}'">
+      <svg class="sidebar-location-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+      All locations
+    </div>
+  `;
+  siteLocations.forEach(loc => {
+    const locPlans = PLANS.filter(p => p.locationId === loc.id);
+    html += `
+      <div class="sidebar-location" onclick="window.location.href='site-planner-location.html?siteId=${siteId}&locationId=${loc.id}'">
+        <svg class="sidebar-location-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        ${loc.name}
+      </div>
+      <div class="sidebar-plans">
+    `;
+    locPlans.forEach(plan => {
+      const isSelected = activePlanId === plan.id;
+      html += `
+        <a class="sidebar-plan ${isSelected ? 'selected' : ''}" href="site-planner-plan.html?siteId=${siteId}&locationId=${loc.id}&planId=${plan.id}">
+          <svg class="sidebar-plan-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+          ${plan.name}
+        </a>
+      `;
+    });
+    html += '</div>';
+  });
+  html += '</div>';
+  sidebar.innerHTML = html;
+}
+
+/* ── Device icon SVG ── */
+function deviceIconSVG(category) {
+  switch (category) {
+    case 'Video Security':
+      return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>';
+    case 'Connectivity':
+      return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12.55a11 11 0 0114.08 0"/><path d="M1.42 9a16 16 0 0121.16 0"/><path d="M8.53 16.11a6 6 0 016.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>';
+    default:
+      return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>';
+  }
+}
+
+const chevronSVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>';
+
+/* ── Build main content ── */
+function buildMain() {
+  const main = document.getElementById('mainContent');
+  let html = '';
+
+  const addressText = planLocation ? planLocation.address : '';
+  const viewPlanUrl = `site-planner-prototype.html?siteId=${siteId}&locationId=${currentPlan ? currentPlan.locationId : locationId}&planId=${activePlanId}`;
+
+  html += `
+    <a class="map-preview" href="${viewPlanUrl}">
+      <div id="previewMap"></div>
+      <div class="floor-plan-overlay">
+        <svg width="220" height="160" viewBox="0 0 220 160">
+          <rect x="0" y="0" width="220" height="160" rx="4" fill="#fff" fill-opacity="0.92" stroke="#d0d5dd" stroke-width="1"/>
+          <rect x="10" y="10" width="60" height="50" rx="2" fill="none" stroke="#98a2b3" stroke-width="1"/>
+          <rect x="10" y="65" width="60" height="40" rx="2" fill="none" stroke="#98a2b3" stroke-width="1"/>
+          <rect x="80" y="10" width="130" height="95" rx="2" fill="none" stroke="#98a2b3" stroke-width="1"/>
+          <line x1="80" y1="45" x2="210" y2="45" stroke="#d0d5dd" stroke-width="0.8"/>
+          <line x1="140" y1="10" x2="140" y2="105" stroke="#d0d5dd" stroke-width="0.8"/>
+          <rect x="10" y="115" width="200" height="35" rx="2" fill="none" stroke="#98a2b3" stroke-width="1"/>
+          <line x1="55" y1="115" x2="55" y2="150" stroke="#d0d5dd" stroke-width="0.8"/>
+          <line x1="100" y1="115" x2="100" y2="150" stroke="#d0d5dd" stroke-width="0.8"/>
+          <line x1="145" y1="115" x2="145" y2="150" stroke="#d0d5dd" stroke-width="0.8"/>
+          <circle cx="30" cy="30" r="4" fill="#ef4444" fill-opacity="0.5" stroke="#ef4444" stroke-width="1"/>
+          <circle cx="50" cy="45" r="4" fill="#ef4444" fill-opacity="0.5" stroke="#ef4444" stroke-width="1"/>
+          <circle cx="110" cy="28" r="4" fill="#ef4444" fill-opacity="0.5" stroke="#ef4444" stroke-width="1"/>
+          <circle cx="170" cy="70" r="4" fill="#ef4444" fill-opacity="0.5" stroke="#ef4444" stroke-width="1"/>
+          <rect x="85" y="50" width="8" height="8" rx="1" fill="#667085" fill-opacity="0.6"/>
+          <rect x="100" y="50" width="8" height="8" rx="1" fill="#667085" fill-opacity="0.6"/>
+          <rect x="115" y="50" width="8" height="8" rx="1" fill="#667085" fill-opacity="0.6"/>
+          <polygon points="25,80 30,72 35,80" fill="#10b981" fill-opacity="0.6" stroke="#10b981" stroke-width="0.8"/>
+        </svg>
+      </div>
+      <span class="map-view-plan-btn">View Plan</span>
+    </a>
+  `;
+
+  html += `
+    <div class="content-header">
+      <div class="header-row">
+        <span class="header-msrp">Total MSRP Estimate: $${totalMSRP.toLocaleString()}</span>
+        <span class="header-device-count">${totalDevices} Total Device${totalDevices !== 1 ? 's' : ''}</span>
+      </div>
+      ${addressText ? `<div class="header-row">
+        <span class="header-address">${addressText}</span>
+        <div class="header-right">
+          <div class="actions-cell">
+            <button class="actions-btn" id="headerActionsBtn" title="Actions">&middot;&middot;&middot;</button>
+            <div class="dropdown" id="headerDropdown">
+              <button class="dropdown-item" data-action="edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Edit</button>
+              <button class="dropdown-item" data-action="share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Share</button>
+              <button class="dropdown-item" data-action="export"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export</button>
+              <button class="dropdown-item danger" data-action="delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>Delete</button>
+            </div>
+          </div>
+        </div>
+      </div>` : ''}
+    </div>
+  `;
+
+  html += '<div class="bom-content">';
+
+  sortedCategories.forEach((cat, idx) => {
+    const devices = categories[cat];
+    html += `
+      <div class="bom-section" id="section-${idx}">
+        <div class="bom-section-header" onclick="toggleSection(${idx})">
+          <span class="bom-section-title">${cat === 'Video Security' ? 'Cameras' : cat}</span>
+          <div class="bom-section-chevron">${chevronSVG}</div>
+        </div>
+        <div class="bom-section-body">
+    `;
+    devices.forEach(d => {
+      const linePrice = d.price * d.qty;
+      html += `
+        <div class="device-row">
+          <div class="device-icon">${deviceIconSVG(d.category)}</div>
+          <div class="device-qty">${d.qty}</div>
+          <div class="device-info">
+            <div class="device-model">${d.model}</div>
+            <div class="device-accessories">${d.accessories}</div>
+          </div>
+          <div class="device-meta">
+            <span class="device-price">$${linePrice.toLocaleString()}</span>
+            ${d.retention ? `<span class="device-retention">${d.retention}</span>` : ''}
+            ${d.license ? `<span class="device-license">${d.license}</span>` : ''}
+          </div>
+        </div>
+      `;
+    });
+    html += '</div></div>';
+  });
+
+  html += '</div>';
+  main.innerHTML = html;
+}
+
+/* ── Collapse/Expand sections ── */
+function toggleSection(idx) {
+  const section = document.getElementById('section-' + idx);
+  if (section) section.classList.toggle('collapsed');
+}
+
+/* ── Update page title ── */
+document.title = currentPlan && planLocation
+  ? `Lumana — ${site.name} · ${planLocation.name} · ${currentPlan.name}`
+  : `Lumana — ${site.name}`;
+
+/* ── Build breadcrumb ── */
+function buildBreadcrumb() {
+  const bc = document.getElementById('topbarBreadcrumb');
+  let html = '<a href="site-planner-sites.html">Sites</a><span class="sep">›</span>';
+  html += `<a href="site-planner-location.html?siteId=${siteId}">Site: ${site.name}</a>`;
+  html += `<span class="sep">›</span>`;
+  if (planLocation) {
+    html += `<a href="site-planner-location.html?siteId=${siteId}&locationId=${planLocation.id}">Location: ${planLocation.name}</a>`;
+    html += `<span class="sep">›</span>`;
+  }
+  if (currentPlan) {
+    html += `<span class="current">Plan: ${currentPlan.name}</span>`;
+  }
+  bc.innerHTML = html;
+}
+
+/* ── Init ── */
+buildBreadcrumb();
+buildSidebar();
+buildMain();
+
+/* ── Init Leaflet map preview ── */
+const mapEl = document.getElementById('previewMap');
+if (mapEl) {
+  const previewMap = L.map('previewMap', {
+    zoomControl: false,
+    attributionControl: false,
+    dragging: false,
+    scrollWheelZoom: false,
+    doubleClickZoom: false,
+    touchZoom: false,
+    keyboard: false,
+  }).setView([37.7749, -122.4194], 17);
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 19,
+  }).addTo(previewMap);
+}
+
+/* ── Dropdown toggle ── */
+document.addEventListener('click', function(e) {
+  const actionsBtn = e.target.closest('.actions-btn');
+  if (actionsBtn) {
+    e.stopPropagation();
+    const dd = document.getElementById('headerDropdown');
+    if (dd) {
+      const wasOpen = dd.classList.contains('show');
+      dd.classList.toggle('show', !wasOpen);
+    }
+    return;
+  }
+  const item = e.target.closest('.dropdown-item');
+  if (item) {
+    const action = item.dataset.action;
+    const dd = document.getElementById('headerDropdown');
+    if (dd) dd.classList.remove('show');
+    if (action === 'edit') alert('Edit plan');
+    else if (action === 'share') alert('Share plan');
+    else if (action === 'export') alert('Export plan');
+    else if (action === 'delete') alert('Delete plan');
+    return;
+  }
+  document.querySelectorAll('.dropdown.show').forEach(d => d.classList.remove('show'));
+});
+</script>
+</body>
+</html>
