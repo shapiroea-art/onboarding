@@ -116,6 +116,56 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .device-retention { font-size: 12px; color: #667085; }
 .device-license { font-size: 12px; color: #667085; }
 
+/* ── Modal ── */
+.modal-overlay { position: fixed; inset: 0; background: rgba(16,24,40,0.5); z-index: 1000; display: none; align-items: center; justify-content: center; }
+.modal-overlay.show { display: flex; }
+.modal { background: #fff; border-radius: 12px; box-shadow: 0 20px 60px rgba(16,24,40,0.2); width: 420px; max-width: 90vw; padding: 28px; }
+.modal-success { display: none; align-items: center; gap: 8px; padding: 10px 14px; margin-bottom: 16px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; font-size: 13px; font-weight: 500; color: #065f46; }
+.modal-success.show { display: flex; }
+.modal-success svg { width: 16px; height: 16px; flex-shrink: 0; color: #10b981; }
+.modal-title { font-size: 18px; font-weight: 600; color: #101828; margin-bottom: 20px; }
+.modal-field { margin-bottom: 16px; }
+.modal-label { display: block; font-size: 13px; font-weight: 500; color: #344054; margin-bottom: 6px; }
+.modal-input { width: 100%; padding: 9px 12px; font-size: 14px; border: 1px solid #d0d5dd; border-radius: 8px; color: #101828; outline: none; transition: border-color 0.15s; font-family: inherit; }
+.modal-input:focus { border-color: #7c3aed; box-shadow: 0 0 0 3px rgba(124,58,237,0.12); }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 24px; }
+.modal-btn { padding: 9px 18px; font-size: 14px; font-weight: 500; border-radius: 8px; cursor: pointer; border: 1px solid #d0d5dd; background: #fff; color: #344054; font-family: inherit; transition: all 0.15s; }
+.modal-btn:hover { background: #f9fafb; }
+.modal-btn-primary { background: #7c3aed; border-color: #7c3aed; color: #fff; }
+.modal-btn-primary:hover { background: #6d28d9; }
+.modal-btn-primary:disabled { background: #d6bbfb; border-color: #d6bbfb; cursor: not-allowed; }
+.modal-address-row { display: flex; gap: 8px; }
+.modal-address-row .modal-input { flex: 1; }
+.add-address-btn { flex-shrink: 0; padding: 9px 14px; font-size: 13px; font-weight: 500; border: 1px solid #d0d5dd; border-radius: 8px; background: #fff; color: #344054; cursor: pointer; font-family: inherit; transition: all 0.15s; white-space: nowrap; }
+.add-address-btn:hover { background: #f9fafb; }
+.add-address-btn.active { background: #ede9fe; border-color: #7c3aed; color: #7c3aed; }
+.modal-map-wrap { margin-top: 12px; display: none; }
+.modal-map-wrap.show { display: block; }
+.modal-map { width: 100%; height: 200px; border-radius: 8px; border: 1px solid #eaecf0; overflow: hidden; position: relative; }
+.modal-map .leaflet-control-attribution { display: none; }
+.map-marker { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -100%); z-index: 500; pointer-events: none; }
+.map-marker svg { filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
+.modal-map-hint { font-size: 12px; color: #667085; text-align: center; margin-top: 8px; }
+
+/* ── Create Plan Modal extras ── */
+.modal-breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #667085; margin-bottom: 16px; }
+.modal-breadcrumb .bc-sep { color: #d0d5dd; }
+.modal-breadcrumb .bc-current { color: #344054; font-weight: 500; }
+.upload-area { border: 2px dashed #d0d5dd; border-radius: 10px; padding: 28px 20px; text-align: center; cursor: pointer; transition: all 0.15s; background: #f9fafb; }
+.upload-area:hover:not(.disabled) { border-color: #7c3aed; background: #faf5ff; }
+.upload-area.dragover { border-color: #7c3aed; background: #ede9fe; }
+.upload-area.disabled { opacity: 0.5; pointer-events: none; cursor: not-allowed; border-color: #e4e7ec; background: #f9fafb; }
+.upload-icon { margin-bottom: 8px; color: #98a2b3; }
+.upload-text { font-size: 14px; color: #344054; margin-bottom: 4px; }
+.upload-text strong { color: #7c3aed; font-weight: 500; cursor: pointer; }
+.upload-hint { font-size: 12px; color: #98a2b3; }
+.upload-file-preview { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #f2f4f7; border-radius: 8px; margin-top: 10px; }
+.upload-file-name { flex: 1; font-size: 13px; color: #344054; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.upload-file-remove { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border: none; background: none; color: #667085; cursor: pointer; border-radius: 4px; flex-shrink: 0; }
+.upload-file-remove:hover { background: #e4e7ec; color: #d92d20; }
+.fp-preview-modal .modal { width: 560px; }
+.fp-preview-img { width: 100%; border-radius: 8px; border: 1px solid #eaecf0; margin-bottom: 16px; max-height: 400px; object-fit: contain; background: #f9fafb; }
+
 </style>
 </head>
 <body>
@@ -152,6 +202,94 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
     <div class="body">
       <aside class="sidebar" id="sidebar"></aside>
       <main class="main" id="mainContent"></main>
+    </div>
+  </div>
+</div>
+
+<!-- Create Location Modal -->
+<div class="modal-overlay" id="createLocationModal">
+  <div class="modal">
+    <div class="modal-success" id="modalSuccessBanner">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      You created a site
+    </div>
+    <div class="modal-title">Create location</div>
+    <div class="modal-field">
+      <label class="modal-label" for="locationNameInput">Location name</label>
+      <input class="modal-input" id="locationNameInput" type="text" placeholder="Enter location name" autocomplete="off"/>
+    </div>
+    <div class="modal-field">
+      <label class="modal-label" for="locationAddressInput">Address</label>
+      <div class="modal-address-row">
+        <input class="modal-input" id="locationAddressInput" type="text" placeholder="Enter address" autocomplete="off"/>
+        <button class="add-address-btn" id="addAddressBtn" type="button">Add address</button>
+      </div>
+      <div class="modal-map-wrap" id="modalMapWrap">
+        <div class="modal-map" id="modalMapContainer">
+          <div id="modalMap" style="width:100%;height:100%"></div>
+          <div class="map-marker">
+            <svg width="28" height="40" viewBox="0 0 28 40" fill="none"><path d="M14 0C6.27 0 0 6.27 0 14c0 10.5 14 26 14 26s14-15.5 14-26C28 6.27 21.73 0 14 0z" fill="#7c3aed"/><circle cx="14" cy="14" r="6" fill="#fff"/></svg>
+          </div>
+        </div>
+        <div class="modal-map-hint">Drag the map to set the Location's origin point</div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn" id="cancelLocationBtn">Cancel</button>
+      <button class="modal-btn modal-btn-primary" id="confirmLocationBtn" disabled>Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- Create Plan Modal -->
+<div class="modal-overlay" id="createPlanModal">
+  <div class="modal">
+    <div class="modal-success show" id="planSuccessBanner">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      You created a location
+    </div>
+    <div class="modal-title">Create plan</div>
+    <div class="modal-breadcrumb" id="planModalBreadcrumb"></div>
+    <div class="modal-field">
+      <label class="modal-label" for="planNameInput">Plan name</label>
+      <input class="modal-input" id="planNameInput" type="text" placeholder="Enter plan name" autocomplete="off"/>
+    </div>
+    <div class="modal-field">
+      <label class="modal-label">Upload a floor plan <span style="color:#98a2b3;font-weight:400">(optional)</span></label>
+      <div class="upload-area disabled" id="uploadArea">
+        <div class="upload-icon">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" stroke="#98a2b3" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><polyline points="17 8 12 3 7 8" stroke="#98a2b3" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><line x1="12" y1="3" x2="12" y2="15" stroke="#98a2b3" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="upload-text"><strong>Click to upload</strong> or drag and drop</div>
+        <div class="upload-hint">.pdf, .jpg or .png up to 15MB</div>
+        <input type="file" id="planFileInput" accept=".pdf,.jpg,.jpeg,.png" style="display:none"/>
+      </div>
+      <div id="uploadFilePreview" style="display:none" class="upload-file-preview">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#667085" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span class="upload-file-name" id="uploadFileName"></span>
+        <button class="upload-file-remove" id="uploadFileRemove" type="button" title="Remove">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn" id="cancelPlanBtn">Cancel</button>
+      <button class="modal-btn modal-btn-primary" id="confirmPlanBtn" disabled>Create plan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Floor Plan Preview Modal -->
+<div class="modal-overlay fp-preview-modal" id="floorPlanPreviewModal">
+  <div class="modal">
+    <div class="modal-success show">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      You created a plan
+    </div>
+    <div class="modal-title">Floor plan uploaded</div>
+    <img class="fp-preview-img" id="fpPreviewImg" src="" alt="Floor plan preview"/>
+    <div class="modal-actions">
+      <button class="modal-btn modal-btn-primary" id="fpPreviewContinueBtn">Open plan editor</button>
     </div>
   </div>
 </div>
@@ -496,6 +634,216 @@ document.addEventListener('click', function(e) {
   }
   document.querySelectorAll('.dropdown.show').forEach(d => d.classList.remove('show'));
 });
+
+/* ── Create Location Modal ── */
+const createLocModal = document.getElementById('createLocationModal');
+const locNameInput = document.getElementById('locationNameInput');
+const locAddressInput = document.getElementById('locationAddressInput');
+const confirmLocBtn = document.getElementById('confirmLocationBtn');
+const cancelLocBtn = document.getElementById('cancelLocationBtn');
+
+function updateLocBtnState() {
+  confirmLocBtn.disabled = !locNameInput.value.trim();
+}
+
+locNameInput.addEventListener('input', updateLocBtnState);
+
+locNameInput.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && locNameInput.value.trim()) locAddressInput.focus();
+  else if (e.key === 'Escape') cancelLocBtn.click();
+});
+locAddressInput.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && locNameInput.value.trim()) confirmLocBtn.click();
+  else if (e.key === 'Escape') cancelLocBtn.click();
+});
+
+cancelLocBtn.addEventListener('click', function() {
+  createLocModal.classList.remove('show');
+  hideLocMap();
+});
+
+createLocModal.addEventListener('click', function(e) {
+  if (e.target === createLocModal) {
+    createLocModal.classList.remove('show');
+    hideLocMap();
+  }
+});
+
+let createdLocName = '';
+let uploadedFile = null;
+
+confirmLocBtn.addEventListener('click', function() {
+  const name = locNameInput.value.trim();
+  if (!name) return;
+  createdLocName = name;
+  createLocModal.classList.remove('show');
+  hideLocMap();
+
+  /* Show Create Plan modal */
+  const planModalBc = document.getElementById('planModalBreadcrumb');
+  planModalBc.innerHTML = `<span>${site.name}</span><span class="bc-sep">›</span><span class="bc-current">${createdLocName}</span>`;
+  document.getElementById('planNameInput').value = '';
+  document.getElementById('confirmPlanBtn').disabled = true;
+  document.getElementById('uploadArea').classList.add('disabled');
+  uploadedFile = null;
+  document.getElementById('planFileInput').value = '';
+  document.getElementById('uploadFilePreview').style.display = 'none';
+  document.getElementById('uploadArea').style.display = '';
+  document.getElementById('planSuccessBanner').classList.add('show');
+  document.getElementById('createPlanModal').classList.add('show');
+  setTimeout(() => document.getElementById('planNameInput').focus(), 50);
+});
+
+/* ── Add Address map ── */
+const addAddressBtn = document.getElementById('addAddressBtn');
+const modalMapWrap = document.getElementById('modalMapWrap');
+let modalLocMap = null;
+
+function hideLocMap() {
+  modalMapWrap.classList.remove('show');
+  addAddressBtn.classList.remove('active');
+  if (modalLocMap) { modalLocMap.remove(); modalLocMap = null; }
+}
+
+addAddressBtn.addEventListener('click', function() {
+  const isOpen = modalMapWrap.classList.contains('show');
+  if (isOpen) {
+    hideLocMap();
+  } else {
+    modalMapWrap.classList.add('show');
+    addAddressBtn.classList.add('active');
+    if (!modalLocMap) {
+      modalLocMap = L.map('modalMap', {
+        zoomControl: false,
+        attributionControl: false,
+      }).setView([37.7749, -122.4194], 15);
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 19,
+      }).addTo(modalLocMap);
+      L.control.zoom({ position: 'topright' }).addTo(modalLocMap);
+      setTimeout(() => modalLocMap.invalidateSize(), 100);
+    }
+  }
+});
+
+/* ── Create Plan Modal ── */
+const createPlanModal = document.getElementById('createPlanModal');
+const planNameInput = document.getElementById('planNameInput');
+const confirmPlanBtn = document.getElementById('confirmPlanBtn');
+const cancelPlanBtn = document.getElementById('cancelPlanBtn');
+const uploadArea = document.getElementById('uploadArea');
+const planFileInput = document.getElementById('planFileInput');
+const uploadFilePreview = document.getElementById('uploadFilePreview');
+const uploadFileNameEl = document.getElementById('uploadFileName');
+const uploadFileRemove = document.getElementById('uploadFileRemove');
+
+function updatePlanBtnState() {
+  const hasName = !!planNameInput.value.trim();
+  confirmPlanBtn.disabled = !hasName;
+  uploadArea.classList.toggle('disabled', !hasName);
+}
+
+planNameInput.addEventListener('input', updatePlanBtnState);
+planNameInput.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') cancelPlanBtn.click();
+});
+
+cancelPlanBtn.addEventListener('click', function() {
+  createPlanModal.classList.remove('show');
+  uploadedFile = null;
+  uploadFilePreview.style.display = 'none';
+  uploadArea.style.display = '';
+});
+
+createPlanModal.addEventListener('click', function(e) {
+  if (e.target === createPlanModal) {
+    createPlanModal.classList.remove('show');
+  }
+});
+
+/* Upload area click */
+uploadArea.addEventListener('click', function() {
+  if (uploadArea.classList.contains('disabled')) return;
+  planFileInput.click();
+});
+
+planFileInput.addEventListener('change', function() {
+  if (planFileInput.files.length > 0) handleFileUpload(planFileInput.files[0]);
+});
+
+/* Drag and drop */
+uploadArea.addEventListener('dragover', function(e) {
+  e.preventDefault();
+  if (!uploadArea.classList.contains('disabled')) uploadArea.classList.add('dragover');
+});
+uploadArea.addEventListener('dragleave', function(e) {
+  e.preventDefault();
+  uploadArea.classList.remove('dragover');
+});
+uploadArea.addEventListener('drop', function(e) {
+  e.preventDefault();
+  uploadArea.classList.remove('dragover');
+  if (uploadArea.classList.contains('disabled')) return;
+  if (e.dataTransfer.files.length > 0) handleFileUpload(e.dataTransfer.files[0]);
+});
+
+function handleFileUpload(file) {
+  const validTypes = ['application/pdf', 'image/jpeg', 'image/png'];
+  if (!validTypes.includes(file.type)) { alert('Please upload a .pdf, .jpg or .png file.'); return; }
+  if (file.size > 15 * 1024 * 1024) { alert('File must be under 15MB.'); return; }
+  uploadedFile = file;
+  uploadFileNameEl.textContent = file.name;
+  uploadFilePreview.style.display = 'flex';
+  uploadArea.style.display = 'none';
+}
+
+uploadFileRemove.addEventListener('click', function() {
+  uploadedFile = null;
+  planFileInput.value = '';
+  uploadFilePreview.style.display = 'none';
+  uploadArea.style.display = '';
+});
+
+/* Confirm Create Plan */
+confirmPlanBtn.addEventListener('click', function() {
+  const name = planNameInput.value.trim();
+  if (!name) return;
+
+  const protoUrl = `site-planner-prototype.html?siteId=${siteId}&locationId=${locationId}&planId=99&newPlan=1`;
+  createPlanModal.classList.remove('show');
+
+  if (uploadedFile && uploadedFile.type.startsWith('image/')) {
+    /* Show floor plan preview modal with the uploaded image */
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      document.getElementById('fpPreviewImg').src = e.target.result;
+      document.getElementById('floorPlanPreviewModal').classList.add('show');
+    };
+    reader.readAsDataURL(uploadedFile);
+  } else {
+    /* No floor plan (or PDF) → go to View plan page with map mode */
+    window.location.href = protoUrl;
+  }
+});
+
+/* Floor Plan Preview Modal */
+const fpPreviewModal = document.getElementById('floorPlanPreviewModal');
+document.getElementById('fpPreviewContinueBtn').addEventListener('click', function() {
+  window.location.href = `site-planner-prototype.html?siteId=${siteId}&locationId=${locationId}&planId=99&newPlan=1`;
+});
+fpPreviewModal.addEventListener('click', function(e) {
+  if (e.target === fpPreviewModal) fpPreviewModal.classList.remove('show');
+});
+
+/* ── Auto-open Create Location modal if coming from new site ── */
+if (params.get('newSite') === '1') {
+  locNameInput.value = '';
+  locAddressInput.value = '';
+  confirmLocBtn.disabled = true;
+  document.getElementById('modalSuccessBanner').classList.add('show');
+  createLocModal.classList.add('show');
+  setTimeout(() => locNameInput.focus(), 50);
+}
 </script>
 </body>
 </html>
