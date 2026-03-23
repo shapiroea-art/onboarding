@@ -67,6 +67,22 @@ tbody tr { transition: background 0.12s; }
 
 /* ── Empty state ── */
 .empty-state { padding: 60px 20px; text-align: center; color: #98a2b3; font-size: 14px; }
+
+/* ── Modal ── */
+.modal-overlay { position: fixed; inset: 0; background: rgba(16,24,40,0.5); z-index: 1000; display: none; align-items: center; justify-content: center; }
+.modal-overlay.show { display: flex; }
+.modal { background: #fff; border-radius: 12px; box-shadow: 0 20px 60px rgba(16,24,40,0.2); width: 420px; max-width: 90vw; padding: 28px; }
+.modal-title { font-size: 18px; font-weight: 600; color: #101828; margin-bottom: 20px; }
+.modal-field { margin-bottom: 16px; }
+.modal-label { display: block; font-size: 13px; font-weight: 500; color: #344054; margin-bottom: 6px; }
+.modal-input { width: 100%; padding: 9px 12px; font-size: 14px; border: 1px solid #d0d5dd; border-radius: 8px; color: #101828; outline: none; transition: border-color 0.15s; font-family: inherit; }
+.modal-input:focus { border-color: #7c3aed; box-shadow: 0 0 0 3px rgba(124,58,237,0.12); }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 24px; }
+.modal-btn { padding: 9px 18px; font-size: 14px; font-weight: 500; border-radius: 8px; cursor: pointer; border: 1px solid #d0d5dd; background: #fff; color: #344054; font-family: inherit; transition: all 0.15s; }
+.modal-btn:hover { background: #f9fafb; }
+.modal-btn-primary { background: #7c3aed; border-color: #7c3aed; color: #fff; }
+.modal-btn-primary:hover { background: #6d28d9; }
+.modal-btn-primary:disabled { background: #d6bbfb; border-color: #d6bbfb; cursor: not-allowed; }
 </style>
 </head>
 <body>
@@ -147,6 +163,21 @@ tbody tr { transition: background 0.12s; }
   </div>
 
 </div>
+</div>
+
+<!-- Create Site Modal -->
+<div class="modal-overlay" id="createSiteModal">
+  <div class="modal">
+    <div class="modal-title">Create site</div>
+    <div class="modal-field">
+      <label class="modal-label" for="siteNameInput">Site name</label>
+      <input class="modal-input" id="siteNameInput" type="text" placeholder="Enter site name" autocomplete="off"/>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn" id="cancelSiteBtn">Cancel</button>
+      <button class="modal-btn modal-btn-primary" id="confirmSiteBtn" disabled>Create site</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -317,16 +348,47 @@ document.addEventListener('click', function(e) {
   closeAllDropdowns();
 });
 
-// ── New Site ──
+// ── New Site Modal ──
+const createSiteModal = document.getElementById('createSiteModal');
+const siteNameInput = document.getElementById('siteNameInput');
+const confirmSiteBtn = document.getElementById('confirmSiteBtn');
+const cancelSiteBtn = document.getElementById('cancelSiteBtn');
+
 document.getElementById('newSiteBtn').addEventListener('click', function() {
-  const name = prompt('Enter site name:');
-  if (name && name.trim()) {
-    sites.push({
-      id: nextId++,
-      name: name.trim(),
-    });
-    renderTable();
+  siteNameInput.value = '';
+  confirmSiteBtn.disabled = true;
+  createSiteModal.classList.add('show');
+  setTimeout(() => siteNameInput.focus(), 50);
+});
+
+siteNameInput.addEventListener('input', function() {
+  confirmSiteBtn.disabled = !siteNameInput.value.trim();
+});
+
+siteNameInput.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && siteNameInput.value.trim()) {
+    confirmSiteBtn.click();
+  } else if (e.key === 'Escape') {
+    cancelSiteBtn.click();
   }
+});
+
+cancelSiteBtn.addEventListener('click', function() {
+  createSiteModal.classList.remove('show');
+});
+
+createSiteModal.addEventListener('click', function(e) {
+  if (e.target === createSiteModal) createSiteModal.classList.remove('show');
+});
+
+confirmSiteBtn.addEventListener('click', function() {
+  const name = siteNameInput.value.trim();
+  if (!name) return;
+  const newId = nextId++;
+  sites.push({ id: newId, name: name });
+  renderTable();
+  createSiteModal.classList.remove('show');
+  window.location.href = `site-planner-location.html?siteId=${newId}&newSite=1`;
 });
 
 // ── Init ──

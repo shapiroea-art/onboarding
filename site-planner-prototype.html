@@ -3952,6 +3952,13 @@ window.addEventListener('DOMContentLoaded', () => {
   if (bcSite) { bcSite.href = `site-planner-location.html?siteId=${siteId}`; bcSite.textContent = 'Site: ' + (bcSiteNames[siteId] || 'Site'); }
   if (bcLoc) { bcLoc.href = `site-planner-location.html?siteId=${siteId}&locationId=${locationId}`; bcLoc.textContent = 'Location: ' + (bcLocNames[locationId] || 'Location'); }
   if (bcPlan) { bcPlan.href = `site-planner-location.html?siteId=${siteId}&locationId=${locationId}&planId=${planId}`; bcPlan.textContent = 'Plan: ' + (bcPlanNames[planId] || 'Plan'); }
+
+  /* If arriving from Create Plan without floor plan → show Map only, hide floor plan */
+  if (params.get('newPlan') === '1') {
+    state.floorPlanFile = null;
+    setMapMode('map');
+    renderPanel();
+  }
 });
 </script>
 </body>
