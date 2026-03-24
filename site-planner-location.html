@@ -119,8 +119,30 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .device-accessories { font-size: 13px; color: #667085; }
 .device-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex-shrink: 0; }
 .device-price { font-size: 12px; color: #344054; font-weight: 600; }
-.device-retention { font-size: 12px; color: #667085; }
-.device-license { font-size: 12px; color: #667085; }
+/* ── Plan BOM grouped view ── */
+.plan-bom-group { margin-bottom: 4px; padding-bottom: 4px; border-bottom: 1px solid #eaecf0; }
+.plan-bom-group:last-child { border-bottom: none; }
+.plan-bom-group-hdr { display: flex; align-items: center; gap: 8px; padding: 10px 0; cursor: pointer; user-select: none; }
+.plan-bom-group-hdr-core { border-left: 4px solid var(--core-color, #667085); padding-left: 10px; background: #f9fafb; border-radius: 0 6px 6px 0; }
+.plan-bom-group-hdr-unassigned { border-left: 4px dashed #d0d5dd; padding-left: 10px; background: #f9fafb; border-radius: 0 6px 6px 0; }
+.plan-bom-group-icon { width: 16px; height: 16px; flex-shrink: 0; color: #667085; display: flex; align-items: center; }
+.plan-bom-group-icon svg { width: 16px; height: 16px; }
+.plan-bom-group-name { font-size: 14px; font-weight: 600; color: #344054; }
+.plan-bom-group-type { font-size: 14px; color: #98a2b3; margin-left: 4px; }
+.plan-bom-group-badge { font-size: 11px; font-weight: 600; color: #667085; background: #eaecf0; border-radius: 10px; padding: 1px 8px; margin-left: 6px; }
+.plan-bom-group-price { margin-left: auto; font-size: 14px; font-weight: 600; color: #344054; white-space: nowrap; }
+.plan-bom-group-chev { width: 16px; height: 16px; color: #667085; transition: transform 0.2s; }
+.plan-bom-group.collapsed .plan-bom-group-chev { transform: rotate(-90deg); }
+.plan-bom-group.collapsed .plan-bom-group-children { display: none; }
+.plan-bom-group-children { padding: 0 0 4px 14px; }
+.plan-bom-cam { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid #f2f4f7; }
+.plan-bom-cam:last-child { border-bottom: none; }
+.plan-bom-cam-icon { width: 20px; height: 20px; border-radius: 4px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; }
+.plan-bom-cam-icon svg { width: 12px; height: 12px; }
+.plan-bom-cam-name { font-size: 13px; font-weight: 500; color: #344054; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.plan-bom-cam-model { font-size: 12px; color: #98a2b3; margin-left: 4px; }
+.plan-bom-cam-price { font-size: 13px; font-weight: 600; color: #344054; white-space: nowrap; flex-shrink: 0; }
+.plan-bom-grand { display: flex; justify-content: space-between; padding: 14px 0; border-top: 2px solid #eaecf0; margin-top: 8px; font-size: 15px; font-weight: 700; color: #101828; }
 
 /* ── Modal ── */
 .modal-overlay { position: fixed; inset: 0; background: rgba(16,24,40,0.5); z-index: 1000; display: none; align-items: center; justify-content: center; }
@@ -437,26 +459,60 @@ const PLANS = [
   { id: 8, locationId: 6, name: 'Level 1' },
 ];
 const DEVICES = [
-  { planId: 1, category: 'Video Security', model: 'CD52-E', qty: 2, accessories: 'ACC-MNT-CJBOX-1 INJ-POE-PLUS', retention: '60 day retention', license: '1 year license', price: 890 },
-  { planId: 1, category: 'Video Security', model: 'Bullet 4K', qty: 1, accessories: 'Wall mount bracket', retention: '30 day retention', license: '1 year license', price: 650 },
-  { planId: 1, category: 'Access Control', model: 'Wired Door', qty: 1, accessories: 'AD34', license: '1 year license', price: 320 },
-  { planId: 2, category: 'Video Security', model: 'Dome 8MP', qty: 3, accessories: 'Corner mount', retention: '90 day retention', license: '1 year license', price: 720 },
-  { planId: 2, category: 'Intercom', model: 'TD33', qty: 1, accessories: 'No accessories.', retention: '30 day retention', license: '1 year license', price: 190 },
-  { planId: 3, category: 'Video Security', model: 'PTZ Pro', qty: 2, accessories: 'Pole mount', retention: '60 day retention', license: '1 year license', price: 1450 },
-  { planId: 4, category: 'Video Security', model: 'Bullet 4K', qty: 2, accessories: 'Wall mount bracket', retention: '30 day retention', license: '1 year license', price: 650 },
-  { planId: 4, category: 'Video Security', model: 'PTZ Pro', qty: 1, accessories: 'Pole mount', retention: '60 day retention', license: '1 year license', price: 1450 },
-  { planId: 4, category: 'Access Control', model: 'Card Reader', qty: 1, accessories: 'Mullion mount', license: '1 year license', price: 280 },
-  { planId: 4, category: 'Connectivity', model: 'Switch 8-Port', qty: 1, accessories: 'Rack ears', license: '1 year license', price: 350 },
-  { planId: 5, category: 'Video Security', model: 'CD52-E', qty: 2, accessories: 'ACC-MNT-CJBOX-1 INJ-POE-PLUS', retention: '60 day retention', license: '1 year license', price: 890 },
-  { planId: 5, category: 'Access Control', model: 'Wired Door', qty: 1, accessories: 'AD34', license: '1 year license', price: 320 },
-  { planId: 6, category: 'Video Security', model: 'Dome 8MP', qty: 2, accessories: 'Corner mount', retention: '90 day retention', license: '1 year license', price: 720 },
-  { planId: 6, category: 'Intercom', model: 'TD33', qty: 1, accessories: 'No accessories.', retention: '30 day retention', license: '1 year license', price: 190 },
-  { planId: 7, category: 'Video Security', model: 'Bullet 4K', qty: 2, accessories: 'Wall mount bracket', retention: '30 day retention', license: '1 year license', price: 650 },
-  { planId: 7, category: 'Access Control', model: 'Card Reader', qty: 1, accessories: 'Mullion mount', license: '1 year license', price: 280 },
-  { planId: 7, category: 'Connectivity', model: 'Switch 8-Port', qty: 1, accessories: 'Rack ears', license: '1 year license', price: 350 },
-  { planId: 8, category: 'Video Security', model: 'PTZ Pro', qty: 1, accessories: 'Pole mount', retention: '60 day retention', license: '1 year license', price: 1450 },
-  { planId: 8, category: 'Video Security', model: 'CD52-E', qty: 2, accessories: 'ACC-MNT-CJBOX-1 INJ-POE-PLUS', retention: '60 day retention', license: '1 year license', price: 890 },
-  { planId: 8, category: 'Access Control', model: 'Wired Door', qty: 1, accessories: 'AD34', license: '1 year license', price: 320 },
+  { planId: 1, category: 'Video Security', model: 'CD52-E', qty: 2, accessories: 'ACC-MNT-CJBOX-1 INJ-POE-PLUS', price: 890 },
+  { planId: 1, category: 'Video Security', model: 'Bullet 4K', qty: 1, accessories: 'Wall mount bracket', price: 650 },
+  { planId: 1, category: 'Access Control', model: 'Wired Door', qty: 1, accessories: 'AD34', price: 320 },
+  { planId: 2, category: 'Video Security', model: 'Dome 8MP', qty: 3, accessories: 'Corner mount', price: 720 },
+  { planId: 2, category: 'Intercom', model: 'TD33', qty: 1, accessories: 'No accessories.', price: 190 },
+  { planId: 3, category: 'Video Security', model: 'PTZ Pro', qty: 2, accessories: 'Pole mount', price: 1450 },
+  { planId: 4, category: 'Video Security', model: 'Bullet 4K', qty: 2, accessories: 'Wall mount bracket', price: 650 },
+  { planId: 4, category: 'Video Security', model: 'PTZ Pro', qty: 1, accessories: 'Pole mount', price: 1450 },
+  { planId: 4, category: 'Access Control', model: 'Card Reader', qty: 1, accessories: 'Mullion mount', price: 280 },
+  { planId: 4, category: 'Connectivity', model: 'Switch 8-Port', qty: 1, accessories: 'Rack ears', price: 350 },
+  { planId: 5, category: 'Video Security', model: 'CD52-E', qty: 2, accessories: 'ACC-MNT-CJBOX-1 INJ-POE-PLUS', price: 890 },
+  { planId: 5, category: 'Access Control', model: 'Wired Door', qty: 1, accessories: 'AD34', price: 320 },
+  { planId: 6, category: 'Video Security', model: 'Dome 8MP', qty: 2, accessories: 'Corner mount', price: 720 },
+  { planId: 6, category: 'Intercom', model: 'TD33', qty: 1, accessories: 'No accessories.', price: 190 },
+  { planId: 7, category: 'Video Security', model: 'Bullet 4K', qty: 2, accessories: 'Wall mount bracket', price: 650 },
+  { planId: 7, category: 'Access Control', model: 'Card Reader', qty: 1, accessories: 'Mullion mount', price: 280 },
+  { planId: 7, category: 'Connectivity', model: 'Switch 8-Port', qty: 1, accessories: 'Rack ears', price: 350 },
+  { planId: 8, category: 'Video Security', model: 'PTZ Pro', qty: 1, accessories: 'Pole mount', price: 1450 },
+  { planId: 8, category: 'Video Security', model: 'CD52-E', qty: 2, accessories: 'ACC-MNT-CJBOX-1 INJ-POE-PLUS', price: 890 },
+  { planId: 8, category: 'Access Control', model: 'Wired Door', qty: 1, accessories: 'AD34', price: 320 },
+];
+const CORES = [
+  { planId: 1, name: 'Office Core', type: '1U Core 64', channels: 64, cameraCount: 3, price: 5000, color: '#2563eb' },
+  { planId: 2, name: 'Server Core', type: 'Core 10', channels: 10, cameraCount: 4, price: 1500, color: '#059669' },
+  { planId: 3, name: 'Parking Core', type: 'Core 10', channels: 10, cameraCount: 2, price: 1500, color: '#059669' },
+  { planId: 4, name: 'Main Core', type: '1U Core 64', channels: 64, cameraCount: 3, price: 5000, color: '#2563eb' },
+  { planId: 5, name: 'Lobby Core', type: 'Core 10', channels: 10, cameraCount: 2, price: 1500, color: '#059669' },
+  { planId: 7, name: 'Office Core', type: 'Core 10', channels: 10, cameraCount: 2, price: 1500, color: '#059669' },
+  { planId: 8, name: 'Main Core', type: '2U Core 128', channels: 128, cameraCount: 3, price: 9000, color: '#7c3aed' },
+];
+/* Per-plan cameras for BOM grouped view */
+const PLAN_CAMERAS = [
+  { planId: 1, name: 'Front Door Cam', model: 'CD52-E', type: 'Dome', price: 890, color: '#7c3aed', coreIdx: 0 },
+  { planId: 1, name: 'Hallway Cam', model: 'CD52-E', type: 'Dome', price: 890, color: '#7c3aed', coreIdx: 0 },
+  { planId: 1, name: 'Lobby Cam', model: 'Bullet 4K', type: 'Bullet', price: 650, color: '#2563eb', coreIdx: 0 },
+  { planId: 2, name: 'Entrance Cam', model: 'Dome 8MP', type: 'Dome', price: 720, color: '#7c3aed', coreIdx: 0 },
+  { planId: 2, name: 'Corridor Cam 1', model: 'Dome 8MP', type: 'Dome', price: 720, color: '#7c3aed', coreIdx: 0 },
+  { planId: 2, name: 'Corridor Cam 2', model: 'Dome 8MP', type: 'Dome', price: 720, color: '#7c3aed', coreIdx: 0 },
+  { planId: 2, name: 'Stairwell Cam', model: 'TD33', type: 'Dome', price: 190, color: '#0891b2', coreIdx: 0 },
+  { planId: 3, name: 'Ramp Cam', model: 'PTZ Pro', type: 'Dome', price: 1450, color: '#2563eb', coreIdx: 0 },
+  { planId: 3, name: 'Exit Cam', model: 'PTZ Pro', type: 'Dome', price: 1450, color: '#2563eb', coreIdx: 0 },
+  { planId: 4, name: 'Loading Cam 1', model: 'Bullet 4K', type: 'Bullet', price: 650, color: '#2563eb', coreIdx: 0 },
+  { planId: 4, name: 'Loading Cam 2', model: 'Bullet 4K', type: 'Bullet', price: 650, color: '#2563eb', coreIdx: 0 },
+  { planId: 4, name: 'Dock PTZ', model: 'PTZ Pro', type: 'Dome', price: 1450, color: '#2563eb', coreIdx: 0 },
+  { planId: 5, name: 'Tower A Cam 1', model: 'CD52-E', type: 'Dome', price: 890, color: '#7c3aed', coreIdx: 0 },
+  { planId: 5, name: 'Tower A Cam 2', model: 'CD52-E', type: 'Dome', price: 890, color: '#7c3aed', coreIdx: 0 },
+  { planId: 6, name: 'Tower A L2 Cam 1', model: 'Dome 8MP', type: 'Dome', price: 720, color: '#7c3aed', coreIdx: -1 },
+  { planId: 6, name: 'Tower A L2 Cam 2', model: 'Dome 8MP', type: 'Dome', price: 720, color: '#7c3aed', coreIdx: -1 },
+  { planId: 6, name: 'Intercom Unit', model: 'TD33', type: 'Dome', price: 190, color: '#0891b2', coreIdx: -1 },
+  { planId: 7, name: 'Tower B Cam 1', model: 'Bullet 4K', type: 'Bullet', price: 650, color: '#2563eb', coreIdx: 0 },
+  { planId: 7, name: 'Tower B Cam 2', model: 'Bullet 4K', type: 'Bullet', price: 650, color: '#2563eb', coreIdx: 0 },
+  { planId: 8, name: 'Retail PTZ', model: 'PTZ Pro', type: 'Dome', price: 1450, color: '#2563eb', coreIdx: 0 },
+  { planId: 8, name: 'Retail Cam 1', model: 'CD52-E', type: 'Dome', price: 890, color: '#7c3aed', coreIdx: 0 },
+  { planId: 8, name: 'Retail Cam 2', model: 'CD52-E', type: 'Dome', price: 890, color: '#7c3aed', coreIdx: 0 },
 ];
 
 /* ── Read URL params ── */
@@ -489,18 +545,21 @@ if (showPlan) {
 }
 const visiblePlanIds = visiblePlans.map(p => p.id);
 const locationDevices = DEVICES.filter(d => visiblePlanIds.includes(d.planId));
+const locationCores = CORES.filter(c => visiblePlanIds.includes(c.planId));
 
 /* ── Group devices by category ── */
 const categories = {};
-const categoryOrder = ['Video Security', 'Connectivity'];
+const categoryOrder = ['Video Security', 'Cores', 'Connectivity'];
 locationDevices.forEach(d => {
   if (!categories[d.category]) categories[d.category] = [];
   categories[d.category].push(d);
 });
+if (locationCores.length > 0) categories['Cores'] = locationCores;
 const sortedCategories = categoryOrder.filter(c => categories[c]);
 
 const totalDevices = locationDevices.reduce((sum, d) => sum + d.qty, 0);
-const totalMSRP = locationDevices.reduce((sum, d) => sum + (d.price * d.qty), 0);
+const coreMSRP = locationCores.reduce((sum, c) => sum + c.price, 0);
+const totalMSRP = locationDevices.reduce((sum, d) => sum + (d.price * d.qty), 0) + coreMSRP;
 
 /* ── Build sidebar ── */
 function buildSidebar() {
@@ -546,6 +605,8 @@ function deviceIconSVG(category) {
   switch (category) {
     case 'Video Security':
       return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>';
+    case 'Cores':
+      return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="18" height="18" rx="2"/><rect x="7" y="7" width="10" height="10" rx="1" opacity="0.4"/></svg>';
     case 'Access Control':
       return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>';
     case 'Intercom':
@@ -637,37 +698,132 @@ function buildMain() {
 
   html += '<div class="bom-content">';
 
-  sortedCategories.forEach((cat, idx) => {
-    const devices = categories[cat];
-    const catTotal = devices.reduce((sum, d) => sum + d.qty, 0);
-    html += `
-      <div class="bom-section" id="section-${idx}">
-        <div class="bom-section-header" onclick="toggleSection(${idx})">
-          <span class="bom-section-title">${cat === 'Video Security' ? 'Cameras' : cat} <span class="bom-section-badge">${catTotal}</span></span>
-          <div class="bom-section-chevron">${chevronSVG}</div>
-        </div>
-        <div class="bom-section-body">
-    `;
-    devices.forEach(d => {
-      const linePrice = d.price * d.qty;
+  if (showPlan) {
+    /* ── Plan BOM: hierarchical Core → Cameras grouped view ── */
+    const planCores = CORES.filter(c => c.planId === planId);
+    const planCams = PLAN_CAMERAS.filter(c => c.planId === planId);
+    const camSVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>';
+    const coreSVG = deviceIconSVG('Cores');
+
+    let grandTotal = 0;
+
+    planCores.forEach((core, ci) => {
+      const coreCams = planCams.filter(c => c.coreIdx === ci);
+      const coreGroupTotal = core.price + coreCams.reduce((s, c) => s + c.price, 0);
+      grandTotal += coreGroupTotal;
+
       html += `
-        <div class="device-row">
-          <div class="device-icon">${deviceIconSVG(d.category)}</div>
-          <div class="device-qty">${d.qty}</div>
-          <div class="device-info">
-            <div class="device-model">${d.model}</div>
-            <div class="device-accessories">${d.accessories}</div>
+        <div class="plan-bom-group" id="plan-bom-group-${ci}">
+          <div class="plan-bom-group-hdr plan-bom-group-hdr-core" style="--core-color:${core.color}" onclick="togglePlanBomGroup(${ci})">
+            <div class="plan-bom-group-chev">${chevronSVG}</div>
+            <span class="plan-bom-group-name">${core.name}</span>
+            <span class="plan-bom-group-badge">${coreCams.length}/${core.channels} ch</span>
+            <span class="plan-bom-group-price">$${coreGroupTotal.toLocaleString()}</span>
           </div>
-          <div class="device-meta">
-            <span class="device-price">$${linePrice.toLocaleString()}</span>
-            ${d.retention ? `<span class="device-retention">${d.retention}</span>` : ''}
-            ${d.license ? `<span class="device-license">${d.license}</span>` : ''}
+          <div class="plan-bom-group-children">
+            <div class="plan-bom-cam" style="opacity:0.7">
+              <span style="font-size:12px;color:#98a2b3">${core.type} · $${core.price.toLocaleString()}</span>
+            </div>`;
+
+      coreCams.forEach(cam => {
+        html += `
+            <div class="plan-bom-cam">
+              <div class="plan-bom-cam-icon" style="background:${cam.color}">${camSVG}</div>
+              <span class="plan-bom-cam-name">${cam.name}</span>
+              <span class="plan-bom-cam-model">${cam.type} · ${cam.model}</span>
+              <span class="plan-bom-cam-price">$${cam.price.toLocaleString()}</span>
+            </div>`;
+      });
+
+      html += `
           </div>
-        </div>
-      `;
+        </div>`;
     });
-    html += '</div></div>';
-  });
+
+    /* Unassigned cameras (coreIdx === -1 or no matching core) */
+    const unassigned = planCams.filter(c => c.coreIdx < 0 || c.coreIdx >= planCores.length);
+    if (unassigned.length > 0) {
+      const unassignedTotal = unassigned.reduce((s, c) => s + c.price, 0);
+      grandTotal += unassignedTotal;
+
+      html += `
+        <div class="plan-bom-group" id="plan-bom-group-unassigned">
+          <div class="plan-bom-group-hdr plan-bom-group-hdr-unassigned" onclick="togglePlanBomGroup('unassigned')">
+            <div class="plan-bom-group-chev">${chevronSVG}</div>
+            <span class="plan-bom-group-name">Unassigned Cameras</span>
+            <span class="plan-bom-group-badge">${unassigned.length}</span>
+            <span class="plan-bom-group-price">$${unassignedTotal.toLocaleString()}</span>
+          </div>
+          <div class="plan-bom-group-children">`;
+
+      unassigned.forEach(cam => {
+        html += `
+            <div class="plan-bom-cam">
+              <div class="plan-bom-cam-icon" style="background:${cam.color}">${camSVG}</div>
+              <span class="plan-bom-cam-name">${cam.name}</span>
+              <span class="plan-bom-cam-model">${cam.type} · ${cam.model}</span>
+              <span class="plan-bom-cam-price">$${cam.price.toLocaleString()}</span>
+            </div>`;
+      });
+
+      html += `
+          </div>
+        </div>`;
+    }
+
+    html += `
+      <div class="plan-bom-grand">
+        <span>Grand Total</span>
+        <span>$${grandTotal.toLocaleString()}</span>
+      </div>`;
+
+  } else {
+    /* ── Non-plan view: flat category-based device rows ── */
+    sortedCategories.forEach((cat, idx) => {
+      const devices = categories[cat];
+      const catTotal = cat === 'Cores' ? devices.length : devices.reduce((sum, d) => sum + d.qty, 0);
+      html += `
+        <div class="bom-section" id="section-${idx}">
+          <div class="bom-section-header" onclick="toggleSection(${idx})">
+            <span class="bom-section-title">${cat === 'Video Security' ? 'Cameras' : cat} <span class="bom-section-badge">${catTotal}</span></span>
+            <div class="bom-section-chevron">${chevronSVG}</div>
+          </div>
+          <div class="bom-section-body">
+      `;
+      devices.forEach(d => {
+        if (cat === 'Cores') {
+          html += `
+            <div class="device-row">
+              <div class="device-icon" style="background:${d.color};color:#fff">${deviceIconSVG('Cores')}</div>
+              <div class="device-info">
+                <div class="device-model">${d.name}</div>
+                <div class="device-accessories">${d.type} · ${d.cameraCount}/${d.channels} channels</div>
+              </div>
+              <div class="device-meta">
+                <span class="device-price">$${d.price.toLocaleString()}</span>
+              </div>
+            </div>
+          `;
+        } else {
+          const linePrice = d.price * d.qty;
+          html += `
+            <div class="device-row">
+              <div class="device-icon">${deviceIconSVG(d.category)}</div>
+              <div class="device-qty">${d.qty}</div>
+              <div class="device-info">
+                <div class="device-model">${d.model}</div>
+                <div class="device-accessories">${d.accessories}</div>
+              </div>
+              <div class="device-meta">
+                <span class="device-price">$${linePrice.toLocaleString()}</span>
+              </div>
+            </div>
+          `;
+        }
+      });
+      html += '</div></div>';
+    });
+  }
 
   /* Total MSRP is shown in the header */
 
@@ -679,6 +835,10 @@ function buildMain() {
 function toggleSection(idx) {
   const section = document.getElementById('section-' + idx);
   if (section) section.classList.toggle('collapsed');
+}
+function togglePlanBomGroup(key) {
+  const el = document.getElementById('plan-bom-group-' + key);
+  if (el) el.classList.toggle('collapsed');
 }
 
 /* ── Update page title ── */
