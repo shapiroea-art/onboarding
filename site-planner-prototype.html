@@ -439,9 +439,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .scale-popup.show { display: block; }
 .scale-popup-title { font-size: 12px; font-weight: 600; color: #344054; margin-bottom: 10px; }
 .scale-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-.scale-row input { flex: 1; padding: 5px 8px; border: 1px solid #d0d5dd; border-radius: 5px; font-size: 13px; outline: none; }
 .scale-row input:focus { border-color: #7c3aed; }
-.scale-row select { padding: 5px 6px; border: 1px solid #d0d5dd; border-radius: 5px; font-size: 13px; outline: none; background: #fff; }
 .scale-actions { display: flex; justify-content: flex-end; gap: 6px; }
 
 /* ── Context menu ── */
@@ -840,10 +838,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
         </div>
       </div>
       <div class="tool-group">
-        <div class="tool-btn" id="navSettingsBtn" data-tip="Plan options" onclick="document.getElementById('settingsOverlay').classList.add('show')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-        </div>
-        <div style="width:1px;height:20px;background:#d0d5dd;margin:0 2px;flex-shrink:0"></div>
         <div class="tool-btn" data-tip="Clear All" onclick="clearAll()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
         </div>
@@ -1143,11 +1137,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
   <div class="scale-popup-title">📏 Calibrate Scale</div>
   <p style="font-size:11px;color:#667085;margin-bottom:10px">Draw a line over a known distance on the floor plan, then enter the real-world length:</p>
   <div class="scale-row">
-    <input type="number" id="scaleValue" value="10" min="0.1" step="0.1" placeholder="Length">
-    <select id="scaleUnit">
-      <option value="ft">feet</option>
-      <option value="m">meters</option>
-    </select>
+    <div class="prop-input-wrap" style="flex:1">
+      <input type="number" id="scaleValue" value="10" min="0.1" step="0.1" placeholder="Length" style="padding:5px 28px 5px 8px;border:1px solid #d0d5dd;border-radius:5px;font-size:13px;outline:none;width:100%">
+      <span class="prop-input-unit" id="scaleUnitLabel">ft</span>
+    </div>
   </div>
   <div class="scale-actions">
     <button class="btn" onclick="cancelScale()">Cancel</button>
@@ -2624,15 +2617,6 @@ function renderProperties(id) {
         const ppf = wFt > 0 ? (hPx / wFt).toFixed(1) : '0';
         const disabledStyle = 'pointer-events:none';
         return `
-      <div class="prop-row">
-        <span class="prop-label">Unit</span>
-        <div class="prop-ctrl">
-          <select class="prop-select" style="width:auto" onchange="updateCamUnit(${id},this.value)">
-            <option value="imperial" ${unit==='imperial'?'selected':''}>Imperial (ft)</option>
-            <option value="metric" ${unit==='metric'?'selected':''}>Metric (m)</option>
-          </select>
-        </div>
-      </div>
       <div class="prop-row" style="${isModel ? disabledStyle : ''}">
         <span class="prop-label">Resolution</span>
         <div class="prop-ctrl" style="display:flex;align-items:center;gap:8px">
@@ -3621,8 +3605,7 @@ function cancelScale() {
 function applyScale() {
   if (!state.scaleLine || !state.scaleLine.x2) return;
   const val = parseFloat(document.getElementById('scaleValue').value);
-  const unit = document.getElementById('scaleUnit').value;
-  const meters = unit === 'ft' ? val * 0.3048 : val;
+  const meters = val * 0.3048;
   const px = Math.hypot(state.scaleLine.x2 - state.scaleLine.x1, state.scaleLine.y2 - state.scaleLine.y1);
   if (meters > 0 && px > 0) {
     state.scalePPM = px / meters;
@@ -5160,48 +5143,5 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
-<!-- Settings Modal -->
-<div class="settings-overlay" id="settingsOverlay">
-  <div class="settings-modal">
-    <div class="settings-header">
-      <span class="settings-title">Plan options</span>
-      <button class="settings-close" id="settingsClose" title="Close">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
-    </div>
-    <div class="settings-body">
-      <div class="settings-row">
-        <span class="settings-row-label">Unit of measurement:</span>
-        <div class="seg-control" id="segUnits">
-          <button class="seg-btn active" data-val="imperial">Imperial</button>
-          <button class="seg-btn" data-val="metric">Metric</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script>
-/* ── Settings Modal ── */
-(function() {
-  const overlay = document.getElementById('settingsOverlay');
-  document.getElementById('settingsClose').addEventListener('click', function() {
-    overlay.classList.remove('show');
-  });
-  overlay.addEventListener('click', function(e) {
-    if (e.target === overlay) overlay.classList.remove('show');
-  });
-
-  /* Segmented controls */
-  document.querySelectorAll('.seg-control').forEach(function(ctrl) {
-    ctrl.querySelectorAll('.seg-btn').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        ctrl.querySelectorAll('.seg-btn').forEach(function(b) { b.classList.remove('active'); });
-        btn.classList.add('active');
-      });
-    });
-  });
-})();
-</script>
 </body>
 </html>
