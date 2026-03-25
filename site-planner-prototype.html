@@ -77,9 +77,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .toolbar-add-cam { background: #7c3aed; color: #fff; }
 .toolbar-add-cam:hover { background: #6d28d9; }
 .toolbar-add-cam svg { width: 14px; height: 14px; }
-.toolbar-add-core { background: #fff; color: #344054; border: 1px solid #d0d5dd; }
-.toolbar-add-core:hover { background: #f9fafb; border-color: #98a2b3; }
-.toolbar-add-core svg { width: 14px; height: 14px; }
+.toolbar-add-device { position: relative; background: #fff; color: #344054; border: 1px solid #d0d5dd; }
+.toolbar-add-device:hover { background: #f9fafb; border-color: #98a2b3; }
+.toolbar-add-device svg { width: 12px; height: 12px; color: #667085; flex-shrink: 0; }
+.device-dropdown { position: absolute; top: 34px; left: 0; min-width: 140px; background: #fff; border: 1px solid #e4e7ec; border-radius: 8px; box-shadow: 0 8px 24px rgba(16,24,40,0.12); z-index: 200; display: none; flex-direction: column; overflow: hidden; }
+.device-dropdown.show { display: flex; }
+.device-dropdown-item { padding: 8px 14px; font-size: 13px; font-weight: 500; color: #344054; cursor: pointer; border: none; background: none; text-align: left; }
+.device-dropdown-item:hover { background: #f9fafb; }
+.device-dropdown-item:first-child { border-radius: 8px 8px 0 0; }
+.device-dropdown-item:last-child { border-radius: 0 0 8px 8px; }
 
 /* ── Workspace ── */
 .workspace { flex: 1; display: flex; min-height: 0; }
@@ -583,6 +589,32 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .core-chip:hover { border-color: #98a2b3; background: #f9fafb; }
 .core-chip.active { background: #7c3aed; color: #fff; border-color: #7c3aed; }
 
+/* ── Add-On Picker Modal ── */
+.addon-picker-overlay { position: fixed; inset: 0; background: rgba(16,24,40,0.5); z-index: 2000; display: none; align-items: center; justify-content: center; }
+.addon-picker-overlay.show { display: flex; }
+.addon-picker-modal { background: #fff; border-radius: 12px; box-shadow: 0 20px 60px rgba(16,24,40,0.2); width: 420px; max-width: 90vw; overflow: hidden; }
+.addon-picker-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px 16px; border-bottom: 1px solid #eaecf0; }
+.addon-picker-title { font-size: 16px; font-weight: 600; color: #101828; }
+.addon-picker-close { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: none; background: none; color: #667085; cursor: pointer; border-radius: 6px; margin: -4px -4px 0 0; }
+.addon-picker-close:hover { background: #f2f4f7; color: #344054; }
+.addon-picker-close svg { width: 18px; height: 18px; }
+.addon-picker-body { padding: 20px 24px 24px; display: flex; flex-direction: column; gap: 16px; }
+.addon-picker-label { font-size: 13px; font-weight: 500; color: #344054; margin-bottom: 4px; }
+.addon-picker-select { width: 100%; padding: 9px 12px; border: 1px solid #d0d5dd; border-radius: 8px; font-size: 14px; color: #344054; background: #fff; cursor: pointer; outline: none; font-family: inherit; }
+.addon-picker-select:focus { border-color: #7c3aed; box-shadow: 0 0 0 3px rgba(124,58,237,0.12); }
+.addon-picker-input { width: 100%; padding: 9px 12px; border: 1px solid #d0d5dd; border-radius: 8px; font-size: 14px; color: #344054; background: #fff; outline: none; font-family: inherit; box-sizing: border-box; }
+.addon-picker-input:focus { border-color: #7c3aed; box-shadow: 0 0 0 3px rgba(124,58,237,0.12); }
+.addon-picker-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 16px 24px 20px; border-top: 1px solid #eaecf0; }
+.addon-cam-search-wrap { position: relative; }
+.addon-cam-search { width: 100%; padding: 9px 12px; border: 1px solid #d0d5dd; border-radius: 8px; font-size: 14px; color: #344054; background: #fff; outline: none; font-family: inherit; box-sizing: border-box; }
+.addon-cam-search:focus { border-color: #7c3aed; box-shadow: 0 0 0 3px rgba(124,58,237,0.12); }
+.addon-cam-list { position: absolute; top: 100%; left: 0; right: 0; max-height: 180px; overflow-y: auto; background: #fff; border: 1px solid #e4e7ec; border-radius: 8px; box-shadow: 0 8px 24px rgba(16,24,40,0.12); z-index: 10; margin-top: 4px; display: none; }
+.addon-cam-list.show { display: block; }
+.addon-cam-option { padding: 8px 12px; font-size: 13px; color: #344054; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+.addon-cam-option:hover { background: #f9fafb; }
+.addon-cam-option.selected { background: #ede9fe; color: #7c3aed; }
+.addon-cam-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
 /* ── Core camera list rows ── */
 .core-cam-row { display: flex; align-items: center; gap: 6px; padding: 6px 0; border-bottom: 1px solid #f2f4f7; }
 .core-cam-row:last-of-type { border-bottom: none; }
@@ -707,9 +739,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
     <!-- Toolbar -->
     <div class="toolbar">
       <div class="tool-group">
-        <button class="toolbar-add-btn toolbar-add-core" onclick="openCoreTypePicker()" data-tip="Add core">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="18" height="18" rx="2"/><rect x="7" y="7" width="10" height="10" rx="1" opacity="0.4"/></svg>
-          + Core
+        <button class="toolbar-add-btn toolbar-add-device" onclick="toggleDeviceDropdown(event)">
+          + Device
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          <div class="device-dropdown" id="deviceDropdown">
+            <div class="device-dropdown-item" onclick="event.stopPropagation();closeDeviceDropdown();openCoreTypePicker()">Core</div>
+            <div class="device-dropdown-item" onclick="event.stopPropagation();closeDeviceDropdown();openAddonPicker()">Add-On</div>
+          </div>
         </button>
         <button class="toolbar-add-btn toolbar-add-cam" onclick="openModelPicker()" data-tip="Add camera">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
@@ -1057,6 +1093,44 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
   </div>
 </div>
 
+<!-- Add-On Picker Modal -->
+<div class="addon-picker-overlay" id="addonPickerOverlay" onclick="if(event.target===this)closeAddonPicker()">
+  <div class="addon-picker-modal">
+    <div class="addon-picker-header">
+      <span class="addon-picker-title">Add-On Picker</span>
+      <button class="addon-picker-close" onclick="closeAddonPicker()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="addon-picker-body">
+      <div>
+        <div class="addon-picker-label">Type</div>
+        <select class="addon-picker-select" id="addonTypeSelect" onchange="onAddonTypeChange()">
+          <option value="" disabled selected>Select add-on type…</option>
+          <option value="cloud-storage">Cloud storage</option>
+          <option value="external-storage">External storage</option>
+          <option value="alerts-bucket">Alerts bucket</option>
+        </select>
+      </div>
+      <div id="addonCapacityField" style="display:none">
+        <div class="addon-picker-label">Capacity</div>
+        <input type="text" class="addon-picker-input" id="addonCapacityInput" placeholder="e.g. 1 TB" oninput="updateAddonPlaceBtn()">
+      </div>
+      <div id="addonCameraField" style="display:none">
+        <div class="addon-picker-label">Camera</div>
+        <div class="addon-cam-search-wrap">
+          <input type="text" class="addon-cam-search" id="addonCamSearch" placeholder="Search cameras…" oninput="filterAddonCameras()" onfocus="document.getElementById('addonCamList').classList.add('show')">
+          <div class="addon-cam-list" id="addonCamList"></div>
+        </div>
+      </div>
+    </div>
+    <div class="addon-picker-footer">
+      <button class="btn" onclick="closeAddonPicker()">Cancel</button>
+      <button class="btn btn-primary" id="addonPlaceBtn" onclick="placeAddon()" style="opacity:0.4;pointer-events:none">Place add-on</button>
+    </div>
+  </div>
+</div>
+
 <!-- Camera name floating input -->
 <div id="camNameOverlay">
   <div class="cam-name-wrap">
@@ -1214,7 +1288,14 @@ const state = {
   cores: [],
   selectedCoreId: null,
   nextCoreId: 1,
-  placingCoreType: null,  // set when user is placing a core on canvas
+  placingCoreType: null,
+  // Add-ons
+  addons: [],
+  selectedAddonId: null,
+  nextAddonId: 1,
+  placingAddonType: null,
+  placingAddonCapacity: null,
+  placingAddonCamId: null,
 };
 
 // ═══════════════════════════════════════════════
@@ -1228,6 +1309,16 @@ const CORE_TYPES = {
 };
 
 const CORE_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="18" height="18" rx="2"/><rect x="7" y="7" width="10" height="10" rx="1" opacity="0.4"/></svg>`;
+
+// ═══════════════════════════════════════════════
+// ADD-ON TYPES
+// ═══════════════════════════════════════════════
+const ADDON_TYPES = {
+  'cloud-storage':    { id: 'cloud-storage',    name: 'Cloud Storage',    price: 500,  color: '#0891b2' },
+  'external-storage': { id: 'external-storage', name: 'External Storage', price: 800,  color: '#d97706' },
+  'alerts-bucket':    { id: 'alerts-bucket',    name: 'Alerts Bucket',    price: 300,  color: '#7c3aed' },
+};
+const ADDON_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2" y="3" width="20" height="18" rx="3"/><line x1="6" y1="10" x2="18" y2="10"/><line x1="6" y1="15" x2="18" y2="15"/></svg>`;
 
 // Wall type visual configs
 const WALL_CONFIGS = {
@@ -1790,8 +1881,9 @@ function selectCamera(id) {
     }
   });
 
-  // Deselect any selected core
+  // Deselect any selected core or addon
   if (id !== null && typeof deselectCores === 'function') deselectCores();
+  if (id !== null && typeof deselectAddons === 'function') deselectAddons();
 
   // Clear all labels
   if (labelLayer) { labelLayer.destroyChildren(); labelLayer.draw(); }
@@ -1825,7 +1917,7 @@ function setTool(tool) {
   const keepMap = ca.classList.contains('map-active');
   ca.className = 'canvas-area';
   if (keepMap) ca.classList.add('map-active');
-  if (tool === 'camera' || tool === 'wall' || tool === 'scale' || tool === 'place-core') ca.classList.add('cursor-crosshair');
+  if (tool === 'camera' || tool === 'wall' || tool === 'scale' || tool === 'place-core' || tool === 'place-addon') ca.classList.add('cursor-crosshair');
   if (tool === 'move') ca.classList.add('cursor-grab');
   // Show wall sub-toolbar only when wall tool active
   document.getElementById('wallSubtoolbar').classList.toggle('show', tool === 'wall');
@@ -1864,6 +1956,14 @@ function onStageClick(e) {
     addCore(state.placingCoreType || 'core-10', p.x, p.y);
     setTool('select');
     state.placingCoreType = null;
+  }
+  if (state.tool === 'place-addon' && e.target === stage) {
+    const p = getScaledPos(stage.getPointerPosition());
+    addAddon(state.placingAddonType, p.x, p.y, state.placingAddonCapacity, state.placingAddonCamId);
+    setTool('select');
+    state.placingAddonType = null;
+    state.placingAddonCapacity = null;
+    state.placingAddonCamId = null;
   }
   if (state.tool === 'scale') {
     const p = getScaledPos(stage.getPointerPosition());
@@ -4145,7 +4245,8 @@ function rpDuplicateClick() {
   } else { duplicateCamera(state.selectedId); }
 }
 function rpDeleteClick() {
-  if (state.selectedCoreId !== null) { deleteCore(state.selectedCoreId); }
+  if (state.selectedAddonId !== null) { deleteAddon(state.selectedAddonId); }
+  else if (state.selectedCoreId !== null) { deleteCore(state.selectedCoreId); }
   else { deleteCamera(state.selectedId); }
 }
 
@@ -4165,6 +4266,393 @@ function selectCoreChip(el) {
   document.querySelectorAll('#coreChips .core-chip').forEach(c => c.classList.remove('active'));
   el.classList.add('active');
 }
+// ── Device dropdown ──
+function toggleDeviceDropdown(e) {
+  e.stopPropagation();
+  const dd = document.getElementById('deviceDropdown');
+  dd.classList.toggle('show');
+  if (dd.classList.contains('show')) {
+    setTimeout(() => document.addEventListener('click', closeDeviceDropdown, { once: true }), 0);
+  }
+}
+function closeDeviceDropdown() {
+  document.getElementById('deviceDropdown').classList.remove('show');
+}
+function openAddonPicker() {
+  document.getElementById('addonTypeSelect').value = '';
+  document.getElementById('addonCapacityInput').value = '';
+  document.getElementById('addonCamSearch').value = '';
+  document.getElementById('addonCapacityField').style.display = 'none';
+  document.getElementById('addonCameraField').style.display = 'none';
+  document.getElementById('addonCamList').classList.remove('show');
+  const placeBtn = document.getElementById('addonPlaceBtn');
+  placeBtn.style.opacity = '0.4';
+  placeBtn.style.pointerEvents = 'none';
+  addonState.selectedCamId = null;
+  document.getElementById('addonPickerOverlay').classList.add('show');
+  document.addEventListener('click', _closeAddonCamList);
+}
+function _closeAddonCamList(e) {
+  const wrap = document.getElementById('addonCameraField');
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById('addonCamList').classList.remove('show');
+  }
+}
+function closeAddonPicker() {
+  document.removeEventListener('click', _closeAddonCamList);
+  document.getElementById('addonPickerOverlay').classList.remove('show');
+}
+const addonState = { selectedCamId: null };
+function onAddonTypeChange() {
+  const type = document.getElementById('addonTypeSelect').value;
+  document.getElementById('addonCapacityField').style.display = type ? '' : 'none';
+  document.getElementById('addonCameraField').style.display = type === 'cloud-storage' ? '' : 'none';
+  addonState.selectedCamId = null;
+  document.getElementById('addonCamSearch').value = '';
+  document.getElementById('addonCamList').classList.remove('show');
+  updateAddonPlaceBtn();
+}
+function updateAddonPlaceBtn() {
+  const type = document.getElementById('addonTypeSelect').value;
+  const capacity = document.getElementById('addonCapacityInput').value.trim();
+  let enabled = type && capacity;
+  if (type === 'cloud-storage' && !addonState.selectedCamId) enabled = false;
+  const btn = document.getElementById('addonPlaceBtn');
+  btn.style.opacity = enabled ? '1' : '0.4';
+  btn.style.pointerEvents = enabled ? 'auto' : 'none';
+}
+function filterAddonCameras() {
+  const q = document.getElementById('addonCamSearch').value.toLowerCase();
+  const list = document.getElementById('addonCamList');
+  let html = '';
+  state.cameras.forEach(cam => {
+    if (q && !cam.name.toLowerCase().includes(q)) return;
+    const sel = addonState.selectedCamId === cam.id ? ' selected' : '';
+    html += `<div class="addon-cam-option${sel}" onclick="selectAddonCamera(${cam.id},'${escHtml(cam.name)}',event)">
+      <span class="addon-cam-dot" style="background:${cam.color}"></span>
+      ${escHtml(cam.name)}
+    </div>`;
+  });
+  if (!html) html = '<div style="padding:12px;font-size:13px;color:#98a2b3;text-align:center">No cameras found</div>';
+  list.innerHTML = html;
+  list.classList.add('show');
+}
+function selectAddonCamera(camId, camName, e) {
+  e.stopPropagation();
+  addonState.selectedCamId = camId;
+  document.getElementById('addonCamSearch').value = camName;
+  document.getElementById('addonCamList').classList.remove('show');
+  updateAddonPlaceBtn();
+}
+function placeAddon() {
+  const type = document.getElementById('addonTypeSelect').value;
+  const capacity = document.getElementById('addonCapacityInput').value.trim();
+  if (!type || !capacity) return;
+  if (type === 'cloud-storage' && !addonState.selectedCamId) return;
+  closeAddonPicker();
+  state.placingAddonType = type;
+  state.placingAddonCapacity = capacity;
+  state.placingAddonCamId = addonState.selectedCamId || null;
+  setTool('place-addon');
+  const def = ADDON_TYPES[type];
+  const tip = document.createElement('span');
+  tip.style.cssText = 'position:fixed;bottom:40px;left:50%;transform:translateX(-50%);background:#1d2939;color:#fff;font-size:12px;padding:6px 14px;border-radius:6px;pointer-events:none;z-index:999';
+  tip.textContent = `Click canvas to place ${def.name}`;
+  document.body.appendChild(tip);
+  setTimeout(() => tip.remove(), 3000);
+}
+
+// ═══════════════════════════════════════════════
+// ADD-ON: CREATE, RENDER, SELECT, PROPERTIES
+// ═══════════════════════════════════════════════
+
+function addAddon(typeId, x, y, capacity, camId, skipNameInput) {
+  const def = ADDON_TYPES[typeId];
+  if (!def) return;
+  saveUndo();
+  const addon = {
+    id: state.nextAddonId++,
+    typeId,
+    x, y,
+    name: def.name,
+    type: def.name,
+    color: def.color,
+    price: def.price,
+    capacity: capacity || '',
+    cameraId: camId || null,
+  };
+  state.addons.push(addon);
+  renderAddonOnCanvas(addon);
+  selectAddon(addon.id);
+  updateUI();
+  if (!skipNameInput) showAddonNameInput(addon);
+  return addon;
+}
+
+function renderAddonOnCanvas(addon) {
+  const existing = cameraLayer.findOne('#addon-' + addon.id);
+  if (existing) existing.destroy();
+  const group = new Konva.Group({ x: addon.x, y: addon.y, id: 'addon-' + addon.id, draggable: true });
+  const body = new Konva.Rect({ x: -16, y: -16, width: 32, height: 32, fill: addon.color, cornerRadius: 6, shadowColor: 'rgba(0,0,0,0.4)', shadowBlur: 8, shadowOffset: { x: 0, y: 2 }, shadowOpacity: 1 });
+  group.add(body);
+  group.add(new Konva.Line({ points: [-8, -3, 8, -3], stroke: '#fff', strokeWidth: 1.5, opacity: 0.9, listening: false }));
+  group.add(new Konva.Line({ points: [-8, 4, 8, 4], stroke: '#fff', strokeWidth: 1.5, opacity: 0.9, listening: false }));
+  const selRing = new Konva.Rect({ x: -19, y: -19, width: 38, height: 38, stroke: '#fff', strokeWidth: 2, fill: 'transparent', cornerRadius: 8, id: 'addon-sel-ring', visible: false, listening: false });
+  group.add(selRing);
+  group.on('dragmove', () => { addon.x = group.x(); addon.y = group.y(); renderAddonLabel(addon); });
+  group.on('dragend', () => { saveUndo(); });
+  group.on('click tap', e => { e.cancelBubble = true; selectAddon(addon.id); });
+  cameraLayer.add(group);
+  cameraLayer.draw();
+  renderAddonLabel(addon);
+}
+
+function renderAddonLabel(addon) {
+  if (!labelLayer) return;
+  const existing = labelLayer.findOne('#addon-lbl-' + addon.id);
+  if (existing) existing.destroy();
+  const text = new Konva.Text({
+    x: addon.x, y: addon.y + 22,
+    text: addon.name,
+    fontSize: 11,
+    fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif',
+    fontStyle: '600',
+    fill: '#344054',
+    id: 'addon-lbl-' + addon.id,
+    listening: false,
+  });
+  text.offsetX(text.width() / 2);
+  labelLayer.add(text);
+  labelLayer.draw();
+}
+
+function showAddonNameInput(addon) {
+  const rect = stage.container().getBoundingClientRect();
+  const screenX = rect.left + stage.x() + addon.x * stage.scaleX();
+  const screenY = rect.top + stage.y() + addon.y * stage.scaleY() + 26 * stage.scaleY();
+  const overlay = document.getElementById('camNameOverlay');
+  const input = document.getElementById('camNameField');
+  overlay.style.left = screenX + 'px';
+  overlay.style.top = screenY + 'px';
+  overlay.classList.add('show');
+  input.value = '';
+  input.placeholder = 'Add-on name';
+  let committed = false;
+  const commit = () => {
+    if (committed) return;
+    committed = true;
+    overlay.classList.remove('show');
+    input.placeholder = 'Camera name';
+    const name = input.value.trim();
+    if (name) {
+      addon.name = name;
+      renderAddonLabel(addon);
+      if (state.selectedAddonId === addon.id) renderAddonProperties(addon.id);
+    }
+    input.removeEventListener('keydown', onKey);
+  };
+  const onKey = (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); commit(); }
+    if (e.key === 'Escape') { committed = true; overlay.classList.remove('show'); input.placeholder = 'Camera name'; input.removeEventListener('keydown', onKey); }
+  };
+  input.addEventListener('keydown', onKey);
+  input.addEventListener('blur', () => setTimeout(commit, 120), { once: true });
+  setTimeout(() => input.focus(), 60);
+}
+
+function deselectAddons() {
+  state.addons.forEach(a => {
+    const g = cameraLayer.findOne('#addon-' + a.id);
+    if (g) { const ring = g.findOne('#addon-sel-ring'); if (ring) ring.visible(false); }
+  });
+  state.selectedAddonId = null;
+  if (cameraLayer) cameraLayer.draw();
+}
+
+function selectAddon(id) {
+  selectCamera(null);
+  deselectCores();
+  state.addons.forEach(a => {
+    const g = cameraLayer.findOne('#addon-' + a.id);
+    if (g) g.findOne('#addon-sel-ring').visible(false);
+  });
+  state.selectedAddonId = id;
+  if (id !== null) {
+    const g = cameraLayer.findOne('#addon-' + id);
+    if (g) g.findOne('#addon-sel-ring').visible(true);
+    cameraLayer.draw();
+    const addon = state.addons.find(a => a.id === id);
+    if (addon) {
+      renderAddonLabel(addon);
+      renderAddonProperties(id);
+    }
+  } else {
+    renderPropertiesEmpty();
+  }
+}
+
+function renderAddonProperties(id) {
+  const addon = state.addons.find(a => a.id === id);
+  if (!addon) return;
+
+  document.getElementById('rpCamHeader').style.display = 'flex';
+  document.getElementById('rpBomHeader').style.display = 'none';
+  document.querySelector('.rp-total').style.display = 'none';
+  document.querySelector('.rp-tabs').style.display = 'none';
+  document.getElementById('propsPane').style.display = '';
+  document.getElementById('bomPane').style.display = 'none';
+  document.getElementById('propsEmpty').style.display = 'none';
+  document.getElementById('propsContent').style.display = 'block';
+  document.getElementById('propsTitle').textContent = addon.name;
+  document.getElementById('propsSub').textContent = addon.type;
+  const propsPrice = document.getElementById('propsPrice');
+  propsPrice.className = 'props-price show';
+  propsPrice.textContent = '$' + addon.price.toLocaleString();
+  const propsIcon = document.getElementById('propsIcon');
+  propsIcon.className = 'props-hdr-icon show';
+  propsIcon.style.background = addon.color || '#667085';
+  propsIcon.innerHTML = ADDON_ICON;
+
+  let cameraHtml = '';
+  if (addon.typeId === 'cloud-storage') {
+    const cam = addon.cameraId ? state.cameras.find(c => c.id === addon.cameraId) : null;
+    if (cam) {
+      const camIcon = ICONS[cam.iconType] || ICONS.dome;
+      cameraHtml = `
+      <div class="props-section">
+        <div class="props-section-title">Assigned camera</div>
+        <div class="core-cam-row">
+          <span class="core-cam-icon" style="background:${cam.color}">${camIcon}</span>
+          <div class="core-cam-info" onclick="selectCamera(${cam.id})" title="Go to camera" style="cursor:pointer">
+            <span class="core-cam-name">${escHtml(cam.name)}</span>
+            <span class="core-cam-meta">${escHtml(cam.model || 'Generic')}</span>
+          </div>
+          <button class="core-cam-remove" onclick="removeAddonCamera(${id})" title="Remove">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </div>`;
+    } else {
+      cameraHtml = `
+      <div class="props-section">
+        <div class="props-section-title">Assigned camera</div>
+        <div style="font-size:12px;color:#98a2b3;padding:4px 0 8px">No camera assigned.</div>
+        ${state.cameras.length ? '<button class="btn" style="padding:3px 10px;font-size:11px" onclick="showAddonCameraSelect(' + id + ')">Assign camera</button>' : ''}
+        <div id="addonCamSelectWrap"></div>
+      </div>`;
+    }
+  }
+
+  const c = document.getElementById('propsContent');
+  c.innerHTML = `
+    <div class="props-section">
+      <div class="props-section-title">Add-On Config</div>
+      <div class="prop-row">
+        <span class="prop-label">Name</span>
+        <div class="prop-ctrl"><input class="prop-input" value="${escHtml(addon.name)}" oninput="updateAddonProp(${id},'name',this.value)"></div>
+      </div>
+      <div class="prop-row">
+        <span class="prop-label">Type</span>
+        <div class="prop-ctrl">
+          <select class="prop-select" style="width:auto" onchange="updateAddonType(${id},this.value)">
+            ${Object.values(ADDON_TYPES).map(t => `<option value="${t.id}" ${addon.typeId === t.id ? 'selected' : ''}>${t.name}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="prop-row">
+        <span class="prop-label">Color</span>
+        <div class="prop-ctrl">
+          <div style="display:flex;gap:5px;flex-wrap:wrap">
+            ${['#0891b2','#2563eb','#7c3aed','#dc2626','#d97706','#db2777','#059669','#374151'].map(col => `
+              <div onclick="updateAddonColor(${id},'${col}')" title="${col}" style="width:20px;height:20px;border-radius:4px;background:${col};cursor:pointer;border:2px solid ${addon.color === col ? '#fff' : 'transparent'};outline:2px solid ${addon.color === col ? col : 'transparent'};box-sizing:border-box;transition:all 0.1s"></div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+      <div class="prop-row">
+        <span class="prop-label">Capacity</span>
+        <div class="prop-ctrl"><input class="prop-input" value="${escHtml(addon.capacity)}" oninput="updateAddonProp(${id},'capacity',this.value)"></div>
+      </div>
+    </div>
+    ${cameraHtml}
+  `;
+}
+
+function updateAddonProp(id, key, val) {
+  const addon = state.addons.find(a => a.id === id);
+  if (!addon) return;
+  addon[key] = val;
+  if (key === 'name') {
+    renderAddonLabel(addon);
+    document.getElementById('propsTitle').textContent = addon.name;
+  }
+}
+
+function updateAddonType(id, typeId) {
+  const addon = state.addons.find(a => a.id === id);
+  if (!addon) return;
+  const def = ADDON_TYPES[typeId];
+  if (!def) return;
+  saveUndo();
+  addon.typeId = typeId;
+  addon.type = def.name;
+  addon.price = def.price;
+  addon.color = def.color;
+  if (typeId !== 'cloud-storage') addon.cameraId = null;
+  renderAddonOnCanvas(addon);
+  renderAddonProperties(id);
+  updateUI();
+}
+
+function updateAddonColor(id, color) {
+  const addon = state.addons.find(a => a.id === id);
+  if (!addon) return;
+  saveUndo();
+  addon.color = color;
+  renderAddonOnCanvas(addon);
+  renderAddonProperties(id);
+}
+
+function removeAddonCamera(id) {
+  const addon = state.addons.find(a => a.id === id);
+  if (!addon) return;
+  addon.cameraId = null;
+  renderAddonProperties(id);
+}
+
+function showAddonCameraSelect(addonId) {
+  const wrap = document.getElementById('addonCamSelectWrap');
+  if (!wrap) return;
+  let html = '<select class="prop-select" style="width:100%;margin-top:6px" onchange="assignAddonCamera(' + addonId + ',+this.value)">';
+  html += '<option value="">Select camera…</option>';
+  state.cameras.forEach(cam => {
+    html += `<option value="${cam.id}">${escHtml(cam.name)}</option>`;
+  });
+  html += '</select>';
+  wrap.innerHTML = html;
+}
+
+function assignAddonCamera(addonId, camId) {
+  const addon = state.addons.find(a => a.id === addonId);
+  if (!addon || !camId) return;
+  addon.cameraId = camId;
+  renderAddonProperties(addonId);
+}
+
+function deleteAddon(id) {
+  saveUndo();
+  state.addons = state.addons.filter(a => a.id !== id);
+  const g = cameraLayer.findOne('#addon-' + id);
+  if (g) g.destroy();
+  const lbl = labelLayer ? labelLayer.findOne('#addon-lbl-' + id) : null;
+  if (lbl) lbl.destroy();
+  cameraLayer.draw();
+  if (labelLayer) labelLayer.draw();
+  state.selectedAddonId = null;
+  renderPropertiesEmpty();
+  updateUI();
+}
+
 function openCoreTypePicker() {
   document.querySelectorAll('#coreChips .core-chip').forEach((c, i) => c.classList.toggle('active', i === 0));
   document.getElementById('corePickerOverlay').classList.add('show');
@@ -4269,8 +4757,8 @@ function renderCoreLabel(core) {
 }
 
 function selectCore(id) {
-  // Deselect cameras first
   selectCamera(null);
+  deselectAddons();
   // Deselect all cores
   state.cores.forEach(c => {
     const g = cameraLayer.findOne('#core-' + c.id);
@@ -4978,7 +5466,11 @@ document.addEventListener('keydown', e => {
   if (e.key === 'c' || e.key === 'C') { setTool('camera'); state.dragType = 'indoor-dome'; }
   if (e.key === 'w' || e.key === 'W') setTool('wall');
   if (e.key === 's' || e.key === 'S') setTool('scale');
-  if ((e.key === 'Delete' || e.key === 'Backspace') && state.selectedId) deleteCamera(state.selectedId);
+  if (e.key === 'Delete' || e.key === 'Backspace') {
+    if (state.selectedAddonId) deleteAddon(state.selectedAddonId);
+    else if (state.selectedCoreId) deleteCore(state.selectedCoreId);
+    else if (state.selectedId) deleteCamera(state.selectedId);
+  }
   if (e.key === 'z' && (e.metaKey || e.ctrlKey) && !e.shiftKey) { e.preventDefault(); undo(); }
   if (e.key === 'z' && (e.metaKey || e.ctrlKey) && e.shiftKey)  { e.preventDefault(); redo(); }
   if (e.key === 'Escape') { if (state.floorPlanEditMode) { disableFloorPlanEdit(); return; } setTool('select'); selectCamera(null); }
