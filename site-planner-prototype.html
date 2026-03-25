@@ -73,35 +73,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .tool-btn[data-tip]:hover::after { content: attr(data-tip); position: absolute; bottom: -28px; left: 50%; transform: translateX(-50%); background: #1d2939; color: #fff; font-size: 11px; font-weight: 400; padding: 3px 7px; border-radius: 4px; white-space: nowrap; pointer-events: none; z-index: 100; }
 .tool-spacer { flex: 1; }
 .zoom-display { font-size: 12px; color: #667085; min-width: 44px; text-align: center; }
+.toolbar-add-btn { display: flex; align-items: center; gap: 5px; height: 30px; padding: 0 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; white-space: nowrap; border: none; transition: all 0.15s; }
+.toolbar-add-cam { background: #7c3aed; color: #fff; }
+.toolbar-add-cam:hover { background: #6d28d9; }
+.toolbar-add-cam svg { width: 14px; height: 14px; }
+.toolbar-add-core { background: #fff; color: #344054; border: 1px solid #d0d5dd; }
+.toolbar-add-core:hover { background: #f9fafb; border-color: #98a2b3; }
+.toolbar-add-core svg { width: 14px; height: 14px; }
 
 /* ── Workspace ── */
 .workspace { flex: 1; display: flex; min-height: 0; }
-
-/* ── Catalog ── */
-.catalog { width: 220px; flex-shrink: 0; background: #fcfcfd; border-right: 1px solid #eaecf0; display: flex; flex-direction: column; overflow: hidden; }
-.catalog-header { padding: 12px 12px 8px; flex-shrink: 0; border-bottom: 1px solid #eaecf0; }
-.catalog-title { font-size: 11px; font-weight: 600; color: #98a2b3; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; }
-.catalog-search { display: flex; align-items: center; gap: 6px; padding: 5px 8px; border: 1px solid #d0d5dd; border-radius: 6px; background: #fff; }
-.catalog-search svg { width: 13px; height: 13px; color: #98a2b3; flex-shrink: 0; }
-.catalog-search input { border: none; outline: none; font-size: 12px; color: #344054; background: transparent; flex: 1; width: 0; }
-.catalog-search input::placeholder { color: #98a2b3; }
-.catalog-body { flex: 1; overflow-y: auto; padding: 6px 8px; }
-.cat-section { margin-bottom: 2px; }
-.cat-section-hdr { display: flex; align-items: center; gap: 5px; padding: 5px 4px; cursor: pointer; font-size: 11px; font-weight: 600; color: #98a2b3; text-transform: uppercase; letter-spacing: 0.5px; user-select: none; }
-.cat-section-hdr:hover { color: #667085; }
-.cat-chev { transition: transform 0.2s; flex-shrink: 0; }
-.cat-section.closed .cat-chev { transform: rotate(-90deg); }
-.cat-section.closed .cat-items { display: none; }
-.cat-items { padding: 2px 0 4px; }
-.cat-item { display: flex; align-items: center; gap: 8px; padding: 7px 6px; border-radius: 7px; cursor: grab; border: 1px solid transparent; transition: all 0.15s; margin-bottom: 1px; }
-.cat-item:hover { background: #fff; border-color: #eaecf0; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
-.cat-item:active { cursor: grabbing; opacity: 0.6; }
-.cat-icon { width: 36px; height: 36px; border-radius: 9px; background: #f2f4f7; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.cat-icon svg { width: 20px; height: 20px; color: #667085; }
-.cat-info { flex: 1; min-width: 0; }
-.cat-name { font-size: 12px; font-weight: 500; color: #344054; line-height: 1.3; }
-.cat-model { font-size: 11px; color: #98a2b3; }
-.cat-price { font-size: 11px; color: #667085; font-weight: 500; white-space: nowrap; }
 
 /* ── Canvas ── */
 .canvas-area { flex: 1; position: relative; overflow: hidden; background-color: #1c2333; background-image: radial-gradient(circle, #283048 1.5px, transparent 1.5px); background-size: 28px 28px; }
@@ -457,9 +438,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 ::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 2px; }
 
 /* ── Phase 2: Left Panel ── */
-.browse-btn { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 8px 12px; border-radius: 7px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; background: #7c3aed; color: #fff; transition: background 0.15s; }
-.browse-btn:hover { background: #6d28d9; }
-.browse-btn svg { width: 13px; height: 13px; }
 .ff-section-label { font-size: 10px; font-weight: 600; color: #98a2b3; text-transform: uppercase; letter-spacing: 0.6px; padding: 10px 4px 6px; }
 .ff-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .ff-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 12px 6px 10px; background: #fff; border: 1px solid #eaecf0; border-radius: 9px; cursor: grab; transition: all 0.15s; user-select: none; }
@@ -477,17 +455,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .recent-name { font-size: 11px; font-weight: 500; color: #344054; }
 .recent-model { font-size: 10px; color: #98a2b3; }
 
-/* ── Catalog collapse ── */
-.catalog-hdr-row { display: flex; align-items: center; margin-bottom: 8px; }
-.catalog { position: relative; transition: width 0.2s ease; overflow: visible !important; }
-.catalog-collapse-tab { position: absolute; top: 8px; right: -20px; width: 20px; height: 32px; background: #fff; border: 1px solid #eaecf0; border-left: none; border-radius: 0 4px 4px 0; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 20; }
-.catalog-collapse-tab:hover { background: #f9fafb; }
-.catalog-collapse-tab svg { width: 12px; height: 12px; color: #667085; transition: transform 0.2s; flex-shrink: 0; }
-.catalog.collapsed .catalog-body, .catalog.collapsed .browse-btn, .catalog.collapsed .catalog-header { display: none; }
-.catalog.collapsed { width: 0; min-width: 0; border-right: none; }
-.catalog.collapsed .catalog-collapse-tab { border-left: 1px solid #eaecf0; }
-.catalog.collapsed .catalog-collapse-tab svg { transform: rotate(180deg); }
-
 /* ── Camera name floating input ── */
 #camNameOverlay { position: fixed; z-index: 500; display: none; transform: translateX(-50%); }
 #camNameOverlay.show { display: block; }
@@ -495,18 +462,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .cam-name-field { border: none; outline: none; font-size: 13px; font-weight: 500; color: #344054; background: transparent; width: 160px; }
 .cam-name-field::placeholder { color: #c4b5fd; }
 .cam-name-hint { font-size: 10px; color: #c4b5fd; white-space: nowrap; }
-
-/* ── Recently used — draggable row tiles ── */
-.recent-tile { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: #fff; border: 1px solid #eaecf0; border-radius: 9px; cursor: grab; transition: all 0.15s; margin-bottom: 5px; user-select: none; }
-.recent-tile:hover { border-color: #c4b5fd; background: #faf5ff; box-shadow: 0 2px 6px rgba(124,58,237,0.1); }
-.recent-tile:active { cursor: grabbing; opacity: 0.7; }
-.recent-tile-icon { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.recent-tile-icon svg { width: 16px; height: 16px; color: #fff; }
-.recent-tile-info { flex: 1; min-width: 0; }
-.recent-tile-name { font-size: 12px; font-weight: 500; color: #344054; }
-.recent-tile-sub { font-size: 10px; color: #98a2b3; }
-.recent-tile-drag { color: #d0d5dd; flex-shrink: 0; }
-.recent-tile-drag svg { width: 11px; height: 11px; }
 
 /* ── Phase 2: Model Picker Modal ── */
 .mp-overlay { position: fixed; inset: 0; background: rgba(17,24,39,0.55); z-index: 800; display: none; backdrop-filter: blur(2px); }
@@ -608,12 +563,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .toggle-slider::before { content: ''; position: absolute; width: 18px; height: 18px; border-radius: 50%; background: #fff; top: 2px; left: 2px; transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
 .toggle input:checked + .toggle-slider { background: #7c3aed; }
 .toggle input:checked + .toggle-slider::before { transform: translateX(18px); }
-
-/* ── Add core button separator ── */
-.catalog-separator { width: 100%; height: 1px; background: #eaecf0; margin: 8px 0; }
-.browse-btn-core { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 8px 12px; border-radius: 7px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid #d0d5dd; background: #fff; color: #344054; transition: all 0.15s; }
-.browse-btn-core:hover { background: #f9fafb; border-color: #98a2b3; }
-.browse-btn-core svg { width: 14px; height: 14px; }
 
 /* ── Core Type Picker Modal ── */
 .core-picker-overlay { position: fixed; inset: 0; background: rgba(16,24,40,0.5); z-index: 2000; display: none; align-items: center; justify-content: center; }
@@ -758,6 +707,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
     <!-- Toolbar -->
     <div class="toolbar">
       <div class="tool-group">
+        <button class="toolbar-add-btn toolbar-add-core" onclick="openCoreTypePicker()" data-tip="Add core">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="18" height="18" rx="2"/><rect x="7" y="7" width="10" height="10" rx="1" opacity="0.4"/></svg>
+          + Core
+        </button>
+        <button class="toolbar-add-btn toolbar-add-cam" onclick="openModelPicker()" data-tip="Add camera">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+          + Camera
+        </button>
+      </div>
+      <div class="tool-group">
         <div class="tool-btn active" id="tool-select" data-tool="select" data-tip="Select (V)" onclick="setTool('select')">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 0l16 12-8 2-4 8L4 0z"/></svg>
         </div>
@@ -851,28 +810,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 
     <!-- Workspace -->
     <div class="workspace">
-
-      <!-- Cameras Panel -->
-      <aside class="catalog" id="catalogPanel">
-        <div class="catalog-collapse-tab" onclick="toggleCatalog()" title="Collapse panel">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-        </div>
-
-        <div class="catalog-header">
-          <button class="browse-btn-core" onclick="openCoreTypePicker()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="18" height="18" rx="2"/><rect x="7" y="7" width="10" height="10" rx="1" opacity="0.4"/></svg>
-            Add core
-          </button>
-          <div class="catalog-separator"></div>
-          <button class="browse-btn" onclick="openModelPicker()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
-            Add camera
-          </button>
-        </div>
-        <div class="catalog-body" id="catalogBody">
-          <!-- Rendered by renderLeftPanel() -->
-        </div>
-      </aside>
 
       <!-- Canvas -->
       <div class="canvas-area" id="canvasArea"
@@ -1520,7 +1457,6 @@ function addCamera(typeId, x, y, skipNameInput) {
   // Track recently used (CAMERA_DB models only)
   if (CAMERA_DB.find(m => m.id === typeId)) {
     state.recentlyUsed = [typeId, ...state.recentlyUsed.filter(id => id !== typeId)].slice(0, 4);
-    renderLeftPanel();
   }
 
   saveUndo();
@@ -3587,7 +3523,6 @@ function updateProjectTotal() {
 // ═══════════════════════════════════════════════
 function updateUI() {
   updateProjectTotal();
-  renderLeftPanel();
   // Show wall legend when any typed user walls exist
   const hasWalls = state.userWalls.length > 0;
   document.getElementById('wallLegend').classList.toggle('show', hasWalls);
@@ -3725,10 +3660,6 @@ function renderCamLabel(cam) {
 }
 
 // ── Catalog collapse / expand ────────────────────
-function toggleCatalog() {
-  document.getElementById('catalogPanel').classList.toggle('collapsed');
-}
-
 // ── Properties panel collapse / expand ──────────
 function toggleProperties() {
   document.querySelector('.properties').classList.toggle('collapsed');
@@ -3829,47 +3760,6 @@ const FF_TILES = [
   { id:'fisheye',      label:'Fisheye 360°',  iconType:'fisheye' },
   { id:'multisensor',  label:'Multi-sensor',  iconType:'dome'    },
 ];
-
-function renderLeftPanel() {
-  const body = document.getElementById('catalogBody');
-  let html = '';
-
-  // Unique camera types currently on the floor plan (preserve first-seen order)
-  const seen = new Set();
-  const onCanvas = [];
-  state.cameras.forEach(cam => {
-    if (!seen.has(cam.typeId)) {
-      seen.add(cam.typeId);
-      onCanvas.push(cam);
-    }
-  });
-
-  if (onCanvas.length) {
-    html += '<div class="ff-section-label" style="padding-top:6px">Add recent cameras</div>';
-    onCanvas.forEach(cam => {
-      const def = CAMERA_DB.find(x => x.id === cam.typeId) || CATALOG.find(x => x.id === cam.typeId);
-      if (!def) return;
-      const label  = def.brand ? `${def.brand} ${def.name}` : def.name;
-      const sub    = def.brand ? `${def.brand} · $${def.price.toLocaleString()}` : def.name;
-      const count  = state.cameras.filter(c => c.typeId === cam.typeId).length;
-      html += `<div class="recent-tile" draggable="true"
-        ondragstart="state.dragType='${def.id}';state.activeModel=null;event.dataTransfer.setData('text','${def.id}')"
-        onclick="setTool('camera');state.dragType='${def.id}';state.activeModel=null"
-        title="${label} — drag or click to place">
-        <div class="recent-tile-icon" style="background:${cam.color}">${ICONS[def.iconType] || ICONS.dome}</div>
-        <div class="recent-tile-info">
-          <div class="recent-tile-name">${escHtml(cam.name.split(' ').slice(0,3).join(' '))}</div>
-          <div class="recent-tile-sub">${escHtml(sub)} · ×${count}</div>
-        </div>
-        <div class="recent-tile-drag">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="5" r="1" fill="currentColor"/><circle cx="15" cy="5" r="1" fill="currentColor"/><circle cx="9" cy="12" r="1" fill="currentColor"/><circle cx="15" cy="12" r="1" fill="currentColor"/><circle cx="9" cy="19" r="1" fill="currentColor"/><circle cx="15" cy="19" r="1" fill="currentColor"/></svg>
-        </div>
-      </div>`;
-    });
-  }
-
-  body.innerHTML = html;
-}
 
 // ═══════════════════════════════════════════════
 // CAMERA MODEL PICKER MODAL
@@ -4221,7 +4111,6 @@ function placeFromPicker() {
       updateUI();
       // Track recently used
       state.recentlyUsed = [modelId, ...state.recentlyUsed.filter(id => id !== modelId)].slice(0, 4);
-      renderLeftPanel();
     }
     return;
   }
@@ -5119,7 +5008,6 @@ function escHtml(s) { return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<
 // INIT
 // ═══════════════════════════════════════════════
 window.addEventListener('DOMContentLoaded', () => {
-  renderLeftPanel();
   initStage();
   updateUI();
   checkHashPlan();
