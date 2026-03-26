@@ -219,9 +219,28 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .bom-line-qty { color: #98a2b3; font-size: 11px; white-space: nowrap; }
 .bom-line-unit { color: #667085; font-size: 11px; white-space: nowrap; }
 .bom-line-total { font-weight: 600; color: #344054; white-space: nowrap; margin-left: auto; }
-.bom-grand { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-top: 2px solid #eaecf0; background: #fafafa; margin-top: auto; }
+.bom-grand { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-top: 2px solid #eaecf0; background: #fafafa; }
 .bom-grand-label { font-size: 12px; font-weight: 600; color: #344054; }
 .bom-grand-val { font-size: 18px; font-weight: 800; color: #7c3aed; }
+.bom-category { border: 1px solid #eaecf0; border-radius: 8px; margin: 8px 12px; overflow: hidden; }
+.bom-category-hdr { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: #f9fafb; cursor: pointer; user-select: none; }
+.bom-category-hdr:hover { background: #f2f4f7; }
+.bom-category-title { font-size: 13px; font-weight: 700; color: #344054; flex: 1; }
+.bom-category-badge { font-size: 11px; font-weight: 600; color: #667085; background: #eaecf0; border-radius: 10px; padding: 1px 8px; }
+.bom-category-total { font-size: 13px; font-weight: 700; color: #344054; }
+.bom-category.collapsed .bom-category-body { display: none; }
+.bom-category.collapsed .bom-category-footer { display: none; }
+.bom-category.collapsed .bom-chev { transform: rotate(-90deg); }
+.bom-category-body { padding: 0; }
+.bom-category-footer { display: flex; justify-content: space-between; padding: 8px 14px; border-top: 1px solid #eaecf0; background: #fafafa; }
+.bom-category-footer-label { font-size: 12px; font-weight: 600; color: #667085; }
+.bom-category-footer-val { font-size: 14px; font-weight: 700; color: #344054; }
+.bom-sw-row { display: flex; align-items: center; gap: 8px; padding: 8px 16px; font-size: 13px; }
+.bom-sw-icon { width: 16px; height: 16px; flex-shrink: 0; color: #667085; }
+.bom-sw-icon svg { width: 16px; height: 16px; }
+.bom-sw-name { font-weight: 500; color: #344054; flex: 1; }
+.bom-sw-qty { font-size: 12px; color: #98a2b3; }
+.bom-sw-price { font-size: 13px; font-weight: 600; color: #344054; min-width: 60px; text-align: right; }
 .bom-empty-pane { display: flex; flex-direction: column; align-items: center; padding: 48px 20px; text-align: center; flex: 1; justify-content: center; }
 .bom-empty-pane svg { width: 32px; height: 32px; color: #d0d5dd; margin-bottom: 12px; }
 .bom-empty-pane p { font-size: 12px; color: #98a2b3; line-height: 1.7; }
@@ -3167,6 +3186,14 @@ function switchTab(tab) {
   if (tab === 'bom') renderBOMPane();
 }
 
+// ── BOM Category Collapse ──
+const _bomCategoryCollapse = { hardware: false, software: false };
+function toggleBomCategory(key) {
+  _bomCategoryCollapse[key] = !_bomCategoryCollapse[key];
+  const el = document.querySelector(`.bom-category[data-category="${key}"]`);
+  if (el) el.classList.toggle('collapsed', _bomCategoryCollapse[key]);
+}
+
 // ── BOM Hierarchical Tree Helpers ──
 const _bomCollapseState = {};
 
@@ -3549,15 +3576,43 @@ function renderBOMPane() {
   // Totals
   const camTotal = cams.reduce((s, c) => s + c.price, 0);
   const coreTotal = cores.reduce((s, c) => s + c.price, 0);
-  const grandTotal = camTotal + coreTotal;
+  const addonTotal = state.addons.reduce((s, a) => s + a.price, 0);
+  const hwTotal = camTotal + coreTotal + addonTotal;
+  const swTotal = cams.length * LICENSE_PRICE.Standard;
+  const grandTotal = hwTotal + swTotal;
 
   const chevronSvg = '<svg class="bom-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>';
   const bulk = _bulkEdit.active;
   const drag = _dragMode.active;
   const bp = _bulkEdit.pendingChanges;
 
-  // Render core groups
-  let groupsHtml = '';
+  // ── Hardware groups ──
+  let hwGroupsHtml = '';
+
+  // Unassigned cameras FIRST
+  if (unassignedCams.length > 0 || _dragMode.active) {
+    const collapsed = _bomCollapseState['unassigned'] ? 'collapsed' : '';
+    hwGroupsHtml += `
+      <div class="bom-group ${collapsed}" data-bom-group="unassigned">
+        <div class="bom-group-hdr bom-group-hdr-unassigned" ${drag ? 'ondragover="event.preventDefault();this.classList.add(\'drop-target\')" ondragleave="this.classList.remove(\'drop-target\')" ondrop="this.classList.remove(\'drop-target\');bomDropOnGroup(null,0,event)"' : ''} onclick="toggleBomGroup('unassigned',event)">
+          ${chevronSvg}
+          <span class="bom-group-icon">${BOM_CAM_ICON}</span>
+          <span class="bom-group-name-wrap">
+            <span class="bom-group-name">Unassigned Cameras</span>
+            <span class="bom-group-count-badge">${unassignedCams.length}</span>
+          </span>
+          <span class="bom-group-price-wrap">
+            <span class="bom-group-total">$${unassignedCams.reduce((s, c) => s + c.price, 0).toLocaleString()}</span>
+          </span>
+        </div>
+        <div class="bom-group-children">
+          ${unassignedCams.map((cam, i) => renderBomCamItem(cam, null, i)).join('')}
+          ${_dragMode.active ? '<div class="bom-drop-zone" ondragover="bomDropZoneDragOver(event)" ondragleave="bomDropZoneDragLeave(event)" ondrop="bomDropOnGroup(null,' + unassignedCams.length + ',event)"></div>' : ''}
+        </div>
+      </div>`;
+  }
+
+  // Core groups
   cores.forEach(core => {
     const coreCams = (core.cameraIds || []).map(id => cams.find(c => c.id === id)).filter(Boolean);
     const collapsed = _bomCollapseState[core.id] ? 'collapsed' : '';
@@ -3577,7 +3632,7 @@ function renderBOMPane() {
       : `<span class="bom-tag" style="${durStyle}" title="Duration" onclick="${bulk ? "bulkEditField('duration',this,event);event.stopPropagation()" : "bomEditCoreTag("+core.id+",'duration',this,event);event.stopPropagation()"}">${coreDurationDisplay}</span>`);
     const coreTagsWrap = drag ? '' : `<span class="bom-tags">${corePayTag}${coreDurTag}<span></span><span></span><span></span></span>`;
 
-    groupsHtml += `
+    hwGroupsHtml += `
       <div class="bom-group ${collapsed}" data-bom-group="${core.id}">
         <div class="bom-group-hdr bom-group-hdr-core" style="--core-color:${core.color}" ${drag ? 'ondragover="event.preventDefault();this.classList.add(\'drop-target\')" ondragleave="this.classList.remove(\'drop-target\')" ondrop="this.classList.remove(\'drop-target\');bomDropOnGroup(' + core.id + ',0,event)"' : (bulk ? '' : 'onclick="selectCore(' + core.id + ')"')}>
           ${coreCbHtml}
@@ -3591,8 +3646,6 @@ function renderBOMPane() {
           ${coreTagsWrap}
           <span class="bom-group-price-wrap">
             <span class="bom-group-price">$${core.price.toLocaleString()}</span>
-            <span class="bom-group-price-sep">|</span>
-            <span class="bom-group-total">$${(core.price + coreCams.reduce((s, c) => s + c.price, 0)).toLocaleString()}</span>
           </span>
         </div>
         <div class="bom-group-children">
@@ -3602,28 +3655,52 @@ function renderBOMPane() {
       </div>`;
   });
 
-  // Unassigned cameras group
-  if (unassignedCams.length > 0 || _dragMode.active) {
-    const collapsed = _bomCollapseState['unassigned'] ? 'collapsed' : '';
-    groupsHtml += `
-      <div class="bom-group ${collapsed}" data-bom-group="unassigned">
-        <div class="bom-group-hdr bom-group-hdr-unassigned" ${drag ? 'ondragover="event.preventDefault();this.classList.add(\'drop-target\')" ondragleave="this.classList.remove(\'drop-target\')" ondrop="this.classList.remove(\'drop-target\');bomDropOnGroup(null,0,event)"' : ''} onclick="toggleBomGroup('unassigned',event)">
-          ${chevronSvg}
-          <span class="bom-group-icon">${BOM_CAM_ICON}</span>
-          <span class="bom-group-name-wrap">
-            <span class="bom-group-name">Unassigned Cameras</span>
-            <span class="bom-group-count-badge">${unassignedCams.length}</span>
-          </span>
-          <span class="bom-group-price-wrap">
-            <span class="bom-group-total">$${unassignedCams.reduce((s, c) => s + c.price, 0).toLocaleString()}</span>
-          </span>
+  // ── Hardware category ──
+  const hwCollapsed = _bomCategoryCollapse.hardware ? 'collapsed' : '';
+  const hwDeviceCount = cams.length + cores.length + state.addons.length;
+  const hardwareHtml = `
+    <div class="bom-category ${hwCollapsed}" data-category="hardware">
+      <div class="bom-category-hdr" onclick="toggleBomCategory('hardware')">
+        ${chevronSvg}
+        <span class="bom-category-title">Hardware</span>
+        <span class="bom-category-badge">${hwDeviceCount}</span>
+        <span class="bom-category-total">$${hwTotal.toLocaleString()}</span>
+      </div>
+      <div class="bom-category-body">
+        <div class="bom-section ${drag ? 'bom-drag-mode' : ''}" style="border-bottom:none;padding-bottom:0">
+          ${hwGroupsHtml}
         </div>
-        <div class="bom-group-children">
-          ${unassignedCams.map((cam, i) => renderBomCamItem(cam, null, i)).join('')}
-          ${_dragMode.active ? '<div class="bom-drop-zone" ondragover="bomDropZoneDragOver(event)" ondragleave="bomDropZoneDragLeave(event)" ondrop="bomDropOnGroup(null,' + unassignedCams.length + ',event)"></div>' : ''}
+      </div>
+      <div class="bom-category-footer">
+        <span class="bom-category-footer-label">Hardware Total</span>
+        <span class="bom-category-footer-val">$${hwTotal.toLocaleString()}</span>
+      </div>
+    </div>`;
+
+  // ── Software category ──
+  const swCollapsed = _bomCategoryCollapse.software ? 'collapsed' : '';
+  const licenseIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" width="16" height="16"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>';
+  const softwareHtml = cams.length > 0 ? `
+    <div class="bom-category ${swCollapsed}" data-category="software">
+      <div class="bom-category-hdr" onclick="toggleBomCategory('software')">
+        ${chevronSvg}
+        <span class="bom-category-title">Software</span>
+        <span class="bom-category-badge">${cams.length}</span>
+        <span class="bom-category-total">$${swTotal.toLocaleString()}</span>
+      </div>
+      <div class="bom-category-body">
+        <div class="bom-sw-row">
+          <span class="bom-sw-icon">${licenseIcon}</span>
+          <span class="bom-sw-name">Lumana License</span>
+          <span class="bom-sw-qty">${cams.length} × $${LICENSE_PRICE.Standard}</span>
+          <span class="bom-sw-price">$${swTotal.toLocaleString()}</span>
         </div>
-      </div>`;
-  }
+      </div>
+      <div class="bom-category-footer">
+        <span class="bom-category-footer-label">Software Total</span>
+        <span class="bom-category-footer-val">$${swTotal.toLocaleString()}</span>
+      </div>
+    </div>` : '';
 
   // Success message
   const successHtml = _bulkEdit.showSuccess ? `
@@ -3684,9 +3761,8 @@ function renderBOMPane() {
     ${toolbarHtml}
     ${bulkBarHtml}
     ${dragBarHtml}
-    <div class="bom-section ${drag ? 'bom-drag-mode' : ''}" style="border-bottom:none;padding-bottom:0">
-      ${groupsHtml}
-    </div>
+    ${hardwareHtml}
+    ${softwareHtml}
     <div class="bom-grand">
       <span class="bom-grand-label">Grand Total</span>
       <span class="bom-grand-val">$${grandTotal.toLocaleString()}</span>
