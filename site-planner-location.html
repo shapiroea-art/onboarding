@@ -470,14 +470,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 </div>
 
 <!-- Close Project Modal -->
-<div class="modal-overlay" id="closeProjectModal">
+<div class="modal-overlay" id="closeProjectModal" onclick="if(event.target===this)this.classList.remove('show')">
   <div class="modal" style="width:380px">
     <div class="modal-title">Close project</div>
     <div class="modal-field">
       <label class="modal-label">Closure reason</label>
       <div class="seg-control" id="closeReasonToggle">
-        <button type="button" class="seg-btn active" data-val="Win">Win</button>
-        <button type="button" class="seg-btn" data-val="Loss">Loss</button>
+        <button type="button" class="seg-btn active" data-val="Win" onclick="toggleCloseReason(this)">Win</button>
+        <button type="button" class="seg-btn" data-val="Loss" onclick="toggleCloseReason(this)">Loss</button>
       </div>
     </div>
     <div class="modal-field">
@@ -485,8 +485,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
       <textarea class="modal-input" id="closeProjectNotes" rows="3" placeholder="Add notes..." style="resize:vertical"></textarea>
     </div>
     <div class="modal-actions">
-      <button class="modal-btn" id="closeProjectCancel">Cancel</button>
-      <button class="modal-btn modal-btn-primary" id="closeProjectConfirm">Close project</button>
+      <button type="button" class="modal-btn" onclick="cancelCloseProject()">Cancel</button>
+      <button type="button" class="modal-btn modal-btn-primary" onclick="confirmCloseProject()">Close project</button>
     </div>
   </div>
 </div>
@@ -973,19 +973,14 @@ function openCloseProjectModal() {
   toggle.querySelectorAll('.seg-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
   document.getElementById('closeProjectModal').classList.add('show');
 }
-document.getElementById('closeReasonToggle').querySelectorAll('.seg-btn').forEach(function(btn) {
-  btn.addEventListener('click', function() {
-    document.getElementById('closeReasonToggle').querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-  });
-});
-document.getElementById('closeProjectCancel').addEventListener('click', function() {
+function toggleCloseReason(btn) {
+  document.getElementById('closeReasonToggle').querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function cancelCloseProject() {
   document.getElementById('closeProjectModal').classList.remove('show');
-});
-document.getElementById('closeProjectModal').addEventListener('click', function(e) {
-  if (e.target === this) this.classList.remove('show');
-});
-document.getElementById('closeProjectConfirm').addEventListener('click', function() {
+}
+function confirmCloseProject() {
   const reason = document.getElementById('closeReasonToggle').querySelector('.seg-btn.active').dataset.val;
   site.status = 'closed';
   site.closureReason = reason;
@@ -993,7 +988,7 @@ document.getElementById('closeProjectConfirm').addEventListener('click', functio
   document.getElementById('closeProjectModal').classList.remove('show');
   buildBreadcrumb();
   renderProjectDetails();
-});
+}
 
 /* ── Project Details ── */
 let _projectEditMode = false;
