@@ -36,10 +36,22 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .btn-primary:hover { background: #6d28d9; }
 
 /* ── Tabs ── */
-.tabs { display: flex; gap: 0; padding: 0 32px; background: #fff; border-bottom: 1px solid #eaecf0; flex-shrink: 0; }
+.tabs { display: flex; align-items: center; justify-content: space-between; padding: 0 32px; background: #fff; border-bottom: 1px solid #eaecf0; flex-shrink: 0; }
+.tabs-left { display: flex; gap: 0; }
+.tabs-filters { display: flex; align-items: center; gap: 8px; }
 .tab { padding: 12px 16px; font-size: 14px; font-weight: 500; color: #667085; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; white-space: nowrap; }
 .tab:hover { color: #344054; }
 .tab.active { color: #7c3aed; border-bottom-color: #7c3aed; }
+.tabs-search { padding: 6px 10px; font-size: 13px; border: 1px solid #d0d5dd; border-radius: 6px; color: #101828; outline: none; width: 180px; font-family: inherit; transition: border-color 0.15s; }
+.tabs-search:focus { border-color: #7c3aed; box-shadow: 0 0 0 2px rgba(124,58,237,0.12); }
+.tabs-filter-dd { padding: 6px 10px; font-size: 13px; border: 1px solid #d0d5dd; border-radius: 6px; color: #344054; background: #fff; font-family: inherit; cursor: pointer; outline: none; }
+.tabs-filter-dd:focus { border-color: #7c3aed; box-shadow: 0 0 0 2px rgba(124,58,237,0.12); }
+.date-range-wrap { display: flex; align-items: center; gap: 4px; }
+.date-range-input { padding: 6px 8px; font-size: 12px; border: 1px solid #d0d5dd; border-radius: 6px; color: #344054; font-family: inherit; outline: none; width: 120px; }
+.date-range-input:focus { border-color: #7c3aed; }
+.closure-badge { display: inline-flex; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+.closure-win { background: #ecfdf5; color: #065f46; }
+.closure-loss { background: #fef3f2; color: #d92d20; }
 
 /* ── Content Area ── */
 .content { flex: 1; overflow-y: auto; padding: 28px 32px; }
@@ -96,6 +108,13 @@ tbody tr { transition: background 0.12s; }
 .seg-btn + .seg-btn { border-left: 1px solid #d0d5dd; }
 .seg-btn:hover { background: #f9fafb; color: #344054; }
 .seg-btn.active { background: #7c3aed; color: #fff; }
+.modal-sep { border: none; border-top: 1px solid #eaecf0; margin: 4px 0 16px; }
+.contact-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.contact-delete-placeholder { width: 28px; flex-shrink: 0; }
+.contact-delete { width: 28px; height: 28px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border: none; background: none; color: #98a2b3; cursor: pointer; border-radius: 6px; padding: 0; }
+.contact-delete:hover { color: #d92d20; background: #fef3f2; }
+.contact-add-btn { border: none; background: none; color: #7c3aed; font-size: 13px; font-weight: 500; cursor: pointer; padding: 4px 0; font-family: inherit; }
+.contact-add-btn:hover { color: #6d28d9; }
 </style>
 </head>
 <body>
@@ -159,20 +178,42 @@ tbody tr { transition: background 0.12s; }
 
   <!-- Tabs -->
   <div class="tabs">
-    <div class="tab active" data-tab="my">My projects</div>
-    <div class="tab" data-tab="shared">Shared with me</div>
-    <div class="tab" data-tab="archive">Archive</div>
+    <div class="tabs-left">
+      <div class="tab active" data-tab="my">My projects</div>
+      <div class="tab" data-tab="shared">Shared with me</div>
+      <div class="tab" data-tab="closed">Closed</div>
+    </div>
+    <div class="tabs-filters">
+      <input class="tabs-search" id="searchInput" type="text" placeholder="Search projects..." oninput="onSearchInput(this.value)">
+      <select class="tabs-filter-dd" id="dateFilterSelect" onchange="onDateFilterChange(this.value)">
+        <option value="">All dates</option>
+        <option value="last7">Last 7 days</option>
+        <option value="last30">Last 30 days</option>
+        <option value="last90">Last 90 days</option>
+        <option value="custom">Custom range</option>
+      </select>
+      <div class="date-range-wrap" id="dateRangeWrap" style="display:none">
+        <input class="date-range-input" id="dateFrom" type="date" onchange="onCustomDateChange()">
+        <span style="color:#98a2b3">–</span>
+        <input class="date-range-input" id="dateTo" type="date" onchange="onCustomDateChange()">
+      </div>
+      <select class="tabs-filter-dd" id="winLossFilter" style="display:none" onchange="onWinLossFilterChange(this.value)">
+        <option value="">Win / Loss</option>
+        <option value="Win">Win</option>
+        <option value="Loss">Loss</option>
+      </select>
+    </div>
   </div>
 
   <!-- Content -->
   <div class="content">
     <div class="table-wrap">
       <table>
-        <thead>
+        <thead id="tableHead">
           <tr>
             <th>Project name</th>
-            <th>Locations</th>
-            <th>Devices</th>
+            <th>BOM</th>
+            <th>Created date</th>
             <th style="width: 56px;"></th>
           </tr>
         </thead>
@@ -193,12 +234,29 @@ tbody tr { transition: background 0.12s; }
       <label class="modal-label" for="siteNameInput">Project name</label>
       <input class="modal-input" id="siteNameInput" type="text" placeholder="Enter project name" autocomplete="off"/>
     </div>
+    <hr class="modal-sep">
+    <div class="modal-field">
+      <label class="modal-label">Contacts <span style="font-weight:400;color:#98a2b3">(optional)</span></label>
+      <div id="contactsList">
+        <div class="contact-row">
+          <input class="modal-input" type="text" placeholder="Name" style="flex:1">
+          <input class="modal-input" type="tel" placeholder="Phone" style="flex:1">
+          <span class="contact-delete-placeholder"></span>
+        </div>
+      </div>
+      <button type="button" class="contact-add-btn" onclick="addContact()">+ Add contact</button>
+    </div>
+    <hr class="modal-sep">
     <div class="modal-field">
       <label class="modal-label">Unit of measurement</label>
       <div class="seg-control" id="segUnits">
         <button type="button" class="seg-btn active" data-val="imperial">Imperial (ft)</button>
         <button type="button" class="seg-btn" data-val="metric">Metric (m)</button>
       </div>
+    </div>
+    <div class="modal-field">
+      <label class="modal-label">Notes <span style="font-weight:400;color:#98a2b3">(optional)</span></label>
+      <textarea class="modal-input" id="siteNotes" rows="3" placeholder="Add notes..." style="resize:vertical"></textarea>
     </div>
     <div class="modal-actions">
       <button class="modal-btn" id="cancelSiteBtn">Cancel</button>
@@ -207,20 +265,51 @@ tbody tr { transition: background 0.12s; }
   </div>
 </div>
 
+<!-- Close Reason Modal -->
+<div class="modal-overlay" id="closeReasonModal">
+  <div class="modal" style="width:320px;text-align:center">
+    <div class="modal-title" style="margin-bottom:8px">Close project</div>
+    <p style="font-size:13px;color:#667085;margin-bottom:20px">Mark this project as:</p>
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button class="modal-btn" id="closeWinBtn" style="flex:1;background:#ecfdf5;border-color:#a7f3d0;color:#065f46;font-weight:600">Win</button>
+      <button class="modal-btn" id="closeLossBtn" style="flex:1;background:#fef3f2;border-color:#fecaca;color:#d92d20;font-weight:600">Loss</button>
+    </div>
+    <button class="modal-btn" id="closeReasonCancel" style="margin-top:12px;width:100%">Cancel</button>
+  </div>
+</div>
+
 <script>
+// ── State ──
+let activeTab = 'my';
+let searchQuery = '';
+let dateFilter = '';
+let dateFrom = '';
+let dateTo = '';
+let winLossFilter = '';
+let closingSiteId = null;
+
 // ── Tabs ──
 document.querySelectorAll('.tab').forEach(function(tab) {
   tab.addEventListener('click', function() {
     document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
     tab.classList.add('active');
+    activeTab = tab.dataset.tab;
+    searchQuery = ''; document.getElementById('searchInput').value = '';
+    dateFilter = ''; document.getElementById('dateFilterSelect').value = '';
+    document.getElementById('dateRangeWrap').style.display = 'none';
+    winLossFilter = ''; document.getElementById('winLossFilter').value = '';
+    document.getElementById('winLossFilter').style.display = activeTab === 'closed' ? '' : 'none';
+    renderTable();
   });
 });
 
 // ── Demo Data ──
 const SITES = [
-  { id: 1, name: 'Bnei Brak' },
-  { id: 2, name: 'Carrefour' },
-  { id: 3, name: 'Hapoalim' },
+  { id: 1, name: 'Bnei Brak', status: 'active', createdDate: '2025-11-15', closureReason: null, bom: 12500 },
+  { id: 2, name: 'Carrefour', status: 'active', createdDate: '2026-01-22', closureReason: null, bom: 8730 },
+  { id: 3, name: 'Hapoalim', status: 'active', createdDate: '2026-03-05', closureReason: null, bom: 24200 },
+  { id: 4, name: 'Tel Aviv Mall', status: 'closed', createdDate: '2025-08-10', closureReason: 'Win', bom: 18500 },
+  { id: 5, name: 'Herzliya Office', status: 'closed', createdDate: '2025-09-28', closureReason: 'Loss', bom: 6200 },
 ];
 const LOCATIONS = [
   { id: 1, siteId: 1, name: 'Main Building', address: 'San Francisco, CA' },
@@ -264,37 +353,92 @@ const DEVICES = [
 ];
 
 let sites = [...SITES];
-let nextId = 4;
+let nextId = 6;
 let openDropdown = null;
+
+function formatDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function filterSites() {
+  let list = sites;
+  // Tab filter
+  if (activeTab === 'closed') {
+    list = list.filter(s => s.status === 'closed');
+  } else {
+    list = list.filter(s => s.status === 'active');
+  }
+  // Search
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase();
+    list = list.filter(s => s.name.toLowerCase().includes(q));
+  }
+  // Date filter
+  if (dateFilter) {
+    const today = new Date(); today.setHours(0,0,0,0);
+    if (dateFilter === 'last7' || dateFilter === 'last30' || dateFilter === 'last90') {
+      const days = dateFilter === 'last7' ? 7 : dateFilter === 'last30' ? 30 : 90;
+      const cutoff = new Date(today); cutoff.setDate(cutoff.getDate() - days);
+      list = list.filter(s => s.createdDate && new Date(s.createdDate + 'T00:00:00') >= cutoff);
+    } else if (dateFilter === 'custom') {
+      if (dateFrom) list = list.filter(s => s.createdDate && s.createdDate >= dateFrom);
+      if (dateTo) list = list.filter(s => s.createdDate && s.createdDate <= dateTo);
+    }
+  }
+  // Win/Loss
+  if (activeTab === 'closed' && winLossFilter) {
+    list = list.filter(s => s.closureReason === winLossFilter);
+  }
+  return list;
+}
 
 function renderTable() {
   const tbody = document.getElementById('sitesBody');
   const empty = document.getElementById('emptyState');
+  const thead = document.getElementById('tableHead');
+  const isClosed = activeTab === 'closed';
 
-  if (sites.length === 0) {
+  // Dynamic headers
+  thead.innerHTML = `<tr>
+    <th>Project name</th>
+    <th>BOM</th>
+    <th>Created date</th>
+    ${isClosed ? '<th>Closure reason</th>' : ''}
+    <th style="width: 56px;"></th>
+  </tr>`;
+
+  const filtered = filterSites();
+
+  if (filtered.length === 0) {
     tbody.innerHTML = '';
     empty.style.display = 'block';
+    empty.textContent = isClosed ? 'No closed projects.' : 'No projects yet. Click "+ New Project" to get started.';
     return;
   }
 
   empty.style.display = 'none';
-  tbody.innerHTML = sites.map(s => {
-    const locCount = LOCATIONS.filter(l => l.siteId === s.id).length;
-    const siteLocIds = LOCATIONS.filter(l => l.siteId === s.id).map(l => l.id);
-    const sitePlanIds = PLANS.filter(p => siteLocIds.includes(p.locationId)).map(p => p.id);
-    const deviceCount = DEVICES.filter(d => sitePlanIds.includes(d.planId)).reduce((sum, d) => sum + d.qty, 0);
+  tbody.innerHTML = filtered.map(s => {
+    const bomDisplay = s.bom ? '$' + s.bom.toLocaleString() : '—';
+    const dateDisplay = formatDate(s.createdDate);
+    const closureHtml = isClosed
+      ? `<td><span class="closure-badge ${s.closureReason === 'Win' ? 'closure-win' : 'closure-loss'}">${s.closureReason || '—'}</span></td>`
+      : '';
+    const closeItem = s.status === 'active' ? `
+          <button class="dropdown-item" data-action="close" data-id="${s.id}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 6L6 18M6 6l12 12"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+            Close
+          </button>` : '';
     return `
     <tr data-id="${s.id}" data-href="site-planner-location.html?siteId=${s.id}">
       <td><span class="site-name">${escapeHtml(s.name)}</span></td>
-      <td><span class="badge">${locCount}</span></td>
-      <td>${deviceCount}</td>
+      <td>${bomDisplay}</td>
+      <td>${dateDisplay}</td>
+      ${closureHtml}
       <td class="actions-cell">
         <button class="actions-btn" data-id="${s.id}" title="Actions">&middot;&middot;&middot;</button>
         <div class="dropdown" id="dropdown-${s.id}">
-          <button class="dropdown-item" data-action="edit" data-id="${s.id}">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-            Edit
-          </button>
           <button class="dropdown-item" data-action="share" data-id="${s.id}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
             Share
@@ -303,6 +447,7 @@ function renderTable() {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Export
           </button>
+          ${closeItem}
           <button class="dropdown-item danger" data-action="delete" data-id="${s.id}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
             Delete
@@ -349,17 +494,11 @@ document.addEventListener('click', function(e) {
     const id = parseInt(item.dataset.id);
     closeAllDropdowns();
 
-    if (action === 'edit') {
-      const site = sites.find(s => s.id === id);
-      if (site) {
-        const newName = prompt('Rename project:', site.name);
-        if (newName && newName.trim()) {
-          site.name = newName.trim();
-          renderTable();
-        }
-      }
-    } else if (action === 'share') {
+    if (action === 'share') {
       alert('Share link copied to clipboard (placeholder).');
+    } else if (action === 'close') {
+      closingSiteId = id;
+      document.getElementById('closeReasonModal').classList.add('show');
     } else if (action === 'export') {
       alert('Project exported (placeholder).');
     } else if (action === 'delete') {
@@ -429,11 +568,74 @@ confirmSiteBtn.addEventListener('click', function() {
   const name = siteNameInput.value.trim();
   if (!name) return;
   const newId = nextId++;
-  sites.push({ id: newId, name: name });
+  const today = new Date().toISOString().slice(0, 10);
+  sites.push({ id: newId, name: name, status: 'active', createdDate: today, closureReason: null, bom: 0 });
   renderTable();
   createSiteModal.classList.remove('show');
   window.location.href = `site-planner-location.html?siteId=${newId}&newSite=1`;
 });
+
+// ── Filters ──
+function onSearchInput(val) {
+  searchQuery = val;
+  renderTable();
+}
+function onDateFilterChange(val) {
+  dateFilter = val;
+  document.getElementById('dateRangeWrap').style.display = val === 'custom' ? 'flex' : 'none';
+  renderTable();
+}
+function onCustomDateChange() {
+  dateFrom = document.getElementById('dateFrom').value;
+  dateTo = document.getElementById('dateTo').value;
+  renderTable();
+}
+function onWinLossFilterChange(val) {
+  winLossFilter = val;
+  renderTable();
+}
+
+// ── Close Reason Modal ──
+document.getElementById('closeWinBtn').addEventListener('click', function() {
+  closeSiteWithReason('Win');
+});
+document.getElementById('closeLossBtn').addEventListener('click', function() {
+  closeSiteWithReason('Loss');
+});
+document.getElementById('closeReasonCancel').addEventListener('click', function() {
+  document.getElementById('closeReasonModal').classList.remove('show');
+  closingSiteId = null;
+});
+document.getElementById('closeReasonModal').addEventListener('click', function(e) {
+  if (e.target === this) { this.classList.remove('show'); closingSiteId = null; }
+});
+function closeSiteWithReason(reason) {
+  const site = sites.find(s => s.id === closingSiteId);
+  if (site) {
+    site.status = 'closed';
+    site.closureReason = reason;
+    renderTable();
+  }
+  document.getElementById('closeReasonModal').classList.remove('show');
+  closingSiteId = null;
+}
+
+// ── Contacts ──
+function addContact() {
+  const list = document.getElementById('contactsList');
+  const row = document.createElement('div');
+  row.className = 'contact-row';
+  row.innerHTML = `
+    <input class="modal-input" type="text" placeholder="Name" style="flex:1">
+    <input class="modal-input" type="tel" placeholder="Phone" style="flex:1">
+    <button type="button" class="contact-delete" onclick="removeContact(this)" title="Remove contact">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>`;
+  list.appendChild(row);
+}
+function removeContact(btn) {
+  btn.closest('.contact-row').remove();
+}
 
 // ── Init ──
 renderTable();
