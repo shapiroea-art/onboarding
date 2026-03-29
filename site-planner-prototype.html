@@ -113,7 +113,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 /* ── Properties ── */
 .properties { width: 850px; flex-shrink: 0; background: #fff; border-left: 1px solid #eaecf0; display: flex; flex-direction: column; position: relative; overflow: visible; transition: width 0.2s ease; }
 .properties.collapsed { width: 0; border-left: none; }
-.properties.collapsed .rp-total,
 .properties.collapsed .rp-tabs,
 .properties.collapsed .rp-body,
 .properties.collapsed .rp-cam-header,
@@ -183,13 +182,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .rp-bom-header-badge { font-size: 11px; font-weight: 700; border-radius: 10px; padding: 2px 8px; background: #7c3aed; color: #fff; }
 
 /* ── Right Panel — Project Total header ── */
-.rp-total { padding: 14px 16px 12px; background: linear-gradient(135deg,#faf5ff 0%,#f0ebff 100%); border-bottom: 1px solid #e9d5ff; flex-shrink: 0; }
-.rp-total-label { font-size: 10px; font-weight: 700; color: #7c3aed; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px; }
-.rp-total-amount { font-size: 28px; font-weight: 800; color: #4c1d95; line-height: 1; margin-bottom: 4px; letter-spacing: -0.5px; }
-.rp-total-meta { font-size: 11px; color: #9061f9; margin-bottom: 10px; }
-.rp-total-bar { height: 3px; background: #ede9fe; border-radius: 2px; }
-.rp-total-fill { height: 100%; background: linear-gradient(90deg,#7c3aed,#a78bfa); border-radius: 2px; transition: width 0.4s ease; min-width: 0; }
-
 /* ── Right Panel — Tabs ── */
 .rp-tabs { display: flex; border-bottom: 1px solid #eaecf0; flex-shrink: 0; background: #fff; }
 .rp-tab { flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px; padding: 9px 4px 8px; font-size: 12px; font-weight: 500; color: #667085; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; user-select: none; }
@@ -309,16 +301,22 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 
 /* ── BOM Bulk Edit ── */
 .bom-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; border-bottom: 1px solid #eaecf0; flex-shrink: 0; }
+.bom-toolbar-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 16px; border-bottom: 1px solid #eaecf0; flex-wrap: wrap; }
 .bom-bulk-btn { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid #d0d5dd; background: #fff; color: #344054; font-family: inherit; transition: all 0.15s; }
 .bom-bulk-btn:hover { background: #f9fafb; border-color: #98a2b3; }
 .bom-bulk-btn.active { background: #7c3aed; border-color: #7c3aed; color: #fff; }
 .bom-bulk-btn svg { width: 13px; height: 13px; }
 .bom-quick-switch { display: inline-flex; align-items: center; border: 1px solid #d0d5dd; border-radius: 6px; overflow: hidden; }
+.bom-quick-switch.bom-mixed { border-color: #d0d5dd; }
 .bom-quick-switch-btn { padding: 3px 8px; font-size: 11px; font-weight: 500; color: #667085; cursor: pointer; border: none; background: #fff; font-family: inherit; transition: all 0.12s; white-space: nowrap; }
 .bom-quick-switch-btn:not(:last-child) { border-right: 1px solid #d0d5dd; }
 .bom-quick-switch-btn.active { background: #7c3aed; color: #fff; }
 .bom-quick-switch-btn:hover:not(.active):not(.disabled) { background: #f9fafb; }
 .bom-quick-switch-btn.disabled { opacity: 0.35; pointer-events: none; }
+.bom-toolbar-dd { padding: 3px 6px; font-size: 11px; font-weight: 500; color: #344054; border: 1px solid #d0d5dd; border-radius: 6px; background: #fff; font-family: inherit; cursor: pointer; outline: none; }
+.bom-toolbar-dd:focus { border-color: #7c3aed; box-shadow: 0 0 0 2px rgba(124,58,237,0.12); }
+.bom-addon-btn { padding: 3px 6px; font-size: 11px; font-weight: 500; color: #344054; border: 1px solid #d0d5dd; border-radius: 6px; background: #fff; font-family: inherit; cursor: pointer; outline: none; transition: all 0.15s; white-space: nowrap; }
+.bom-addon-btn:hover { background: #f9fafb; border-color: #98a2b3; }
 .bom-view-opts-wrap { position: relative; display: inline-flex; }
 .bom-view-opts-dd { position: absolute; top: calc(100% + 5px); right: 0; width: 280px; background: #fff; border: 1px solid #e4e7ec; border-radius: 10px; box-shadow: 0 8px 24px rgba(16,24,40,0.12); z-index: 300; display: none; flex-direction: column; padding: 14px; gap: 14px; }
 .bom-view-opts-dd.show { display: flex; }
@@ -326,11 +324,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .bom-vo-search { width: 100%; padding: 6px 10px; border: 1px solid #d0d5dd; border-radius: 6px; font-size: 12px; font-family: inherit; outline: none; box-sizing: border-box; }
 .bom-vo-search:focus { border-color: #7c3aed; box-shadow: 0 0 0 2px rgba(124,58,237,0.15); }
 .bom-vo-check { display: flex; align-items: center; gap: 6px; padding: 3px 0; font-size: 12px; color: #344054; cursor: pointer; }
-.bom-bulk-bar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: #faf5ff; border-bottom: 1px solid #e9d5ff; flex-shrink: 0; }
-.bom-bulk-bar-hint { font-size: 12px; color: #6b21a8; flex: 1; line-height: 1.4; }
-.bom-bulk-actions { display: flex; gap: 6px; flex-shrink: 0; }
-.bom-bulk-select-all { display: flex; align-items: center; gap: 6px; padding: 8px 16px 6px; border-bottom: 1px solid #f2f4f7; }
-.bom-bulk-select-all label { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: #344054; cursor: pointer; }
 .bom-cb { width: 16px; height: 16px; accent-color: #7c3aed; cursor: pointer; flex-shrink: 0; margin: 0; }
 .bom-item-cb { margin-right: 2px; }
 .bom-success { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: #ecfdf5; border-bottom: 1px solid #a7f3d0; font-size: 13px; font-weight: 500; color: #065f46; flex-shrink: 0; animation: bomSuccessFade 3s forwards; }
@@ -967,12 +960,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
         <div class="rp-bom-header" id="rpBomHeader" style="display:none">
           <span class="rp-bom-header-title">BOM</span>
           <span class="rp-bom-header-badge" id="rpBomHeaderBadge">0</span>
-        </div>
-        <!-- Project Total Header -->
-        <div class="rp-total">
-          <div class="rp-total-label">MSRP Estimate</div>
-          <div class="rp-total-amount" id="rpTotalVal">$0</div>
-          <div class="rp-total-meta" id="rpTotalMeta">0 cameras · $0 avg</div>
+          <div id="bomHeaderActions" style="display:flex;align-items:center;gap:6px"></div>
         </div>
         <!-- Tabs -->
         <div class="rp-tabs">
@@ -2664,7 +2652,7 @@ function renderProperties(id) {
   // Panel header state: camera selected
   document.getElementById('rpCamHeader').style.display = 'flex';
   document.getElementById('rpBomHeader').style.display = 'none';
-  document.querySelector('.rp-total').style.display = 'none';
+
   document.querySelector('.rp-tabs').style.display = 'none';
   document.getElementById('propsPane').style.display = '';
   document.getElementById('bomPane').style.display = 'none';
@@ -2878,7 +2866,7 @@ function renderPropertiesEmpty() {
   // Panel header state: nothing selected — show MSRP + BOM header, hide cam header + tabs
   document.getElementById('rpCamHeader').style.display = 'none';
   document.getElementById('rpBomHeader').style.display = 'flex';
-  document.querySelector('.rp-total').style.display = '';
+
   document.querySelector('.rp-tabs').style.display = 'none';
   document.getElementById('propsPane').style.display = 'none';
   document.getElementById('bomPane').style.display = '';
@@ -3223,29 +3211,115 @@ const _bomViewOptions = {
 };
 
 // ── Bulk edit state ──
-const _bulkEdit = {
-  active: false,
-  selected: new Set(),       // 'cam-{id}' or 'core-{id}'
-  pendingChanges: {},        // field -> value, captured from first edit
-  showSuccess: false,
+// ── BOM Scope State ──
+const _bomScope = {
+  mode: 'all',              // 'all' | 'select'
+  selected: new Set(),      // camera IDs (numbers)
+  paymentUnpressed: false,  // true = user deactivated the payment toggle
+  durationUnpressed: false, // true = user deactivated the duration toggle
+  shownRetention: null,     // temporarily show selected retention value
+  shownLicense: null,       // temporarily show selected license value
 };
 
-// ── Quick Switches ──
-function quickSwitchPayment(value) {
+// ── BOM Scope Helpers ──
+function _bomTargetCameras() {
+  if (_bomScope.mode === 'select') {
+    return state.cameras.filter(c => _bomScope.selected.has(c.id));
+  }
+  return state.cameras;
+}
+function _bomTargetCores() {
+  return _bomScope.mode === 'all' ? state.cores : [];
+}
+
+// ── BOM Scope Controls ──
+function bomSetScope(mode) {
+  _bomScope.mode = mode;
+  if (mode === 'all') _bomScope.selected.clear();
+  _bomScope.paymentUnpressed = false;
+  _bomScope.durationUnpressed = false;
+  renderBOMPane();
+}
+function bomScopeToggleItem(camId, evt) {
+  evt.stopPropagation();
+  if (_bomScope.selected.has(camId)) _bomScope.selected.delete(camId);
+  else _bomScope.selected.add(camId);
+  renderBOMPane();
+}
+function bomScopeToggleAll(checked) {
+  _bomScope.selected.clear();
+  if (checked) state.cameras.forEach(c => _bomScope.selected.add(c.id));
+  renderBOMPane();
+}
+
+// ── Scope-aware Quick Switches ──
+function bomSwitchPayment(value) {
+  const targetCams = _bomTargetCameras();
+  const targetCores = _bomTargetCores();
+  const targets = [...targetCams, ...targetCores];
+  // Unpressed: clicking the active value deactivates the toggle visually
+  const isActive = !_bomScope.paymentUnpressed && targets.length > 0 && targets.every(d => d.payment === value);
+  if (isActive) { _bomScope.paymentUnpressed = true; renderBOMPane(); return; }
+  _bomScope.paymentUnpressed = false;
+  _bomScope.durationUnpressed = false;
   saveUndo();
-  state.cameras.forEach(c => { c.payment = value; });
-  state.cores.forEach(c => { c.payment = value; if (value === 'Upfront') c.duration = 1; });
+  targetCams.forEach(c => { c.payment = value; if (value === 'Upfront') c.duration = 1; });
+  targetCores.forEach(c => { c.payment = value; if (value === 'Upfront') c.duration = 1; });
   renderBOMPane();
   updateProjectTotal();
   if (state.selectedId) renderProperties(state.selectedId);
 }
-function quickSwitchDuration(value) {
+function bomSwitchDuration(value) {
+  const targetCams = _bomTargetCameras();
+  const targetCores = _bomTargetCores();
+  const targets = [...targetCams, ...targetCores];
+  // Unpressed: clicking the active value deactivates the toggle visually
+  const isActive = !_bomScope.durationUnpressed && targets.length > 0 && targets.every(d => d.duration === value);
+  if (isActive) { _bomScope.durationUnpressed = true; renderBOMPane(); return; }
+  _bomScope.durationUnpressed = false;
   saveUndo();
-  state.cameras.forEach(c => { c.duration = value; });
-  state.cores.forEach(c => { c.duration = value; });
+  targetCams.forEach(c => { c.duration = value; });
+  targetCores.forEach(c => { c.duration = value; });
   renderBOMPane();
   updateProjectTotal();
   if (state.selectedId) renderProperties(state.selectedId);
+}
+function bomSwitchRetention(value) {
+  const v = parseInt(value);
+  if (!v) return;
+  saveUndo();
+  const keepLicense = _bomScope.shownLicense;
+  _bomTargetCameras().forEach(c => { c.retention = v; });
+  updateProjectTotal();
+  _bomScope.shownRetention = v;
+  _bomScope.shownLicense = keepLicense;
+  renderBOMPane();
+  if (state.selectedId) renderProperties(state.selectedId);
+}
+function bomSwitchLicense(value) {
+  if (!value) return;
+  saveUndo();
+  const keepRetention = _bomScope.shownRetention;
+  _bomTargetCameras().forEach(c => { c.license = value; });
+  updateProjectTotal();
+  _bomScope.shownLicense = value;
+  _bomScope.shownRetention = keepRetention;
+  renderBOMPane();
+  if (state.selectedId) renderProperties(state.selectedId);
+}
+function bomAddAddonsToCameras() {
+  const targetCams = _bomTargetCameras();
+  if (!targetCams.length) return;
+  // Open addon picker in camera mode with all target cameras pre-selected
+  addonState.scope = 'camera';
+  addonState.assignToCamId = null;
+  addonState.bomBulk = true; // flag: cameras defined by BOM scope, not the modal
+  document.getElementById('addonScopeToggle').style.display = 'none';
+  setAddonScope('camera');
+  addonState.selectedCamIds = targetCams.map(c => c.id); // set AFTER setAddonScope (which clears it)
+  document.getElementById('addonCameraField').style.display = 'none';
+  document.getElementById('addonPlaceBtn').setAttribute('onclick', 'placeAddon()');
+  document.getElementById('addonPickerOverlay').classList.add('show');
 }
 
 // ── BOM View Options functions ──
@@ -3298,104 +3372,6 @@ function _bomMatchesSearch(item) {
   return (item.name || '').toLowerCase().includes(q) || (item.type || '').toLowerCase().includes(q);
 }
 
-function toggleBulkEdit() {
-  if (_dragMode.active) { _dragMode.active = false; _dragMode.showSuccess = false; }
-  _bulkEdit.active = !_bulkEdit.active;
-  _bulkEdit.selected.clear();
-  _bulkEdit.pendingChanges = {};
-  _bulkEdit.showSuccess = false;
-  renderBOMPane();
-}
-
-function bulkToggleItem(key, evt) {
-  evt.stopPropagation();
-  if (_bulkEdit.selected.has(key)) _bulkEdit.selected.delete(key);
-  else _bulkEdit.selected.add(key);
-  renderBOMPane();
-}
-
-function bulkToggleAll(checked) {
-  _bulkEdit.selected.clear();
-  if (checked) {
-    state.cameras.forEach(c => _bulkEdit.selected.add('cam-' + c.id));
-    state.cores.forEach(c => _bulkEdit.selected.add('core-' + c.id));
-  }
-  renderBOMPane();
-}
-
-function bulkEditField(field, el, evt) {
-  evt.stopPropagation();
-  const RESOLUTIONS = ['QVGA','VGA','SVGA','720p','1.3MP','2MP','1080MP','3MP','4MP','5MP','6MP','4K','10MP','12MP','16MP','20MP','6K','7K','8K'];
-  const opts = {
-    payment: ['Upfront','Yearly'],
-    duration: ['1 yr','3 yr','5 yr','10 yr'],
-    license: ['Essential','Enterprise'],
-    retention: ['30d','60d','90d','180d','365d'],
-    resolution: RESOLUTIONS,
-  };
-  const options = opts[field];
-  if (!options) return;
-  const curVal = el.textContent.trim();
-  const sel = document.createElement('select');
-  sel.style.cssText = 'font-size:11px;color:#344054;border:1px solid #d0d5dd;border-radius:4px;padding:1px 3px;background:#fff;font-family:inherit;outline:none;cursor:pointer;width:auto';
-  options.forEach(o => {
-    const opt = document.createElement('option');
-    opt.value = o; opt.textContent = o;
-    if (o === curVal) opt.selected = true;
-    sel.appendChild(opt);
-  });
-  el.textContent = '';
-  el.appendChild(sel);
-  sel.focus();
-  const commit = () => {
-    const v = sel.value;
-    sel.remove();
-    _bulkEdit.pendingChanges[field] = v;
-    renderBOMPane();
-  };
-  sel.addEventListener('change', commit);
-  sel.addEventListener('blur', commit, { once: true });
-}
-
-function bulkApply() {
-  const changes = _bulkEdit.pendingChanges;
-  if (Object.keys(changes).length === 0) return;
-  saveUndo();
-  _bulkEdit.selected.forEach(key => {
-    const [type, idStr] = key.split('-');
-    const id = parseInt(idStr);
-    if (type === 'cam') {
-      const cam = state.cameras.find(c => c.id === id);
-      if (!cam) return;
-      if (changes.payment) { cam.payment = changes.payment; }
-      if (changes.duration) { const d = parseInt(changes.duration); cam.duration = d; }
-      if (changes.license) cam.license = changes.license;
-      if (changes.retention) cam.retention = parseInt(changes.retention);
-      if (changes.resolution) cam.resolution = changes.resolution;
-    } else if (type === 'core') {
-      const core = state.cores.find(c => c.id === id);
-      if (!core) return;
-      if (changes.payment) { core.payment = changes.payment; if (changes.payment === 'Upfront') core.duration = 1; }
-      if (changes.duration) { const d = parseInt(changes.duration); core.duration = d; core.payment = 'Yearly'; }
-    }
-  });
-  _bulkEdit.active = false;
-  _bulkEdit.selected.clear();
-  _bulkEdit.pendingChanges = {};
-  _bulkEdit.showSuccess = true;
-  renderBOMPane();
-  updateProjectTotal();
-  setTimeout(() => { _bulkEdit.showSuccess = false; renderBOMPane(); }, 3000);
-}
-
-function bulkCancel() {
-  _bulkEdit.active = false;
-  _bulkEdit.selected.clear();
-  _bulkEdit.pendingChanges = {};
-  _bulkEdit.showSuccess = false;
-  renderBOMPane();
-}
-
 // ── Drag reorder state ──
 const _dragMode = {
   active: false,
@@ -3404,7 +3380,7 @@ const _dragMode = {
 };
 
 function bomDragStart(camId, evt) {
-  if (_bulkEdit.active) return;
+  if (_bomScope.mode === 'select') return;
   _dragMode.active = true;
   _dragMode.dragCamId = camId;
   evt.dataTransfer.effectAllowed = 'move';
@@ -3473,128 +3449,36 @@ function bomDropOnGroup(targetCoreId, position, evt) {
   setTimeout(() => { _dragMode.showSuccess = false; renderBOMPane(); }, 3000);
 }
 
-function bomEditTag(camId, field, el, evt) {
-  evt.stopPropagation();
-  const cam = state.cameras.find(c => c.id === camId);
-  if (!cam) return;
-  if (field === 'resolution' && (cam.model || 'Generic') !== 'Generic') return;
-  const RESOLUTIONS = ['QVGA','VGA','SVGA','720p','1.3MP','2MP','1080MP','3MP','4MP','5MP','6MP','4K','10MP','12MP','16MP','20MP','6K','7K','8K'];
-  const opts = {
-    payment: ['Upfront','Yearly'],
-    duration: ['1 yr','3 yr','5 yr','10 yr'],
-    license: ['Essential','Enterprise'],
-    retention: ['30d','60d','90d','180d','365d'],
-    resolution: RESOLUTIONS,
-  };
-  const options = opts[field];
-  if (!options) return;
-  const curVal = el.textContent.trim();
-  const sel = document.createElement('select');
-  sel.className = '';
-  sel.style.cssText = 'font-size:11px;color:#344054;border:1px solid #d0d5dd;border-radius:4px;padding:1px 3px;background:#fff;font-family:inherit;outline:none;cursor:pointer;width:auto';
-  options.forEach(o => {
-    const opt = document.createElement('option');
-    opt.value = o; opt.textContent = o;
-    if (o === curVal) opt.selected = true;
-    sel.appendChild(opt);
-  });
-  el.textContent = '';
-  el.appendChild(sel);
-  sel.focus();
-  const commit = () => {
-    const v = sel.value;
-    sel.remove();
-    if (field === 'payment') { cam.payment = v; }
-    else if (field === 'duration') { cam.duration = parseInt(v); }
-    else if (field === 'license') { cam.license = v; }
-    else if (field === 'retention') { cam.retention = parseInt(v); }
-    else if (field === 'resolution') { cam.resolution = v; }
-    renderBOMPane();
-    updateProjectTotal();
-  };
-  sel.addEventListener('change', commit);
-  sel.addEventListener('blur', commit, { once: true });
-}
-
-function bomEditCoreTag(coreId, field, el, evt) {
-  evt.stopPropagation();
-  const core = state.cores.find(c => c.id === coreId);
-  if (!core) return;
-  if (field === 'duration' && core.payment === 'Upfront') return;
-  const opts = {
-    payment: ['Upfront','Yearly'],
-    duration: ['1 yr','3 yr','5 yr','10 yr'],
-  };
-  const options = opts[field];
-  if (!options) return;
-  const curVal = el.textContent.trim();
-  const sel = document.createElement('select');
-  sel.style.cssText = 'font-size:11px;color:#344054;border:1px solid #d0d5dd;border-radius:4px;padding:1px 3px;background:#fff;font-family:inherit;outline:none;cursor:pointer;width:auto';
-  options.forEach(o => {
-    const opt = document.createElement('option');
-    opt.value = o; opt.textContent = o;
-    if (o === curVal) opt.selected = true;
-    sel.appendChild(opt);
-  });
-  el.textContent = '';
-  el.appendChild(sel);
-  sel.focus();
-  const commit = () => {
-    const v = sel.value;
-    sel.remove();
-    if (field === 'payment') { core.payment = v; if (v === 'Upfront') core.duration = 1; }
-    else if (field === 'duration') { core.duration = parseInt(v); }
-    renderBOMPane();
-    updateProjectTotal();
-  };
-  sel.addEventListener('change', commit);
-  sel.addEventListener('blur', commit, { once: true });
-}
-
-
-function _bomTagHtml(field, value, bulk, camId, model) {
-  const p = _bulkEdit.pendingChanges;
-  const display = (bulk && p[field]) ? p[field] : value;
-  const changed = bulk && p[field];
-  if (field === 'resolution' && model && model !== 'Generic' && !changed) {
-    return `<span class="bom-tag" style="cursor:default" title="Resolution">${display}</span>`;
-  }
-  const style = changed ? 'color:#7c3aed;font-weight:600' : '';
-  const click = bulk
-    ? `onclick="bulkEditField('${field}',this,event)"`
-    : `onclick="bomEditTag(${camId},'${field}',this,event)"`;
-  return `<span class="bom-tag" style="${style}" title="${field.charAt(0).toUpperCase()+field.slice(1)}" ${click}>${display}</span>`;
+function _bomTagHtml(field, value) {
+  return `<span class="bom-tag" style="cursor:default" title="${field.charAt(0).toUpperCase()+field.slice(1)}">${value}</span>`;
 }
 
 function renderBomCamItem(cam, coreId, idx) {
   const icon = ICONS[cam.iconType] || BOM_CAM_ICON;
   const payment = cam.payment || 'Upfront';
   const duration = (cam.duration || 1) + ' yr';
-  const bulk = _bulkEdit.active;
-  const key = 'cam-' + cam.id;
-  const checked = _bulkEdit.selected.has(key);
-  const cbHtml = bulk ? `<input type="checkbox" class="bom-cb bom-item-cb" ${checked ? 'checked' : ''} onclick="bulkToggleItem('${key}',event)">` : '';
+  const selectMode = _bomScope.mode === 'select';
+  const checked = _bomScope.selected.has(cam.id);
+  const cbHtml = selectMode ? `<input type="checkbox" class="bom-cb bom-item-cb" ${checked ? 'checked' : ''} onclick="bomScopeToggleItem(${cam.id},event)">` : '';
   const dragHandleSvg = `<svg class="bom-drag-handle" viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px;cursor:grab;color:#98a2b3;flex-shrink:0"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>`;
-  const dragAttr = bulk ? '' : `draggable="true" ondragstart="bomDragStart(${cam.id},event)" ondragend="bomDragEnd(event)"`;
-  // Drop zones shown via CSS only during active drag (bom-dragging class on pane)
+  const dragAttr = selectMode ? '' : `draggable="true" ondragstart="bomDragStart(${cam.id},event)" ondragend="bomDragEnd(event)"`;
   const dropZone = `<div class="bom-drop-zone" ondragover="bomDropZoneDragOver(event)" ondragleave="bomDropZoneDragLeave(event)" ondrop="bomDropOnGroup(${coreId},${idx},event)"></div>`;
   const indent = coreId !== null ? '<span class="bom-item-indent"></span>' : '';
   const tagsHtml = `<span class="bom-tags">
-      ${_bomTagHtml('payment', payment, bulk, cam.id)}
-      ${_bomTagHtml('duration', duration, bulk, cam.id)}
-      ${_bomTagHtml('license', cam.license || 'Essential', bulk, cam.id)}
-      ${_bomTagHtml('retention', (cam.retention || 30) + 'd', bulk, cam.id)}
-      ${_bomTagHtml('resolution', cam.resolution || '4K', bulk, cam.id, cam.model || 'Generic')}
+      ${_bomTagHtml('payment', payment)}
+      ${_bomTagHtml('duration', duration)}
+      ${_bomTagHtml('license', cam.license || 'Essential')}
+      ${_bomTagHtml('retention', (cam.retention || 30) + 'd')}
+      ${_bomTagHtml('resolution', cam.resolution || '4K')}
     </span>`;
-  // Per-camera add-ons under this camera (respect view options)
   const camAddons = (_bomViewOptions.devices.addons)
     ? state.addons.filter(a => a.cameraId === cam.id && ADDON_TYPES[a.typeId] && ADDON_TYPES[a.typeId].scope === 'camera' && _bomMatchesSearch(a))
     : [];
   const camAddonsHtml = camAddons.map(a => renderBomAddonItem(a, true)).join('');
 
   return `${dropZone}<div class="bom-item" ${dragAttr}>
-    <div class="bom-item-primary" ${bulk ? '' : 'onclick="selectCamera(' + cam.id + ')" title="Select camera"'}>
-      ${indent}${bulk ? '' : dragHandleSvg}${cbHtml}
+    <div class="bom-item-primary" onclick="selectCamera(${cam.id})" title="Select camera">
+      ${indent}${selectMode ? '' : dragHandleSvg}${cbHtml}
       <span class="bom-item-icon">${icon}</span>
       <span class="bom-item-name-wrap">
         <span class="bom-item-name">${escHtml(cam.name)}</span>
@@ -3674,8 +3558,6 @@ function renderBOMPane() {
   const grandTotal = hwTotal + swTotal;
 
   const chevronSvg = '<svg class="bom-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>';
-  const bulk = _bulkEdit.active;
-  const bp = _bulkEdit.pendingChanges;
 
   // ── View options filtering ──
   const vo = _bomViewOptions;
@@ -3720,26 +3602,16 @@ function renderBOMPane() {
       const coreCamsRaw = (core.cameraIds || []).map(id => cams.find(c => c.id === id)).filter(Boolean);
       const coreCamsFilt = showCams ? _bomSortItems(coreCamsRaw.filter(_bomMatchesSearch)) : [];
       const collapsed = _bomCollapseState[core.id] ? 'collapsed' : '';
-      const coreKey = 'core-' + core.id;
-      const coreChecked = _bulkEdit.selected.has(coreKey);
-      const coreCbHtml = bulk ? `<input type="checkbox" class="bom-cb" ${coreChecked ? 'checked' : ''} onclick="bulkToggleItem('${coreKey}',event)">` : '';
-
       const coreDuration = core.payment === 'Yearly' ? core.duration + ' yr' : '—';
-      const corePaymentDisplay = (bulk && bp.payment) ? bp.payment : core.payment;
-      const coreDurationDisplay = (bulk && bp.duration) ? bp.duration : coreDuration;
-      const payStyle = (bulk && bp.payment) ? 'color:#7c3aed;font-weight:600' : '';
-      const durStyle = (bulk && bp.duration) ? 'color:#7c3aed;font-weight:600' : '';
-
-      const corePayTag = `<span class="bom-tag" style="${payStyle}" title="Payment" onclick="${bulk ? "bulkEditField('payment',this,event);event.stopPropagation()" : "bomEditCoreTag("+core.id+",'payment',this,event);event.stopPropagation()"}">${corePaymentDisplay}</span>`;
-      const coreDurTag = coreDurationDisplay === '—' && !durStyle
+      const corePayTag = `<span class="bom-tag" style="cursor:default" title="Payment">${core.payment}</span>`;
+      const coreDurTag = coreDuration === '—'
         ? '<span class="bom-tag" style="cursor:default;color:#98a2b3" title="Duration">—</span>'
-        : `<span class="bom-tag" style="${durStyle}" title="Duration" onclick="${bulk ? "bulkEditField('duration',this,event);event.stopPropagation()" : "bomEditCoreTag("+core.id+",'duration',this,event);event.stopPropagation()"}">${coreDurationDisplay}</span>`;
+        : `<span class="bom-tag" style="cursor:default" title="Duration">${coreDuration}</span>`;
       const coreTagsWrap = `<span class="bom-tags">${corePayTag}${coreDurTag}<span></span><span></span><span></span></span>`;
 
       hwGroupsHtml += `
         <div class="bom-group ${collapsed}" data-bom-group="${core.id}">
-          <div class="bom-group-hdr bom-group-hdr-core" style="--core-color:${core.color}" ondragover="event.preventDefault();this.classList.add('drop-target')" ondragleave="this.classList.remove('drop-target')" ondrop="this.classList.remove('drop-target');bomDropOnGroup(${core.id},0,event)" ${bulk ? '' : 'onclick="selectCore(' + core.id + ')"'}>
-            ${coreCbHtml}
+          <div class="bom-group-hdr bom-group-hdr-core" style="--core-color:${core.color}" ondragover="event.preventDefault();this.classList.add('drop-target')" ondragleave="this.classList.remove('drop-target')" ondrop="this.classList.remove('drop-target');bomDropOnGroup(${core.id},0,event)" onclick="selectCore(${core.id})">
             <span onclick="toggleBomGroup('${core.id}',event)">${chevronSvg}</span>
             <span class="bom-group-icon">${BOM_CORE_ICON}</span>
             <span class="bom-group-name-wrap">
@@ -3922,45 +3794,46 @@ function renderBOMPane() {
       </div>
     </div>` : '';
 
-  // Success message
-  const successHtml = _bulkEdit.showSuccess ? `
-    <div class="bom-success">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-      Changes applied to ${_bulkEdit.selected.size} device${_bulkEdit.selected.size !== 1 ? 's' : ''} successfully.
-    </div>` : (_dragMode.showSuccess ? `
+  // Success message (drag only)
+  const successHtml = _dragMode.showSuccess ? `
     <div class="bom-success">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
       Camera moved successfully.
-    </div>` : '');
+    </div>` : '';
 
-  // Toolbar — detect active payment/duration across all devices
-  const allDevices = [...cams, ...cores];
-  const allPayments = allDevices.map(d => d.payment);
-  const allDurations = allDevices.map(d => d.duration);
-  const activePayment = allPayments.length > 0 && allPayments.every(p => p === allPayments[0]) ? allPayments[0] : null;
-  const activeDuration = allDurations.length > 0 && allDurations.every(d => d === allDurations[0]) ? allDurations[0] : null;
-  const isUpfront = activePayment === 'Upfront';
-  const durDisabled = isUpfront ? 'disabled' : '';
+  // ── Toolbar — scope-aware controls ──
+  const targetCams = _bomTargetCameras();
+  const targetCores = _bomTargetCores();
+  const targetDevices = [...targetCams, ...targetCores];
 
-  const toolbarHtml = (cams.length + cores.length > 0) ? `
-    <div class="bom-toolbar" style="flex-wrap:wrap;gap:6px">
-      <div style="display:flex;align-items:center;gap:8px;flex:1;flex-wrap:wrap">
-        <div class="bom-quick-switch">
-          <button class="bom-quick-switch-btn ${activePayment === 'Upfront' ? 'active' : ''}" onclick="quickSwitchPayment('Upfront')">Upfront</button>
-          <button class="bom-quick-switch-btn ${activePayment === 'Yearly' ? 'active' : ''}" onclick="quickSwitchPayment('Yearly')">Yearly</button>
-        </div>
-        <div class="bom-quick-switch">
-          <button class="bom-quick-switch-btn ${activeDuration === 1 ? 'active' : ''} ${durDisabled}" onclick="quickSwitchDuration(1)">1yr</button>
-          <button class="bom-quick-switch-btn ${activeDuration === 3 ? 'active' : ''} ${durDisabled}" onclick="quickSwitchDuration(3)">3yr</button>
-          <button class="bom-quick-switch-btn ${activeDuration === 5 ? 'active' : ''} ${durDisabled}" onclick="quickSwitchDuration(5)">5yr</button>
-          <button class="bom-quick-switch-btn ${activeDuration === 10 ? 'active' : ''} ${durDisabled}" onclick="quickSwitchDuration(10)">10yr</button>
-        </div>
-      </div>
-      <div style="display:flex;align-items:center;gap:6px">
-        <button class="bom-bulk-btn ${bulk ? 'active' : ''}" onclick="toggleBulkEdit()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          Bulk Edit
-        </button>
+  // Detect active payment across targets
+  const tPayments = targetDevices.map(d => d.payment);
+  const activePayment = tPayments.length > 0 && tPayments.every(p => p === tPayments[0]) ? tPayments[0] : null;
+  const paymentMixed = tPayments.length > 0 && !activePayment;
+
+  // Detect active duration across targets
+  const tDurations = targetDevices.map(d => d.duration);
+  const activeDuration = tDurations.length > 0 && tDurations.every(d => d === tDurations[0]) ? tDurations[0] : null;
+  const durationMixed = tDurations.length > 0 && !activeDuration;
+  const durDisabled = '';
+
+  // Detect retention across target cameras
+  const tRetentions = targetCams.map(c => c.retention || 30);
+  const activeRetention = tRetentions.length > 0 && tRetentions.every(r => r === tRetentions[0]) ? tRetentions[0] : null;
+
+  // Detect license across target cameras
+  const tLicenses = targetCams.map(c => c.license || 'Essential');
+  const activeLicense = tLicenses.length > 0 && tLicenses.every(l => l === tLicenses[0]) ? tLicenses[0] : null;
+
+  const selectMode = _bomScope.mode === 'select';
+
+  const showPaymentActive = !_bomScope.paymentUnpressed && activePayment;
+  const showDurationActive = !_bomScope.durationUnpressed && activeDuration;
+
+  // Render View Options into the BOM header row
+  const bomHeaderActions = document.getElementById('bomHeaderActions');
+  if (bomHeaderActions) {
+    bomHeaderActions.innerHTML = (cams.length + cores.length > 0) ? `
       <div class="bom-view-opts-wrap">
         <button class="bom-bulk-btn ${_bomViewOptions.open ? 'active' : ''}" onclick="toggleBomViewOpts(event)">
           View options
@@ -3992,30 +3865,50 @@ function renderBOMPane() {
             </div>
           </div>
         </div>
-      </div>
-      </div>
-    </div>` : '';
+      </div>` : '';
+  }
 
-  // Bulk bar
-  const totalItems = cams.length + cores.length;
-  const allChecked = _bulkEdit.selected.size === totalItems && totalItems > 0;
-  const pendingCount = Object.keys(_bulkEdit.pendingChanges).length;
-  const bulkBarHtml = bulk ? `
-    <div class="bom-bulk-bar">
-      <span class="bom-bulk-bar-hint">Edit a value on any device to apply it to all selected.</span>
-      <div class="bom-bulk-actions">
-        <button class="btn" style="padding:4px 10px;font-size:11px" onclick="bulkCancel()">Cancel</button>
-        <button class="btn btn-primary" style="padding:4px 10px;font-size:11px;${pendingCount ? '' : 'opacity:0.4;pointer-events:none'}" onclick="bulkApply()">Apply</button>
+  const toolbarHtml = (cams.length + cores.length > 0) ? `
+    <div class="bom-toolbar" style="flex-direction:column;gap:0;padding:0">
+      <!-- Row 1: Scope toggle -->
+      <div class="bom-toolbar-row" style="justify-content:flex-start">
+        <div class="bom-quick-switch" style="width:100%">
+          <button class="bom-quick-switch-btn ${!selectMode ? 'active' : ''}" onclick="bomSetScope('all')" style="flex:1;text-align:center">All</button>
+          <button class="bom-quick-switch-btn ${selectMode ? 'active' : ''}" onclick="bomSetScope('select')" style="flex:1;text-align:center">Select cameras</button>
+        </div>
       </div>
-    </div>
-    <div class="bom-bulk-select-all">
-      <label><input type="checkbox" class="bom-cb" ${allChecked ? 'checked' : ''} onchange="bulkToggleAll(this.checked)"> Select all devices</label>
+      <!-- Row 2: Payment, Duration, Retention, License, + Add-ons -->
+      <div class="bom-toolbar-row" style="justify-content:flex-start">
+        <div class="bom-quick-switch${paymentMixed ? ' bom-mixed' : ''}">
+          <button class="bom-quick-switch-btn ${showPaymentActive === 'Upfront' ? 'active' : ''}" onclick="bomSwitchPayment('Upfront')">Upfront</button>
+          <button class="bom-quick-switch-btn ${showPaymentActive === 'Yearly' ? 'active' : ''}" onclick="bomSwitchPayment('Yearly')">Yearly</button>
+        </div>
+        <div class="bom-quick-switch${durationMixed ? ' bom-mixed' : ''}">
+          <button class="bom-quick-switch-btn ${showDurationActive === 1 ? 'active' : ''} ${durDisabled}" onclick="bomSwitchDuration(1)">1yr</button>
+          <button class="bom-quick-switch-btn ${showDurationActive === 3 ? 'active' : ''} ${durDisabled}" onclick="bomSwitchDuration(3)">3yr</button>
+          <button class="bom-quick-switch-btn ${showDurationActive === 5 ? 'active' : ''} ${durDisabled}" onclick="bomSwitchDuration(5)">5yr</button>
+          <button class="bom-quick-switch-btn ${showDurationActive === 10 ? 'active' : ''} ${durDisabled}" onclick="bomSwitchDuration(10)">10yr</button>
+        </div>
+        <select class="bom-toolbar-dd" onchange="bomSwitchRetention(this.value)" title="Retention">
+          <option value="" disabled ${_bomScope.shownRetention === null ? 'selected' : ''} style="color:#98a2b3">Retention</option>
+          <option value="30" ${_bomScope.shownRetention === 30 ? 'selected' : ''}>30d</option>
+          <option value="60" ${_bomScope.shownRetention === 60 ? 'selected' : ''}>60d</option>
+          <option value="90" ${_bomScope.shownRetention === 90 ? 'selected' : ''}>90d</option>
+          <option value="180" ${_bomScope.shownRetention === 180 ? 'selected' : ''}>180d</option>
+          <option value="365" ${_bomScope.shownRetention === 365 ? 'selected' : ''}>365d</option>
+        </select>
+        <select class="bom-toolbar-dd" onchange="bomSwitchLicense(this.value)" title="License">
+          <option value="" disabled ${_bomScope.shownLicense === null ? 'selected' : ''} style="color:#98a2b3">License</option>
+          <option value="Essential" ${_bomScope.shownLicense === 'Essential' ? 'selected' : ''}>Essential</option>
+          <option value="Enterprise" ${_bomScope.shownLicense === 'Enterprise' ? 'selected' : ''}>Enterprise</option>
+        </select>
+        <button class="bom-addon-btn" onclick="bomAddAddonsToCameras()" title="Add add-ons to ${selectMode ? 'selected' : 'all'} cameras">+ Add-ons</button>
+      </div>
     </div>` : '';
 
   pane.innerHTML = `
     ${successHtml}
     ${toolbarHtml}
-    ${bulkBarHtml}
     ${hardwareHtml}
     ${softwareHtml}
     <div class="bom-grand">
@@ -4126,29 +4019,6 @@ function exportCSV() {
 function updateProjectTotal() {
   const cams = state.cameras;
   const cores = state.cores;
-  const groups = {};
-  cams.forEach(c => {
-    if (!groups[c.typeId]) groups[c.typeId] = { price: c.price, qty: 0 };
-    groups[c.typeId].qty++;
-  });
-  const camTotal = Object.values(groups).reduce((s,i) => s + i.price * i.qty, 0);
-  const coreTotal = cores.reduce((s, c) => s + c.price, 0);
-  const licTotal = cams.length * LICENSE_PRICE.Standard;
-  const grand = camTotal + coreTotal + licTotal;
-
-  document.getElementById('rpTotalVal').textContent = '$' + grand.toLocaleString();
-  let metaParts = [];
-  if (cams.length) metaParts.push(cams.length + ' camera' + (cams.length !== 1 ? 's' : ''));
-  if (cores.length) metaParts.push(cores.length + ' core' + (cores.length !== 1 ? 's' : ''));
-  document.getElementById('rpTotalMeta').textContent = metaParts.length ? metaParts.join(', ') : 'No devices';
-
-  // Progress bar: dynamic scale (if element exists)
-  const rpFill = document.getElementById('rpTotalFill');
-  if (rpFill) {
-    const scale = Math.max(50000, grand * 1.2);
-    const pct = Math.min(100, (grand / scale) * 100);
-    rpFill.style.width = pct + '%';
-  }
 
   // BOM tab badge + BOM header badge (total devices)
   const totalDevices = cams.length + cores.length;
@@ -4157,7 +4027,11 @@ function updateProjectTotal() {
   if (bomHdrBadge) bomHdrBadge.textContent = totalDevices;
 
   // If BOM pane is open (via tab or via no-selection mode), refresh it
-  if (_activeTab === 'bom' || (!state.selectedId && document.getElementById('bomPane').style.display !== 'none')) renderBOMPane();
+  if (_activeTab === 'bom' || (!state.selectedId && document.getElementById('bomPane').style.display !== 'none')) {
+    _bomScope.shownRetention = null;
+    _bomScope.shownLicense = null;
+    renderBOMPane();
+  }
 }
 
 // ═══════════════════════════════════════════════
@@ -4820,7 +4694,7 @@ function toggleDeviceDropdown(e) {
 function closeDeviceDropdown() {
   document.getElementById('deviceDropdown').classList.remove('show');
 }
-const addonState = { selectedCamIds: [], assignToCamId: null, scope: 'camera' };
+const addonState = { selectedCamIds: [], assignToCamId: null, scope: 'camera', bomBulk: false };
 
 function _populateAddonTypeSelect(scope) {
   const sel = document.getElementById('addonTypeSelect');
@@ -4861,6 +4735,7 @@ function openAddonPicker() {
 function closeAddonPicker() {
   document.getElementById('addonPickerOverlay').classList.remove('show');
   addonState.assignToCamId = null;
+  addonState.bomBulk = false;
 }
 
 function openAddonPickerForCamera(camId) {
@@ -4886,10 +4761,12 @@ function onAddonTypeChange() {
   document.getElementById('addonPaymentField').style.display = 'none';
   document.getElementById('addonDurationField').style.display = 'none';
   document.getElementById('addonCameraField').style.display = 'none';
-  addonState.selectedCamIds = addonState.assignToCamId ? [addonState.assignToCamId] : [];
+  if (!addonState.bomBulk) {
+    addonState.selectedCamIds = addonState.assignToCamId ? [addonState.assignToCamId] : [];
+  }
 
   if (def) {
-    if (def.fields.includes('camera') && !addonState.assignToCamId) {
+    if (def.fields.includes('camera') && !addonState.assignToCamId && !addonState.bomBulk) {
       document.getElementById('addonCameraField').style.display = '';
       renderAddonCamTags();
     }
@@ -4920,7 +4797,7 @@ function updateAddonPlaceBtn() {
   const type = document.getElementById('addonTypeSelect').value;
   const def = type ? ADDON_TYPES[type] : null;
   let enabled = !!def;
-  if (def && def.fields.includes('camera') && !addonState.selectedCamIds.length && !addonState.assignToCamId) enabled = false;
+  if (def && def.fields.includes('camera') && !addonState.selectedCamIds.length && !addonState.assignToCamId && !addonState.bomBulk) enabled = false;
   const btn = document.getElementById('addonPlaceBtn');
   btn.style.opacity = enabled ? '1' : '0.4';
   btn.style.pointerEvents = enabled ? 'auto' : 'none';
@@ -5026,6 +4903,7 @@ function placeAddon() {
   if (def.fields.includes('retention')) baseOpts.retention = +document.getElementById('addonRetentionSelect').value;
   if (def.fields.includes('payment')) baseOpts.payment = document.getElementById('addonPaymentSelect').value;
   if (def.fields.includes('duration')) baseOpts.duration = +document.getElementById('addonDurationSelect').value;
+  const fromBom = addonState.bomBulk;
   closeAddonPicker();
   let lastAddon = null;
   if (def.fields.includes('camera')) {
@@ -5035,7 +4913,8 @@ function placeAddon() {
   } else {
     lastAddon = addAddon(type, baseOpts);
   }
-  if (lastAddon) selectAddon(lastAddon.id);
+  if (lastAddon && !fromBom) selectAddon(lastAddon.id);
+  if (fromBom) renderBOMPane();
 }
 
 function placeAddonForCamera() {
@@ -5104,7 +4983,7 @@ function renderAddonProperties(id) {
 
   document.getElementById('rpCamHeader').style.display = 'flex';
   document.getElementById('rpBomHeader').style.display = 'none';
-  document.querySelector('.rp-total').style.display = 'none';
+
   document.querySelector('.rp-tabs').style.display = 'none';
   document.getElementById('propsPane').style.display = '';
   document.getElementById('bomPane').style.display = 'none';
@@ -5440,7 +5319,7 @@ function renderCoreProperties(id) {
   // Panel header state: core selected
   document.getElementById('rpCamHeader').style.display = 'flex';
   document.getElementById('rpBomHeader').style.display = 'none';
-  document.querySelector('.rp-total').style.display = 'none';
+
   document.querySelector('.rp-tabs').style.display = 'none';
   document.getElementById('propsPane').style.display = '';
   document.getElementById('bomPane').style.display = 'none';

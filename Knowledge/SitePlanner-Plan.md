@@ -6,7 +6,62 @@ A digital site-planning tool — think Google Maps meets a drawing canvas. The u
 
 It is equivalent to tools like IPVM's Camera Calculator or Genetec Site Designer, but built into Lumana.
 
-> **Device types supported:** Video cameras, Lumana Cores (recording appliances), and Add-on devices (Cloud Storage, External Storage, Alerts Bucket). Access control devices (door controllers, readers) and sensors (air quality, intercoms) are planned for a future phase.
+> **Device types supported:** Video cameras, Lumana Cores (recording appliances), and Add-on devices (per-camera: Cloud Storage, External NAS, Timelapse, Cloud Metadata, Cloud Snapshot; per-plan: Alerts Storage, Event Tags Storage, Video Verification). Access control devices (door controllers, readers) and sensors (air quality, intercoms) are planned for a future phase.
+
+---
+
+## 0. Application Pages & Navigation Flow
+
+The Site Planner is a multi-page application. Each page is a standalone HTML prototype.
+
+```
+site-planner-sites.html          (Projects list — entry point)
+    ↓  click project
+site-planner-location.html       (Location detail — map + BOM summary)
+    ├→  click plan / "View plan"
+    │   site-planner-prototype.html  (Full interactive editor)
+    └→  read-only link
+        site-planner-plan.html       (Plan viewer — BOM only, no canvas)
+```
+
+### site-planner-sites.html — Projects List (442 lines)
+
+Landing page showing all projects in a filterable table.
+
+| Element | Details |
+|---|---|
+| **Top bar** | Breadcrumb ("Projects") + "+ New Project" button |
+| **Tabs** | My projects · Shared with me · Archive |
+| **Table columns** | Project name · Locations · Devices · Actions (edit, duplicate, delete) |
+| **New Project modal** | Name input + unit selection (Imperial / Metric) |
+| **Empty state** | Illustration + "Create your first project" prompt |
+
+### site-planner-location.html — Location Detail (1,245 lines)
+
+Shows a single location with sidebar navigation, map preview, and device BOM summary.
+
+| Element | Details |
+|---|---|
+| **Left sidebar (220px)** | Tree of locations → nested plans (clickable) |
+| **Top bar** | Breadcrumb (Project > Location) |
+| **Map preview (280px)** | Leaflet map with floor plan overlay + "View plan" button |
+| **Content header** | Location name, device count, address |
+| **BOM sections** | Collapsible groups by category — device rows with icon, qty badge, model, accessories, retention/license info, price |
+| **Demo data** | `SITES`, `LOCATIONS`, `PLANS`, `DEVICES` constants define the sample hierarchy |
+
+### site-planner-plan.html — Plan Viewer (456 lines)
+
+Read-only view of a single plan's BOM. Same sidebar + data structure as `site-planner-location.html` but without the interactive canvas.
+
+| Element | Details |
+|---|---|
+| **Layout** | Same navbar + sidebar + BOM as location page |
+| **Content** | Full device list with categories, quantities, pricing, grand total |
+| **Use case** | Stakeholder review — no editing capability |
+
+### site-planner-prototype.html — Interactive Editor (6,232 lines)
+
+The main floor-plan editor. Covered in detail in the rest of this document.
 
 ---
 
@@ -40,10 +95,10 @@ It is equivalent to tools like IPVM's Camera Calculator or Genetec Site Designer
 
 ```
 Lumana-Desktop/
-├── site-planner-prototype.html          ← Main prototype file (~5,600 lines, all phases built)
-├── site-planner-location.html           ← Location management page
-├── site-planner-sites.html              ← Sites list page
-├── site-planner-plan.html               ← Plan list page
+├── site-planner-sites.html              ← Projects list (entry point, 442 lines)
+├── site-planner-location.html           ← Location detail + BOM summary (1,245 lines)
+├── site-planner-plan.html               ← Read-only plan viewer (456 lines)
+├── site-planner-prototype.html          ← Full interactive editor (~6,232 lines, all phases built)
 │
 ├── Knowledge/
 │   └── SitePlanner-Plan.md              ← This file
@@ -103,9 +158,11 @@ Lumana-Desktop/
 
 **Add-Ons:**
 - `+ Device → Add-On` opens Add-On Picker modal
-- 3 types: Cloud Storage ($500), External Storage ($800), Alerts Bucket ($300)
-- Capacity input, optional camera assignment (for Cloud Storage: camera search dropdown)
-- Click to place on canvas, enter name, view properties
+- Scope toggle: **Per camera** (5 types) | **Per plan** (3 types)
+- Per-camera types: Cloud Storage ($500), External NAS Storage ($800), Timelapse ($200), Cloud Camera Metadata ($150), Cloud Camera Snapshot ($100) — assigned to specific cameras, some with retention options
+- Per-plan types: Alerts Storage ($300), Event Tags Storage ($250), Video Verification ($400) — payment (Upfront/Yearly) + duration options
+- Camera selection modal with search when placing per-camera add-ons
+- Also accessible from camera properties panel → "Add add-on" button (skips scope toggle, forces per-camera)
 
 ### Interaction Principles
 1. **Click to select** a device → right panel shows its configuration.
@@ -126,9 +183,11 @@ For a camera at mounting height `H`, tilt angle `θ`, and focal length `f`:
 - **Fence/barriers**: ray continues at 35% of remaining range.
 
 ### Device Relationships
-- **Camera → Core**: a camera can be assigned to one core; a core holds many cameras (up to its channel capacity).
-- **Add-On → Camera**: an add-on has a `cameraId` field (one-to-one from add-on side). A camera can have multiple add-ons assigned (one-to-many from camera side). Found via `state.addons.filter(a => a.cameraId === camId)`.
-- The camera properties panel shows both "Core Assignment" and "Add-on Assignment" blocks for managing these relationships.
+- **Camera → Core**: a camera can be assigned to one core; a core holds many cameras (up to its channel capacity). Tracked via `cam.coreId`.
+- **Per-camera Add-On → Camera**: an add-on with `scope:'camera'` has a `cameraId` field (one-to-one from add-on side). A camera can have multiple add-ons assigned (one-to-many from camera side). Found via `state.addons.filter(a => a.cameraId === camId)`.
+- **Per-plan Add-On**: `scope:'plan'` add-ons have `cameraId: null` — they belong to the project, not individual cameras. Found via `state.addons.filter(a => ADDON_TYPES[a.typeId].scope === 'plan')`.
+- The camera properties panel shows "Core Assignment" and "Assigned add-ons" (per-camera) blocks.
+- The BOM tab shows per-camera add-ons nested under their camera, per-plan add-ons in a separate "Plan Add-Ons" group.
 
 ---
 
@@ -320,26 +379,30 @@ For a camera at mounting height `H`, tilt angle `θ`, and focal length `f`:
 ### Phase 13 — Add-On Devices ✅ COMPLETE
 
 33. **[✅] Add-On Picker Modal**
-    - Type dropdown: Cloud Storage ($500), External Storage ($800), Alerts Bucket ($300)
-    - Capacity input field
-    - Camera search dropdown (for Cloud Storage: filter/select cameras in project)
-    - `ADDON_TYPES` constant, `ADDON_ICON` SVG constant
+    - **Scope toggle**: "Per camera" | "Per plan" — filters available types
+    - Per-camera types (5): Cloud Storage ($500), External NAS Storage ($800), Timelapse ($200), Cloud Camera Metadata ($150), Cloud Camera Snapshot ($100)
+    - Per-plan types (3): Alerts Storage ($300), Event Tags Storage ($250), Video Verification ($400)
+    - Conditional fields based on type: retention selector (per-camera storage), payment method + duration (per-plan)
+    - Camera selection modal with search for per-camera add-ons
+    - `ADDON_TYPES` constant (scope, price, color, fields, retentionOpts), `ADDON_ICON` SVG constant
 
-34. **[✅] Add-On Placement & Canvas Rendering**
-    - Click to place on canvas → Konva group with colored rect body + storage icon (horizontal lines)
-    - Inline name input after placement
-    - Drag to reposition, click to select, selection ring highlight
+34. **[✅] Add-On to BOM (no canvas placement)**
+    - Add-ons are added directly to the BOM — no canvas placement step
+    - Per-camera add-ons appear nested under their assigned camera in the BOM
+    - Per-plan add-ons appear in a separate "Plan Add-Ons" section in the BOM
+    - Add-on properties viewable in right panel on selection
 
 35. **[✅] Add-On Properties Panel**
-    - Name, type dropdown, color picker (8 colors), capacity input
-    - Camera section (for cloud storage): shows assigned camera name (clickable → navigates to camera)
-    - Camera assignment/removal functions
+    - Name, type dropdown (filtered by scope), color picker (8 colors)
+    - Retention selector (per-camera types with retention options)
+    - Payment method + duration (per-plan types)
+    - Camera section (per-camera types): shows assigned camera name (clickable → navigates to camera), assign/remove
     - Delete button in panel header
 
 36. **[✅] Add-On Assignment in Camera Properties**
-    - "Add-on assignment" block after "Core Assignment" in camera properties
-    - "Add add-on" button (aligned right) → modal with list of unassigned add-ons + "Create & assign" button
-    - Assigned add-ons displayed as rows: icon, name/type/capacity, remove (×) button
+    - "Assigned add-ons" section in camera properties panel
+    - "Add add-on" button → opens Add-On Picker in per-camera mode (scope toggle hidden, camera pre-selected)
+    - Assigned add-ons displayed as rows: icon, name/type, retention tag, price, remove (×) button
     - Click add-on name → navigates to add-on properties
 
 ---
@@ -399,8 +462,8 @@ For a camera at mounting height `H`, tilt angle `θ`, and focal length `f`:
 | URL share link (LZString) | 11 | ✅ Done |
 | Core Type Picker + placement + properties | 12 | ✅ Done |
 | Camera ↔ Core assignment (both directions) | 12 | ✅ Done |
-| Add-On Picker + placement + properties | 13 | ✅ Done |
-| Add-on ↔ Camera assignment (both directions) | 13 | ✅ Done |
+| Add-On Picker (per-camera + per-plan scope) + BOM + properties | 13 | ✅ Done |
+| Add-on ↔ Camera assignment (per-camera types, both directions) | 13 | ✅ Done |
 | Toolbar restructuring (+ Device / + Camera) | 14 | ✅ Done |
 | Left catalog panel removed | 14 | ✅ Done |
 | CSV export | 6 | ✅ Done |
@@ -469,7 +532,26 @@ state = {
 
 ### Add-On Object
 ```javascript
-{ id, name, type, capacity, color, x, y, cameraId, price }
+{ id, typeId, name, type, color, price, cameraId,
+  retention,  // per-camera storage types (30/60/90/180/365 days)
+  payment,    // per-plan types: 'Upfront' | 'Yearly'
+  duration    // per-plan Yearly types: 1/3/5/10 years
+}
+```
+
+### ADDON_TYPES (8 types, 2 scopes)
+```javascript
+// Per-camera (scope:'camera') — assigned to specific cameras
+'cloud-storage':  { price:500, fields:['camera','retention'], retentionOpts:[30,60,90,180,365] }
+'external-nas':   { price:800, fields:['camera','retention'], retentionOpts:[30,60,90,180,365] }
+'timelapse':      { price:200, fields:['camera','retention'], retentionOpts:[180,365] }
+'cloud-metadata': { price:150, fields:['camera'] }
+'cloud-snapshot': { price:100, fields:['camera'] }
+
+// Per-plan (scope:'plan') — project-wide, not camera-specific
+'alerts-storage':     { price:300, fields:['payment','duration'] }
+'event-tags':         { price:250, fields:['payment','duration'] }
+'video-verification': { price:400, fields:['payment','duration'] }
 ```
 
 ---
@@ -490,6 +572,6 @@ state = {
 | 10 | PDF report export | ✅ Done |
 | 11 | Save / Share | ✅ Done |
 | 12 | Core devices | ✅ Done |
-| 13 | Add-on devices | ✅ Done |
+| 13 | Add-on devices (per-camera + per-plan) | ✅ Done |
 | 14 | Toolbar restructuring | ✅ Done |
 | 15 | Integrations (production) | ⬜ Not started |
