@@ -921,6 +921,22 @@ buildSidebar();
 buildMain();
 renderProjectDetails();
 
+/* ── Create Location Modal (variables + opener) ── */
+const createLocModal = document.getElementById('createLocationModal');
+const locNameInput = document.getElementById('locationNameInput');
+const locAddressInput = document.getElementById('locationAddressInput');
+const confirmLocBtn = document.getElementById('confirmLocationBtn');
+const cancelLocBtn = document.getElementById('cancelLocationBtn');
+
+function openCreateLocationModal() {
+  locNameInput.value = '';
+  locAddressInput.value = '';
+  confirmLocBtn.disabled = true;
+  document.getElementById('modalSuccessBanner').classList.remove('show');
+  createLocModal.classList.add('show');
+  setTimeout(function() { locNameInput.focus(); }, 50);
+}
+
 /* ── Create Plan button (location view) ── */
 const createPlanFromLocBtn = document.getElementById('createPlanFromLocBtn');
 if (createPlanFromLocBtn) {
@@ -1218,20 +1234,6 @@ function removeEditShared(i) {
 }
 
 /* ── Create Location Modal ── */
-const createLocModal = document.getElementById('createLocationModal');
-const locNameInput = document.getElementById('locationNameInput');
-const locAddressInput = document.getElementById('locationAddressInput');
-const confirmLocBtn = document.getElementById('confirmLocationBtn');
-const cancelLocBtn = document.getElementById('cancelLocationBtn');
-
-function openCreateLocationModal() {
-  locNameInput.value = '';
-  locAddressInput.value = '';
-  confirmLocBtn.disabled = true;
-  document.getElementById('modalSuccessBanner').classList.remove('show');
-  createLocModal.classList.add('show');
-  setTimeout(function() { locNameInput.focus(); }, 50);
-}
 
 function updateLocBtnState() {
   confirmLocBtn.disabled = !locNameInput.value.trim();
