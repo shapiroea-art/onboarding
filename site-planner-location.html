@@ -915,6 +915,9 @@ function buildBreadcrumb() {
   topbarActions.innerHTML = shareBtn + exportBtn + closeBtn + createLocBtn + deleteBtn;
 }
 
+/* ── Project Details state ── */
+let _projectEditMode = false;
+
 /* ── Init ── */
 buildBreadcrumb();
 buildSidebar();
@@ -1007,7 +1010,6 @@ function confirmCloseProject() {
 }
 
 /* ── Project Details ── */
-let _projectEditMode = false;
 
 function formatDateDisplay(iso) {
   if (!iso) return '—';
