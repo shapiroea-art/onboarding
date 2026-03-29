@@ -115,6 +115,21 @@ tbody tr { transition: background 0.12s; }
 .contact-delete:hover { color: #d92d20; background: #fef3f2; }
 .contact-add-btn { border: none; background: none; color: #7c3aed; font-size: 13px; font-weight: 500; cursor: pointer; padding: 4px 0; font-family: inherit; }
 .contact-add-btn:hover { color: #6d28d9; }
+
+/* ── Upload Area ── */
+.upload-area { border: 2px dashed #d0d5dd; border-radius: 10px; padding: 24px; text-align: center; cursor: pointer; transition: all 0.15s; background: #fafafa; }
+.upload-area:hover { border-color: #7c3aed; background: #faf5ff; }
+.upload-icon { margin-bottom: 8px; }
+.upload-text { font-size: 13px; color: #344054; margin-bottom: 4px; }
+.upload-text strong { color: #7c3aed; }
+.upload-hint { font-size: 12px; color: #98a2b3; }
+.upload-file-preview { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid #eaecf0; border-radius: 8px; background: #f9fafb; }
+.upload-file-name { flex: 1; font-size: 13px; color: #344054; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.upload-file-remove { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border: none; background: none; color: #98a2b3; cursor: pointer; border-radius: 4px; padding: 0; flex-shrink: 0; }
+.upload-file-remove:hover { color: #d92d20; background: #fef3f2; }
+.modal-success { display: none; align-items: center; gap: 8px; padding: 10px 14px; margin-bottom: 16px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; font-size: 13px; font-weight: 500; color: #065f46; }
+.modal-success.show { display: flex; }
+.modal-success svg { width: 16px; height: 16px; flex-shrink: 0; color: #10b981; }
 </style>
 </head>
 <body>
@@ -261,6 +276,66 @@ tbody tr { transition: background 0.12s; }
     <div class="modal-actions">
       <button class="modal-btn" id="cancelSiteBtn">Cancel</button>
       <button class="modal-btn modal-btn-primary" id="confirmSiteBtn" disabled>Create project</button>
+    </div>
+  </div>
+</div>
+
+<!-- Create Location Modal (step 2) -->
+<div class="modal-overlay" id="createLocationModal">
+  <div class="modal">
+    <div class="modal-success show" id="locSuccessBanner">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      You created a project
+    </div>
+    <div class="modal-title">Create location</div>
+    <div class="modal-field">
+      <label class="modal-label" for="locNameInput">Location name</label>
+      <input class="modal-input" id="locNameInput" type="text" placeholder="Enter location name" autocomplete="off"/>
+    </div>
+    <div class="modal-field">
+      <label class="modal-label" for="locAddressInput">Address</label>
+      <input class="modal-input" id="locAddressInput" type="text" placeholder="Enter address" autocomplete="off"/>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn" id="cancelLocBtn">Cancel</button>
+      <button class="modal-btn modal-btn-primary" id="confirmLocBtn" disabled>Create location</button>
+    </div>
+  </div>
+</div>
+
+<!-- Create Plan Modal (step 3) -->
+<div class="modal-overlay" id="createPlanModal">
+  <div class="modal">
+    <div class="modal-success show" id="planSuccessBanner">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      You created a location
+    </div>
+    <div class="modal-title">Create plan</div>
+    <div class="modal-field">
+      <label class="modal-label" for="planNameInput">Plan name</label>
+      <input class="modal-input" id="planNameInput" type="text" placeholder="Enter plan name" autocomplete="off"/>
+    </div>
+    <div class="modal-field">
+      <label class="modal-label">Upload a floor plan <span style="color:#98a2b3;font-weight:400">(optional)</span></label>
+      <div class="upload-area" id="uploadArea">
+        <div class="upload-icon">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" stroke="#98a2b3" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><polyline points="17 8 12 3 7 8" stroke="#98a2b3" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><line x1="12" y1="3" x2="12" y2="15" stroke="#98a2b3" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="upload-text"><strong>Click to upload</strong> or drag and drop</div>
+        <div class="upload-hint">.pdf, .jpg or .png up to 15MB</div>
+        <input type="file" id="planFileInput" accept=".pdf,.jpg,.jpeg,.png" style="display:none"/>
+      </div>
+      <div id="uploadFilePreview" style="display:none" class="upload-file-preview">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#667085" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span class="upload-file-name" id="uploadFileName"></span>
+        <button class="upload-file-remove" id="uploadFileRemove" type="button" title="Remove">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn" id="cancelPlanBtn">Cancel</button>
+      <button class="modal-btn modal-btn-primary" id="confirmPlanBtn" disabled>Create plan</button>
     </div>
   </div>
 </div>
@@ -564,15 +639,112 @@ createSiteModal.addEventListener('click', function(e) {
   if (e.target === createSiteModal) createSiteModal.classList.remove('show');
 });
 
+let _newSiteId = null;
+let _newLocName = '';
+let uploadedFile = null;
+
 confirmSiteBtn.addEventListener('click', function() {
   const name = siteNameInput.value.trim();
   if (!name) return;
-  const newId = nextId++;
+  _newSiteId = nextId++;
   const today = new Date().toISOString().slice(0, 10);
-  sites.push({ id: newId, name: name, status: 'active', createdDate: today, closureReason: null, bom: 0 });
+  sites.push({ id: _newSiteId, name: name, status: 'active', createdDate: today, closureReason: null, bom: 0 });
   renderTable();
   createSiteModal.classList.remove('show');
-  window.location.href = `site-planner-location.html?siteId=${newId}&newSite=1`;
+  // Step 2: Create Location
+  document.getElementById('locNameInput').value = '';
+  document.getElementById('locAddressInput').value = '';
+  document.getElementById('confirmLocBtn').disabled = true;
+  document.getElementById('locSuccessBanner').classList.add('show');
+  document.getElementById('createLocationModal').classList.add('show');
+  setTimeout(() => document.getElementById('locNameInput').focus(), 50);
+});
+
+// ── Step 2: Create Location ──
+const locNameInput = document.getElementById('locNameInput');
+const locAddressInput = document.getElementById('locAddressInput');
+const confirmLocBtn = document.getElementById('confirmLocBtn');
+
+locNameInput.addEventListener('input', function() {
+  confirmLocBtn.disabled = !locNameInput.value.trim();
+});
+locNameInput.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && locNameInput.value.trim()) confirmLocBtn.click();
+  else if (e.key === 'Escape') document.getElementById('cancelLocBtn').click();
+});
+document.getElementById('cancelLocBtn').addEventListener('click', function() {
+  document.getElementById('createLocationModal').classList.remove('show');
+});
+document.getElementById('createLocationModal').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('show');
+});
+confirmLocBtn.addEventListener('click', function() {
+  _newLocName = locNameInput.value.trim();
+  if (!_newLocName) return;
+  document.getElementById('createLocationModal').classList.remove('show');
+  // Step 3: Create Plan
+  document.getElementById('planNameInput').value = '';
+  document.getElementById('confirmPlanBtn').disabled = true;
+  uploadedFile = null;
+  document.getElementById('uploadArea').style.display = '';
+  document.getElementById('uploadFilePreview').style.display = 'none';
+  document.getElementById('planSuccessBanner').classList.add('show');
+  document.getElementById('createPlanModal').classList.add('show');
+  setTimeout(() => document.getElementById('planNameInput').focus(), 50);
+});
+
+// ── Step 3: Create Plan ──
+const planNameInput = document.getElementById('planNameInput');
+const confirmPlanBtn = document.getElementById('confirmPlanBtn');
+const uploadArea = document.getElementById('uploadArea');
+const planFileInput = document.getElementById('planFileInput');
+
+function updatePlanBtnState() {
+  confirmPlanBtn.disabled = !planNameInput.value.trim();
+}
+planNameInput.addEventListener('input', updatePlanBtnState);
+planNameInput.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && planNameInput.value.trim()) confirmPlanBtn.click();
+  else if (e.key === 'Escape') document.getElementById('cancelPlanBtn').click();
+});
+document.getElementById('cancelPlanBtn').addEventListener('click', function() {
+  document.getElementById('createPlanModal').classList.remove('show');
+});
+document.getElementById('createPlanModal').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('show');
+});
+
+uploadArea.addEventListener('click', function() { planFileInput.click(); });
+uploadArea.addEventListener('dragover', function(e) { e.preventDefault(); uploadArea.style.borderColor = '#7c3aed'; });
+uploadArea.addEventListener('dragleave', function() { uploadArea.style.borderColor = ''; });
+uploadArea.addEventListener('drop', function(e) {
+  e.preventDefault();
+  uploadArea.style.borderColor = '';
+  if (e.dataTransfer.files.length) handlePlanFile(e.dataTransfer.files[0]);
+});
+planFileInput.addEventListener('change', function() {
+  if (planFileInput.files.length) handlePlanFile(planFileInput.files[0]);
+});
+document.getElementById('uploadFileRemove').addEventListener('click', function() {
+  uploadedFile = null;
+  planFileInput.value = '';
+  document.getElementById('uploadFilePreview').style.display = 'none';
+  uploadArea.style.display = '';
+});
+
+function handlePlanFile(file) {
+  uploadedFile = file;
+  document.getElementById('uploadFileName').textContent = file.name;
+  document.getElementById('uploadFilePreview').style.display = 'flex';
+  uploadArea.style.display = 'none';
+}
+
+confirmPlanBtn.addEventListener('click', function() {
+  const planName = planNameInput.value.trim();
+  if (!planName) return;
+  document.getElementById('createPlanModal').classList.remove('show');
+  // Navigate to the new project's location page
+  window.location.href = `site-planner-location.html?siteId=${_newSiteId}`;
 });
 
 // ── Filters ──
