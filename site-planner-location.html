@@ -82,7 +82,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .view-plan-btn svg { width: 14px; height: 14px; }
 
 /* ── Icon button ── */
-.btn-icon { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: 1px solid #d0d5dd; border-radius: 6px; background: #fff; cursor: pointer; color: #667085; transition: all 0.15s; }
+.btn-icon { width: 32px; padding: 5px 0; display: flex; align-items: center; justify-content: center; border: 1px solid #d0d5dd; border-radius: 6px; background: #fff; cursor: pointer; color: #667085; transition: all 0.15s; }
 .btn-icon:hover { background: #f9fafb; color: #344054; }
 .btn-icon svg { width: 16px; height: 16px; }
 .btn-icon.btn-danger:hover { background: #fef3f2; color: #d92d20; border-color: #fecaca; }
@@ -300,7 +300,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .bom-quick-switch-btn.disabled { opacity: 0.35; pointer-events: none; }
 
 /* ── All-Locations BOM: Toolbar ── */
-.all-bom-toolbar-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid #eaecf0; flex-wrap: wrap; }
+.all-bom-toolbar-row { display: flex; align-items: center; gap: 8px; padding: 8px 0 12px; flex-wrap: wrap; }
 .bom-toolbar-dd { padding: 3px 6px; font-size: 11px; font-weight: 500; color: #344054; border: 1px solid #d0d5dd; border-radius: 6px; background: #fff; font-family: inherit; cursor: pointer; outline: none; }
 .bom-toolbar-dd:focus { border-color: #7c3aed; box-shadow: 0 0 0 2px rgba(124,58,237,0.12); }
 .bom-addon-btn { padding: 3px 6px; font-size: 11px; font-weight: 500; color: #344054; border: 1px solid #d0d5dd; border-radius: 6px; background: #fff; font-family: inherit; cursor: pointer; outline: none; transition: all 0.15s; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; }
@@ -641,6 +641,18 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
     <div class="modal-actions">
       <button type="button" class="modal-btn" onclick="cancelCloseProject()">Cancel</button>
       <button type="button" class="modal-btn modal-btn-primary" onclick="confirmCloseProject()">Close project</button>
+    </div>
+  </div>
+</div>
+
+<!-- Project Details Modal -->
+<div class="modal-overlay" id="projectDetailsModal" onclick="if(event.target===this)cancelProjectDetailsModal()">
+  <div class="modal" style="width:420px;max-height:90vh;overflow-y:auto">
+    <div class="modal-title">Project Details</div>
+    <div id="projectDetailsModalBody"></div>
+    <div class="modal-actions">
+      <button type="button" class="modal-btn" onclick="cancelProjectDetailsModal()">Cancel</button>
+      <button type="button" class="modal-btn modal-btn-primary" onclick="saveProjectDetailsModal()">Save</button>
     </div>
   </div>
 </div>
@@ -1616,10 +1628,6 @@ function buildMain() {
     `;
   }
 
-  if (showAllLocations) {
-    html += '<div id="projectDetailsBlock" style="padding-top:20px"></div>';
-  }
-
   html += '<div class="bom-content">';
 
   if (showPlan) {
@@ -1808,18 +1816,15 @@ function buildBreadcrumb() {
     : `<button class="btn" onclick="reopenProject()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>Reopen</button>`;
   const deleteBtn = `<button class="btn-icon btn-danger" onclick="deleteProject()" title="Delete project"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>`;
   const createLocBtn = showAllLocations ? `<button class="btn btn-primary" onclick="openCreateLocationModal()"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="3" x2="8" y2="13"/><line x1="3" y1="8" x2="13" y2="8"/></svg>Create location</button>` : '';
-  topbarActions.innerHTML = deleteBtn + closeReopenBtn + shareBtn + exportBtn + createLocBtn;
+  const projDetailsBtn = `<button class="btn" onclick="openProjectDetailsModal()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Project details</button>`;
+  const topSep = '<span style="width:1px;height:24px;background:#eaecf0;flex-shrink:0"></span>';
+  topbarActions.innerHTML = projDetailsBtn + topSep + deleteBtn + closeReopenBtn + shareBtn + exportBtn + createLocBtn;
 }
-
-/* ── Project Details state ── */
-let _projectEditMode = false;
-let _projectDetailsCollapsed = true;
 
 /* ── Init ── */
 buildBreadcrumb();
 buildSidebar();
 buildMain();
-renderProjectDetails();
 
 /* ── Create Location Modal (variables + opener) ── */
 const createLocModal = document.getElementById('createLocationModal');
@@ -1886,7 +1891,6 @@ function reopenProject() {
   site.closureReason = null;
   site.closureNotes = '';
   buildBreadcrumb();
-  renderProjectDetails();
 }
 
 /* ── Close project modal ── */
@@ -1910,10 +1914,9 @@ function confirmCloseProject() {
   site.closureNotes = document.getElementById('closeProjectNotes').value.trim();
   document.getElementById('closeProjectModal').classList.remove('show');
   buildBreadcrumb();
-  renderProjectDetails();
 }
 
-/* ── Project Details ── */
+/* ── Project Details Modal ── */
 
 function formatDateDisplay(iso) {
   if (!iso) return '—';
@@ -1921,213 +1924,91 @@ function formatDateDisplay(iso) {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-function renderProjectDetails() {
-  const el = document.getElementById('projectDetailsBlock');
-  if (!el) return;
+function openProjectDetailsModal() {
+  const body = document.getElementById('projectDetailsModalBody');
+  const unitVal = site.unit || 'imperial';
+  const contactRows = (site.contacts || []).map((c, i) => `
+    <div class="proj-edit-row">
+      <input class="proj-edit-input" style="flex:1" value="${c.name}" placeholder="Name" data-contact-name="${i}">
+      <input class="proj-edit-input" style="flex:1" value="${c.phone}" placeholder="Phone" data-contact-phone="${i}">
+      <button class="proj-edit-remove" onclick="this.closest('.proj-edit-row').remove()" title="Remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>`).join('');
+  const sharedRows = (site.sharedWith || []).map((s, i) => `
+    <div class="proj-edit-row">
+      <input class="proj-edit-input" style="flex:1" value="${s.name}" placeholder="Name" data-shared-name="${i}">
+      <input class="proj-edit-input" style="flex:1" value="${s.email}" placeholder="Email" data-shared-email="${i}">
+      <button class="proj-edit-remove" onclick="this.closest('.proj-edit-row').remove()" title="Remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>`).join('');
 
-  // Chevron icons
-  const chevronUp = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>`;
-  const chevronDown = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>`;
-
-  if (_projectEditMode) {
-    const contactRows = (site.contacts || []).map((c, i) => `
-      <div class="proj-edit-row">
-        <input class="proj-edit-input" style="flex:1" value="${c.name}" placeholder="Name" data-contact-name="${i}">
-        <input class="proj-edit-input" style="flex:1" value="${c.phone}" placeholder="Phone" data-contact-phone="${i}">
-        <button class="proj-edit-remove" onclick="removeEditContact(${i})" title="Remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-      </div>`).join('');
-    const sharedRows = (site.sharedWith || []).map((s, i) => `
-      <div class="proj-edit-row">
-        <input class="proj-edit-input" style="flex:1" value="${s.name}" placeholder="Name" data-shared-name="${i}">
-        <input class="proj-edit-input" style="flex:1" value="${s.email}" placeholder="Email" data-shared-email="${i}">
-        <button class="proj-edit-remove" onclick="removeEditShared(${i})" title="Remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-      </div>`).join('');
-    const unitVal = site.unit || 'imperial';
-
-    el.innerHTML = `
-      <div class="proj-details" style="margin:0 28px 0">
-        <div class="proj-details-header">
-          <div class="proj-details-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-            Project Details
-          </div>
-          <div style="display:flex;gap:6px">
-            <button class="btn" onclick="cancelProjectEdit()">Cancel</button>
-            <button class="btn btn-primary" onclick="saveProjectEdit()">Save</button>
-          </div>
-        </div>
-        <div class="proj-details-grid">
-          <div class="proj-details-field">
-            <div class="proj-details-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Project name</div>
-            <input class="proj-edit-input" id="editProjName" value="${site.name}">
-          </div>
-          <div class="proj-details-field">
-            <div class="proj-details-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Created date</div>
-            <div class="proj-details-value">${formatDateDisplay(site.createdDate)}</div>
-          </div>
-        </div>
-        <div class="proj-details-grid" style="margin-top:16px">
-          <div class="proj-details-field">
-            <div class="proj-details-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Owner</div>
-            <div class="proj-details-value">${site.owner || '—'}</div>
-          </div>
-          <div class="proj-details-field">
-            <div class="proj-details-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Status</div>
-            <div class="proj-details-value">${site.status === 'active'
-              ? '<span class="proj-details-status active"><span class="proj-details-status-dot"></span> Active</span>'
-              : '<span class="proj-details-status closed"><span class="proj-details-status-dot"></span> Closed</span>'}</div>
-          </div>
-        </div>
-        <div class="proj-details-grid" style="margin-top:16px">
-          <div class="proj-details-field">
-            <div class="proj-details-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 3H3v7h18V3z"/><path d="M21 14H3v7h18v-7z"/></svg> Unit of measurement</div>
-            <div class="seg-control" id="editUnitToggle">
-              <button type="button" class="seg-btn ${unitVal === 'imperial' ? 'active' : ''}" data-val="imperial" onclick="toggleEditUnit(this)">Imperial (ft)</button>
-              <button type="button" class="seg-btn ${unitVal === 'metric' ? 'active' : ''}" data-val="metric" onclick="toggleEditUnit(this)">Metric (m)</button>
-            </div>
-          </div>
-        </div>
-        <div class="proj-details-grid" style="margin-top:16px">
-          <div class="proj-details-field">
-            <div class="proj-details-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg> Shared with</div>
-            <div id="editSharedList">${sharedRows}</div>
-            <button class="proj-edit-add" onclick="addEditShared()">+ Add person</button>
-          </div>
-          <div class="proj-details-field">
-            <div class="proj-details-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg> Contacts</div>
-            <div id="editContactsList">${contactRows}</div>
-            <button class="proj-edit-add" onclick="addEditContact()">+ Add contact</button>
-          </div>
-        </div>
-        <div style="margin-top:16px">
-          <div class="proj-details-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Notes</div>
-          <textarea class="proj-edit-input" id="editProjNotes" rows="2" style="resize:vertical">${site.notes || ''}</textarea>
-        </div>
-      </div>`;
-    return;
-  }
-
-  // View mode
-  const contactsHtml = (site.contacts || []).length
-    ? (site.contacts || []).map(c => `<div class="proj-details-list-item">${c.name} <span>${c.phone}</span></div>`).join('')
-    : '<div class="proj-details-list-item" style="color:#98a2b3">None</div>';
-  const sharedHtml = (site.sharedWith || []).length
-    ? (site.sharedWith || []).map(s => `<div class="proj-details-list-item">${s.name} <span>${s.email}</span></div>`).join('')
-    : '<div class="proj-details-list-item" style="color:#98a2b3">None</div>';
-  const unitDisplay = (site.unit === 'metric') ? 'Metric (m)' : 'Imperial (ft)';
-
-  let closureHtml = '';
-  if (site.status === 'closed') {
-    const badgeClass = site.closureReason === 'Win' ? 'closure-win' : 'closure-loss';
-    closureHtml = `
-      <div class="proj-details-closure">
-        <div class="proj-details-field">
-          <div class="proj-details-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg> Closure reason</div>
-          <span class="closure-badge ${badgeClass}">${site.closureReason}</span>
-        </div>
-        <div class="proj-details-field">
-          <div class="proj-details-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Closure notes</div>
-          <div class="proj-details-value">${site.closureNotes || '—'}</div>
-        </div>
-      </div>`;
-  }
-
-  const bodyHtml = _projectDetailsCollapsed ? '' : `
-      <div class="proj-details-grid">
-        <div class="proj-details-field">
-          <div class="proj-details-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Project name</div>
-          <div class="proj-details-value" style="font-size:15px;font-weight:600">${site.name}</div>
-        </div>
-        <div class="proj-details-field">
-          <div class="proj-details-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Created date</div>
-          <div class="proj-details-value">${formatDateDisplay(site.createdDate)}</div>
+  body.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:20px">
+      <div class="proj-details-field">
+        <div class="proj-details-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Project name</div>
+        <input class="proj-edit-input" id="editProjName" value="${site.name}">
+      </div>
+      <div class="proj-details-field">
+        <div class="proj-details-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Created date</div>
+        <div class="proj-details-value">${formatDateDisplay(site.createdDate)}</div>
+      </div>
+      <div class="proj-details-field">
+        <div class="proj-details-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Owner</div>
+        <div class="proj-details-value">${site.owner || '—'}</div>
+      </div>
+      <div class="proj-details-field">
+        <div class="proj-details-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Status</div>
+        <div class="proj-details-value">${site.status === 'active'
+          ? '<span class="proj-details-status active"><span class="proj-details-status-dot"></span> Active</span>'
+          : '<span class="proj-details-status closed"><span class="proj-details-status-dot"></span> Closed</span>'}</div>
+      </div>
+      <div class="proj-details-field">
+        <div class="proj-details-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 3H3v7h18V3z"/><path d="M21 14H3v7h18v-7z"/></svg> Unit of measurement</div>
+        <div class="seg-control" id="editUnitToggle">
+          <button type="button" class="seg-btn ${unitVal === 'imperial' ? 'active' : ''}" data-val="imperial" onclick="toggleEditUnit(this)">Imperial (ft)</button>
+          <button type="button" class="seg-btn ${unitVal === 'metric' ? 'active' : ''}" data-val="metric" onclick="toggleEditUnit(this)">Metric (m)</button>
         </div>
       </div>
-      <div class="proj-details-grid" style="margin-top:16px">
-        <div class="proj-details-field">
-          <div class="proj-details-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Owner</div>
-          <div class="proj-details-value">${site.owner || '—'}</div>
-        </div>
-        <div class="proj-details-field">
-          <div class="proj-details-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Status</div>
-          ${site.status === 'active'
-            ? '<span class="proj-details-status active"><span class="proj-details-status-dot"></span> Active</span>'
-            : '<span class="proj-details-status closed"><span class="proj-details-status-dot"></span> Closed</span>'}
-        </div>
+      <div class="proj-details-field">
+        <div class="proj-details-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg> Shared with</div>
+        <div id="editSharedList">${sharedRows}</div>
+        <button class="proj-edit-add" onclick="addEditShared()">+ Add person</button>
       </div>
-      <div class="proj-details-grid" style="margin-top:16px">
-        <div class="proj-details-field">
-          <div class="proj-details-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 3H3v7h18V3z"/><path d="M21 14H3v7h18v-7z"/></svg> Unit of measurement</div>
-          <div class="proj-details-value">${unitDisplay}</div>
-        </div>
-        <div class="proj-details-field">
-          <div class="proj-details-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg> Shared with</div>
-          <div class="proj-details-list">${sharedHtml}</div>
-        </div>
+      <div class="proj-details-field">
+        <div class="proj-details-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg> Contacts</div>
+        <div id="editContactsList">${contactRows}</div>
+        <button class="proj-edit-add" onclick="addEditContact()">+ Add contact</button>
       </div>
-      <div class="proj-details-grid" style="margin-top:16px">
-        <div class="proj-details-field">
-          <div class="proj-details-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg> Contacts</div>
-          <div class="proj-details-list">${contactsHtml}</div>
-        </div>
-        <div class="proj-details-field">
-          <div class="proj-details-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Notes</div>
-          <div class="proj-details-value" style="font-weight:400">${site.notes || '—'}</div>
-        </div>
+      <div class="proj-details-field">
+        <div class="proj-details-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Notes</div>
+        <textarea class="proj-edit-input" id="editProjNotes" rows="2" style="resize:vertical">${site.notes || ''}</textarea>
       </div>
-      ${closureHtml}`;
-
-  el.innerHTML = `
-    <div class="proj-details" style="margin:0 28px 0">
-      <div class="proj-details-header" style="${_projectDetailsCollapsed ? 'margin-bottom:0;padding-bottom:0;border-bottom:none' : ''}">
-        <div class="proj-details-title">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          Project Details
-        </div>
-        <div style="display:flex;gap:6px">
-          ${!_projectDetailsCollapsed ? `<button class="btn" onclick="enterProjectEdit()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Edit</button>` : ''}
-          <button class="btn-icon" onclick="toggleProjectDetails()" title="${_projectDetailsCollapsed ? 'Expand' : 'Collapse'}">${_projectDetailsCollapsed ? chevronDown : chevronUp}</button>
-        </div>
-      </div>
-      ${bodyHtml}
     </div>`;
+
+  document.getElementById('projectDetailsModal').classList.add('show');
 }
 
-function toggleProjectDetails() {
-  _projectDetailsCollapsed = !_projectDetailsCollapsed;
-  renderProjectDetails();
-}
-function enterProjectEdit() {
-  _projectDetailsCollapsed = false;
-  _projectEditMode = true;
-  renderProjectDetails();
-}
-function cancelProjectEdit() {
-  _projectEditMode = false;
-  renderProjectDetails();
-}
-function saveProjectEdit() {
+function saveProjectDetailsModal() {
   site.name = document.getElementById('editProjName').value.trim() || site.name;
   site.notes = document.getElementById('editProjNotes').value.trim();
   const unitBtn = document.querySelector('#editUnitToggle .seg-btn.active');
   if (unitBtn) site.unit = unitBtn.dataset.val;
-  // Contacts
   site.contacts = [];
   document.querySelectorAll('#editContactsList .proj-edit-row').forEach(row => {
     const name = row.querySelector('[data-contact-name]').value.trim();
     const phone = row.querySelector('[data-contact-phone]').value.trim();
     if (name || phone) site.contacts.push({ name, phone });
   });
-  // Shared
   site.sharedWith = [];
   document.querySelectorAll('#editSharedList .proj-edit-row').forEach(row => {
     const name = row.querySelector('[data-shared-name]').value.trim();
     const email = row.querySelector('[data-shared-email]').value.trim();
     if (name || email) site.sharedWith.push({ name, email });
   });
-  _projectEditMode = false;
-  renderProjectDetails();
+  document.getElementById('projectDetailsModal').classList.remove('show');
   buildBreadcrumb();
+}
+
+function cancelProjectDetailsModal() {
+  document.getElementById('projectDetailsModal').classList.remove('show');
 }
 function toggleEditUnit(btn) {
   btn.parentElement.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
