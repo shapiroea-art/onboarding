@@ -310,7 +310,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .bom-delete-btn svg { width: 12px; height: 12px; }
 
 /* ── All-Locations BOM: Table rows ── */
-.all-bom-loc { margin-bottom: 2px; }
+.all-bom-loc { margin-bottom: 8px; }
+.all-bom-loc:first-child { margin-top: 12px; }
 .all-bom-loc-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #f9fafb; border: 1px solid #eaecf0; border-radius: 8px; cursor: pointer; user-select: none; transition: background 0.12s; }
 .all-bom-loc-row:hover { background: #f2f4f7; }
 .all-bom-loc-chev { width: 16px; height: 16px; color: #667085; flex-shrink: 0; transition: transform 0.2s; }
@@ -321,7 +322,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .all-bom-loc-total { margin-left: auto; font-size: 14px; font-weight: 700; color: #344054; white-space: nowrap; }
 .all-bom-loc-children { padding: 4px 0 4px 20px; }
 
-.all-bom-plan { margin-bottom: 2px; }
+.all-bom-plan { margin-bottom: 8px; }
 .all-bom-plan-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: #f9fafb; border: 1px solid #f2f4f7; border-radius: 6px; cursor: pointer; user-select: none; transition: background 0.12s; }
 .all-bom-plan-row:hover { background: #f2f4f7; }
 .all-bom-plan-chev { width: 14px; height: 14px; color: #98a2b3; flex-shrink: 0; transition: transform 0.2s; }
@@ -666,22 +667,15 @@ const PLANS = [
 const DEVICES = [
   { planId: 1, category: 'Video Security', model: 'CD52-E', qty: 2, accessories: 'ACC-MNT-CJBOX-1 INJ-POE-PLUS', price: 890 },
   { planId: 1, category: 'Video Security', model: 'Bullet 4K', qty: 1, accessories: 'Wall mount bracket', price: 650 },
-  { planId: 1, category: 'Access Control', model: 'Wired Door', qty: 1, accessories: 'AD34', price: 320 },
   { planId: 2, category: 'Video Security', model: 'Dome 8MP', qty: 3, accessories: 'Corner mount', price: 720 },
-  { planId: 2, category: 'Intercom', model: 'TD33', qty: 1, accessories: 'No accessories.', price: 190 },
   { planId: 3, category: 'Video Security', model: 'PTZ Pro', qty: 2, accessories: 'Pole mount', price: 1450 },
   { planId: 4, category: 'Video Security', model: 'Bullet 4K', qty: 2, accessories: 'Wall mount bracket', price: 650 },
   { planId: 4, category: 'Video Security', model: 'PTZ Pro', qty: 1, accessories: 'Pole mount', price: 1450 },
-  { planId: 4, category: 'Access Control', model: 'Card Reader', qty: 1, accessories: 'Mullion mount', price: 280 },
   { planId: 5, category: 'Video Security', model: 'CD52-E', qty: 2, accessories: 'ACC-MNT-CJBOX-1 INJ-POE-PLUS', price: 890 },
-  { planId: 5, category: 'Access Control', model: 'Wired Door', qty: 1, accessories: 'AD34', price: 320 },
   { planId: 6, category: 'Video Security', model: 'Dome 8MP', qty: 2, accessories: 'Corner mount', price: 720 },
-  { planId: 6, category: 'Intercom', model: 'TD33', qty: 1, accessories: 'No accessories.', price: 190 },
   { planId: 7, category: 'Video Security', model: 'Bullet 4K', qty: 2, accessories: 'Wall mount bracket', price: 650 },
-  { planId: 7, category: 'Access Control', model: 'Card Reader', qty: 1, accessories: 'Mullion mount', price: 280 },
   { planId: 8, category: 'Video Security', model: 'PTZ Pro', qty: 1, accessories: 'Pole mount', price: 1450 },
   { planId: 8, category: 'Video Security', model: 'CD52-E', qty: 2, accessories: 'ACC-MNT-CJBOX-1 INJ-POE-PLUS', price: 890 },
-  { planId: 8, category: 'Access Control', model: 'Wired Door', qty: 1, accessories: 'AD34', price: 320 },
 ];
 const CORES = [
   { planId: 1, name: 'Office Core', type: '1U Core 64', channels: 64, cameraCount: 3, price: 5000, color: '#2563eb' },
@@ -710,7 +704,6 @@ const PLAN_CAMERAS = [
   { planId: 5, name: 'Tower A Cam 2', model: 'CD52-E', type: 'Dome', price: 890, color: '#7c3aed', coreIdx: 0 },
   { planId: 6, name: 'Tower A L2 Cam 1', model: 'Dome 8MP', type: 'Dome', price: 720, color: '#7c3aed', coreIdx: -1 },
   { planId: 6, name: 'Tower A L2 Cam 2', model: 'Dome 8MP', type: 'Dome', price: 720, color: '#7c3aed', coreIdx: -1 },
-  { planId: 6, name: 'Intercom Unit', model: 'TD33', type: 'Dome', price: 190, color: '#0891b2', coreIdx: -1 },
   { planId: 7, name: 'Tower B Cam 1', model: 'Bullet 4K', type: 'Bullet', price: 650, color: '#2563eb', coreIdx: 0 },
   { planId: 7, name: 'Tower B Cam 2', model: 'Bullet 4K', type: 'Bullet', price: 650, color: '#2563eb', coreIdx: 0 },
   { planId: 8, name: 'Retail PTZ', model: 'PTZ Pro', type: 'Dome', price: 1450, color: '#2563eb', coreIdx: 0 },
@@ -790,6 +783,10 @@ const _allBomScope = {
   mode: 'all',
   selectedCameras: new Set(),
   selectedCores: new Set(),
+  shownPayment: null,
+  shownDuration: null,
+  shownRetention: null,
+  shownLicense: null,
 };
 const _allBomCollapse = {};
 
@@ -881,6 +878,24 @@ function allBomScopeToggleAll(checked) {
     PLAN_CAMERAS.filter(c => allPlanIds.includes(c.planId)).forEach(c => _allBomScope.selectedCameras.add(c._id));
     CORES.filter(c => allPlanIds.includes(c.planId)).forEach(c => _allBomScope.selectedCores.add(c._cid));
   }
+  renderAllLocationsBom();
+}
+
+/* ── All-Locations BOM: Bulk edit switches ── */
+function allBomSwitchPayment(val) {
+  _allBomScope.shownPayment = _allBomScope.shownPayment === val ? null : val;
+  renderAllLocationsBom();
+}
+function allBomSwitchDuration(val) {
+  _allBomScope.shownDuration = _allBomScope.shownDuration === val ? null : val;
+  renderAllLocationsBom();
+}
+function allBomSwitchRetention(val) {
+  _allBomScope.shownRetention = val ? parseInt(val) : null;
+  renderAllLocationsBom();
+}
+function allBomSwitchLicense(val) {
+  _allBomScope.shownLicense = val || null;
   renderAllLocationsBom();
 }
 
@@ -1103,7 +1118,9 @@ function renderAllLocationsBom() {
 
   // Toolbar
   const trashSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>';
-  tbEl.innerHTML = '<div class="all-bom-toolbar-row">' +
+  const payAct = _allBomScope.shownPayment;
+  const durAct = _allBomScope.shownDuration;
+  tbEl.innerHTML = '<div class="all-bom-toolbar-row" style="justify-content:flex-start;padding:8px 0">' +
     '<span style="font-size:11px;font-weight:500;color:#98a2b3;white-space:nowrap">Items:</span>' +
     '<div class="bom-quick-switch">' +
       '<button class="bom-quick-switch-btn' + (!selectMode ? ' active' : '') + '" onclick="allBomSetScope(\'all\')">All</button>' +
@@ -1111,6 +1128,29 @@ function renderAllLocationsBom() {
     '</div>' +
     (selectMode ? '<label class="all-bom-vo-check" style="margin-left:4px"><input type="checkbox" class="bom-cb"' + (totalAllChecked ? ' checked' : '') + ' onchange="allBomScopeToggleAll(this.checked)"> All</label>' : '') +
     '<span style="width:1px;height:18px;background:#eaecf0;flex-shrink:0"></span>' +
+    '<div class="bom-quick-switch">' +
+      '<button class="bom-quick-switch-btn' + (payAct === 'Upfront' ? ' active' : '') + '" onclick="allBomSwitchPayment(\'Upfront\')">Upfront</button>' +
+      '<button class="bom-quick-switch-btn' + (payAct === 'Yearly' ? ' active' : '') + '" onclick="allBomSwitchPayment(\'Yearly\')">Yearly</button>' +
+    '</div>' +
+    '<div class="bom-quick-switch">' +
+      '<button class="bom-quick-switch-btn' + (durAct === 1 ? ' active' : '') + '" onclick="allBomSwitchDuration(1)">1yr</button>' +
+      '<button class="bom-quick-switch-btn' + (durAct === 3 ? ' active' : '') + '" onclick="allBomSwitchDuration(3)">3yr</button>' +
+      '<button class="bom-quick-switch-btn' + (durAct === 5 ? ' active' : '') + '" onclick="allBomSwitchDuration(5)">5yr</button>' +
+      '<button class="bom-quick-switch-btn' + (durAct === 10 ? ' active' : '') + '" onclick="allBomSwitchDuration(10)">10yr</button>' +
+    '</div>' +
+    '<select class="bom-toolbar-dd" onchange="allBomSwitchRetention(this.value)" title="Retention">' +
+      '<option value="" disabled' + (_allBomScope.shownRetention === null ? ' selected' : '') + ' style="color:#98a2b3">Retention</option>' +
+      '<option value="30"' + (_allBomScope.shownRetention === 30 ? ' selected' : '') + '>30d</option>' +
+      '<option value="60"' + (_allBomScope.shownRetention === 60 ? ' selected' : '') + '>60d</option>' +
+      '<option value="90"' + (_allBomScope.shownRetention === 90 ? ' selected' : '') + '>90d</option>' +
+      '<option value="180"' + (_allBomScope.shownRetention === 180 ? ' selected' : '') + '>180d</option>' +
+      '<option value="365"' + (_allBomScope.shownRetention === 365 ? ' selected' : '') + '>365d</option>' +
+    '</select>' +
+    '<select class="bom-toolbar-dd" onchange="allBomSwitchLicense(this.value)" title="License">' +
+      '<option value="" disabled' + (_allBomScope.shownLicense === null ? ' selected' : '') + ' style="color:#98a2b3">License</option>' +
+      '<option value="Essential"' + (_allBomScope.shownLicense === 'Essential' ? ' selected' : '') + '>Essential</option>' +
+      '<option value="Enterprise"' + (_allBomScope.shownLicense === 'Enterprise' ? ' selected' : '') + '>Enterprise</option>' +
+    '</select>' +
     '<button class="bom-addon-btn" onclick="alert(\'Add-ons placeholder\')">+ Add-ons</button>' +
     '<button class="bom-delete-btn" onclick="allBomDeleteItems()">' + trashSvg + 'Delete</button>' +
   '</div>';
