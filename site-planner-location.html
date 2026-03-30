@@ -312,14 +312,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 /* ── All-Locations BOM: Table rows ── */
 .all-bom-loc { margin-bottom: 8px; }
 .all-bom-loc:first-child { margin-top: 12px; }
-.all-bom-loc-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #f9fafb; border: 1px solid #eaecf0; border-radius: 8px; cursor: pointer; user-select: none; transition: background 0.12s; }
+.all-bom-loc-row { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: #f8fafc; border: 1px solid #eaecf0; border-left: 4px solid #7c3aed; border-radius: 8px; cursor: pointer; user-select: none; transition: background 0.12s; }
 .all-bom-loc-row:hover { background: #f2f4f7; }
 .all-bom-loc-chev { width: 16px; height: 16px; color: #667085; flex-shrink: 0; transition: transform 0.2s; }
 .all-bom-loc.collapsed .all-bom-loc-chev { transform: rotate(-90deg); }
 .all-bom-loc.collapsed .all-bom-loc-children { display: none; }
-.all-bom-loc-name { font-size: 14px; font-weight: 600; color: #344054; }
+.all-bom-loc-name { font-size: 16px; font-weight: 600; color: #101828; }
 .all-bom-loc-meta { font-size: 12px; color: #98a2b3; }
-.all-bom-loc-total { margin-left: auto; font-size: 14px; font-weight: 700; color: #344054; white-space: nowrap; }
+.all-bom-loc-total { margin-left: auto; font-size: 15px; font-weight: 700; color: #344054; white-space: nowrap; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-variant-numeric: tabular-nums; }
 .all-bom-loc-children { padding: 4px 0 4px 20px; }
 
 .all-bom-plan { margin-bottom: 8px; }
@@ -330,7 +330,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .all-bom-plan.collapsed .all-bom-plan-children { display: none; }
 .all-bom-plan-name { font-size: 13px; font-weight: 600; color: #344054; }
 .all-bom-plan-meta { font-size: 12px; color: #98a2b3; }
-.all-bom-plan-total { margin-left: auto; font-size: 13px; font-weight: 600; color: #344054; white-space: nowrap; }
+.all-bom-plan-total { margin-left: auto; font-size: 13px; font-weight: 600; color: #344054; white-space: nowrap; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-variant-numeric: tabular-nums; }
 .all-bom-plan-children { padding: 4px 0 4px 16px; }
 
 /* ── Core groups inside plan ── */
@@ -385,8 +385,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 
 /* ── Grand Total ── */
 .all-bom-grand { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-top: 2px solid #eaecf0; margin-top: 12px; }
-.all-bom-grand-label { font-size: 14px; font-weight: 600; color: #101828; }
-.all-bom-grand-val { font-size: 18px; font-weight: 800; color: #7c3aed; }
+.all-bom-grand-label { font-size: 14px; font-weight: 600; color: #344054; }
+.all-bom-grand-val { font-size: 24px; font-weight: 800; color: #7c3aed; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-variant-numeric: tabular-nums; }
 
 /* ── Expand / Collapse All ── */
 .all-bom-expand-row { display: flex; align-items: center; justify-content: flex-end; gap: 4px; padding: 4px 0 2px; }
