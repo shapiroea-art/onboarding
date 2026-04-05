@@ -52,6 +52,21 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .btn-icon:hover { background: #f9fafb; color: #344054; }
 .btn-icon svg { width: 16px; height: 16px; }
 
+/* ── Modal ── */
+.modal-overlay { position: fixed; inset: 0; background: rgba(16,24,40,0.5); z-index: 1000; display: none; align-items: center; justify-content: center; }
+.modal-overlay.show { display: flex; }
+.modal { background: #fff; border-radius: 12px; box-shadow: 0 20px 60px rgba(16,24,40,0.2); width: 400px; max-width: 90vw; padding: 28px; }
+.modal-title { font-size: 18px; font-weight: 600; color: #101828; margin-bottom: 20px; }
+.modal-field { margin-bottom: 16px; }
+.modal-label { display: block; font-size: 13px; font-weight: 500; color: #344054; margin-bottom: 6px; }
+.modal-input { width: 100%; padding: 9px 12px; font-size: 14px; border: 1px solid #d0d5dd; border-radius: 8px; color: #101828; outline: none; transition: border-color 0.15s; font-family: inherit; box-sizing: border-box; }
+.modal-input:focus { border-color: #7c3aed; box-shadow: 0 0 0 3px rgba(124,58,237,0.12); }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 24px; }
+.modal-btn { padding: 9px 18px; font-size: 14px; font-weight: 500; border-radius: 8px; cursor: pointer; border: 1px solid #d0d5dd; background: #fff; color: #344054; font-family: inherit; transition: all 0.15s; }
+.modal-btn:hover { background: #f9fafb; }
+.modal-btn-primary { background: #7c3aed; border-color: #7c3aed; color: #fff; }
+.modal-btn-primary:hover { background: #6d28d9; }
+
 /* ── Export Dropdown ── */
 .export-wrap { position: relative; }
 .export-dropdown { position: absolute; top: calc(100% + 5px); right: 0; width: 160px; background: #fff; border: 1px solid #e4e7ec; border-radius: 8px; box-shadow: 0 8px 20px rgba(16,24,40,0.1); z-index: 300; display: none; flex-direction: column; overflow: hidden; }
@@ -738,6 +753,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
         <span class="current">View plan</span>
       </div>
       <div class="topbar-actions">
+        <button class="btn-icon" onclick="openRenamePlanModal()" title="Edit plan">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
         <button class="btn" onclick="shareLink()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
           Share
@@ -6196,6 +6214,49 @@ window.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => banner.classList.remove('show'), 6000);
   }
 });
+</script>
+
+<!-- Rename Plan Modal -->
+<div class="modal-overlay" id="renamePlanModal">
+  <div class="modal">
+    <div class="modal-title">Edit plan</div>
+    <div class="modal-field">
+      <label class="modal-label" for="renamePlanInput">Plan name</label>
+      <input class="modal-input" id="renamePlanInput" type="text" placeholder="Enter plan name" autocomplete="off"/>
+    </div>
+    <div class="modal-actions" style="justify-content:space-between">
+      <button class="modal-btn" style="color:#d92d20;border-color:#fecaca" onclick="deletePlan()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px;margin-right:2px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>Delete plan</button>
+      <div style="display:flex;gap:8px">
+        <button class="modal-btn" onclick="document.getElementById('renamePlanModal').classList.remove('show')">Cancel</button>
+        <button class="modal-btn modal-btn-primary" onclick="confirmRenamePlan()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function openRenamePlanModal() {
+  var nameEl = document.querySelector('.topbar-breadcrumb .current');
+  var currentName = nameEl ? nameEl.textContent.replace('Plan: ','').replace('View plan','').trim() : '';
+  document.getElementById('renamePlanInput').value = currentName || '';
+  document.getElementById('renamePlanModal').classList.add('show');
+  setTimeout(function() { document.getElementById('renamePlanInput').focus(); }, 50);
+}
+function confirmRenamePlan() {
+  var newName = document.getElementById('renamePlanInput').value.trim();
+  if (!newName) return;
+  var nameEl = document.querySelector('.topbar-breadcrumb .current');
+  if (nameEl) nameEl.textContent = 'Plan: ' + newName;
+  document.getElementById('renamePlanModal').classList.remove('show');
+}
+function deletePlan() {
+  if (!confirm('Are you sure you want to delete this plan?')) return;
+  document.getElementById('renamePlanModal').classList.remove('show');
+  var params = new URLSearchParams(window.location.search);
+  var siteId = params.get('siteId') || '1';
+  var locationId = params.get('locationId') || '1';
+  window.location.href = 'site-planner-location.html?siteId=' + siteId + '&locationId=' + locationId;
+}
 </script>
 
 </body>

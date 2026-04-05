@@ -301,13 +301,19 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .all-bom-loc:first-child { margin-top: 4px; }
 .all-bom-loc-row { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #fff; border-bottom: 1px solid #eaecf0; cursor: pointer; user-select: none; transition: background 0.12s; min-height: 48px; }
 .all-bom-loc-row:hover { background: #f9fafb; }
-.all-bom-loc-chev { width: 20px; height: 20px; color: #98a2b3; flex-shrink: 0; transition: transform 0.2s; order: 99; margin-left: auto; }
+.all-bom-loc-chev { width: 20px; height: 20px; color: #98a2b3; flex-shrink: 0; transition: transform 0.2s; order: 99; }
 .all-bom-loc.collapsed .all-bom-loc-chev { transform: rotate(-90deg); }
 .all-bom-loc.collapsed .all-bom-loc-children { display: none; }
 .all-bom-loc-icon { flex-shrink: 0; }
 .all-bom-loc-name { font-size: 14px; font-weight: 600; color: #101828; }
 .all-bom-loc-meta { font-size: 13px; color: #98a2b3; }
-.all-bom-loc-total { font-size: 14px; font-weight: 600; color: #344054; white-space: nowrap; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-variant-numeric: tabular-nums; }
+.all-bom-loc-total { font-size: 14px; font-weight: 600; color: #344054; white-space: nowrap; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-variant-numeric: tabular-nums; order: 98; }
+.all-bom-loc-edit { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border: 1px solid #d0d5dd; border-radius: 6px; background: #fff; cursor: pointer; color: #667085; transition: all 0.15s; flex-shrink: 0; order: 96; margin-left: auto; }
+.all-bom-loc-edit:hover { background: #f9fafb; color: #344054; border-color: #98a2b3; }
+.all-bom-loc-edit svg { width: 14px; height: 14px; }
+.all-bom-loc-create-plan { display: inline-flex; align-items: center; gap: 4px; padding: 4px 12px; font-size: 12px; font-weight: 500; color: #667085; background: #fff; border: 1px solid #d0d5dd; border-radius: 6px; cursor: pointer; white-space: nowrap; transition: all 0.15s; font-family: inherit; order: 97; }
+.all-bom-loc-create-plan:hover { background: #f9fafb; border-color: #98a2b3; color: #344054; }
+.all-bom-loc-create-plan svg { width: 12px; height: 12px; }
 .all-bom-loc-children { padding: 0 0 0 40px; }
 
 .all-bom-plan { margin-bottom: 0; }
@@ -517,6 +523,28 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
     <div class="modal-actions">
       <button class="modal-btn" id="cancelLocationBtn">Cancel</button>
       <button class="modal-btn modal-btn-primary" id="confirmLocationBtn" disabled>Create location</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Location Modal -->
+<div class="modal-overlay" id="editLocationModal">
+  <div class="modal">
+    <div class="modal-title">Edit location</div>
+    <div class="modal-field">
+      <label class="modal-label" for="editLocNameInput">Location name</label>
+      <input class="modal-input" id="editLocNameInput" type="text" placeholder="Enter location name" autocomplete="off"/>
+    </div>
+    <div class="modal-field">
+      <label class="modal-label" for="editLocAddressInput">Address</label>
+      <input class="modal-input" id="editLocAddressInput" type="text" placeholder="Enter address" autocomplete="off"/>
+    </div>
+    <div class="modal-actions" style="justify-content:space-between">
+      <button class="modal-btn" id="deleteEditLocBtn" style="color:#d92d20;border-color:#fecaca"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px;margin-right:2px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>Delete location</button>
+      <div style="display:flex;gap:8px">
+        <button class="modal-btn" id="cancelEditLocBtn">Cancel</button>
+        <button class="modal-btn modal-btn-primary" id="confirmEditLocBtn">Save</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1133,6 +1161,61 @@ function saveDeviceInfo() {
   renderAllLocationsBom();
 }
 
+/* ── Edit location modal ── */
+var _editLocTargetId = null;
+function openEditLocationModal(locId) {
+  _editLocTargetId = locId;
+  var loc = siteLocations.find(function(l) { return l.id === locId; });
+  if (!loc) return;
+  document.getElementById('editLocNameInput').value = loc.name;
+  document.getElementById('editLocAddressInput').value = loc.address;
+  document.getElementById('editLocationModal').classList.add('show');
+  setTimeout(function() { document.getElementById('editLocNameInput').focus(); }, 50);
+}
+document.getElementById('cancelEditLocBtn').addEventListener('click', function() {
+  document.getElementById('editLocationModal').classList.remove('show');
+});
+document.getElementById('deleteEditLocBtn').addEventListener('click', function() {
+  var loc = siteLocations.find(function(l) { return l.id === _editLocTargetId; });
+  if (!loc || !confirm('Are you sure you want to delete "' + loc.name + '"?')) return;
+  document.getElementById('editLocationModal').classList.remove('show');
+  var idx = siteLocations.indexOf(loc);
+  if (idx >= 0) siteLocations.splice(idx, 1);
+  buildBreadcrumb();
+  buildMain();
+});
+document.getElementById('confirmEditLocBtn').addEventListener('click', function() {
+  var loc = siteLocations.find(function(l) { return l.id === _editLocTargetId; });
+  if (!loc) return;
+  var newName = document.getElementById('editLocNameInput').value.trim();
+  var newAddress = document.getElementById('editLocAddressInput').value.trim();
+  if (newName) loc.name = newName;
+  if (newAddress) loc.address = newAddress;
+  document.getElementById('editLocationModal').classList.remove('show');
+  buildBreadcrumb();
+  buildMain();
+});
+
+/* ── Create plan from location row ── */
+var _createPlanTargetLocId = null;
+function openCreatePlanForLocation(locId) {
+  _createPlanTargetLocId = locId;
+  var loc = siteLocations.find(function(l) { return l.id === locId; });
+  if (!loc) return;
+  var planModalBc = document.getElementById('planModalBreadcrumb');
+  planModalBc.innerHTML = '<span>' + site.name + '</span><span class="bc-sep">\u203A</span><span class="bc-current">' + loc.name + '</span>';
+  document.getElementById('planNameInput').value = '';
+  document.getElementById('confirmPlanBtn').disabled = true;
+  document.getElementById('uploadArea').classList.add('disabled');
+  uploadedFile = null;
+  document.getElementById('planFileInput').value = '';
+  document.getElementById('uploadFilePreview').style.display = 'none';
+  document.getElementById('uploadArea').style.display = '';
+  document.getElementById('planSuccessBanner').classList.remove('show');
+  document.getElementById('createPlanModal').classList.add('show');
+  setTimeout(function() { document.getElementById('planNameInput').focus(); }, 50);
+}
+
 /* ── All-Locations BOM: Toggle collapse ── */
 function toggleAllBomLoc(locId) {
   const key = 'loc-' + locId;
@@ -1458,6 +1541,8 @@ function renderAllLocationsBom() {
           '<span class="all-bom-loc-name">' + loc.name + '</span>' +
           '<span class="all-bom-loc-meta">' + loc.address + '</span>' +
           '<span class="all-bom-loc-total">$' + locTotal.toLocaleString() + '</span>' +
+          '<button class="all-bom-loc-edit" onclick="openEditLocationModal(' + loc.id + ');event.stopPropagation()" title="Edit location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>' +
+          '<button class="all-bom-loc-create-plan" onclick="openCreatePlanForLocation(' + loc.id + ');event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="3" x2="8" y2="13"/><line x1="3" y1="8" x2="13" y2="8"/></svg>Plan</button>' +
         '</div>';
         tableHtml += '<div class="all-bom-loc-children">';
       }
@@ -1914,6 +1999,7 @@ function openCreateLocationModal() {
 const createPlanFromLocBtn = document.getElementById('createPlanFromLocBtn');
 if (createPlanFromLocBtn) {
   createPlanFromLocBtn.addEventListener('click', function() {
+    _createPlanTargetLocId = locationId;
     const planModalBc = document.getElementById('planModalBreadcrumb');
     planModalBc.innerHTML = '<span>' + site.name + '</span><span class="bc-sep">›</span><span class="bc-current">' + currentLocation.name + '</span>';
     document.getElementById('planNameInput').value = '';
@@ -2276,7 +2362,8 @@ confirmPlanBtn.addEventListener('click', function() {
   const name = planNameInput.value.trim();
   if (!name) return;
 
-  const protoUrl = `site-planner-prototype.html?siteId=${siteId}&locationId=${locationId}&planId=99&newPlan=1`;
+  const targetLocId = _createPlanTargetLocId || locationId;
+  const protoUrl = `site-planner-prototype.html?siteId=${siteId}&locationId=${targetLocId}&planId=99&newPlan=1`;
   createPlanModal.classList.remove('show');
 
   if (uploadedFile) {
@@ -2360,7 +2447,8 @@ fpwNextBtn.addEventListener('click', function() {
   } else {
     /* Done → navigate to View plan page with floor plan + map mode */
     fpwOverlay.classList.remove('show');
-    window.location.href = `site-planner-prototype.html?siteId=${siteId}&locationId=${locationId}&planId=99&newPlan=1&floorPlan=1`;
+    var fpwLocId = _createPlanTargetLocId || locationId;
+    window.location.href = `site-planner-prototype.html?siteId=${siteId}&locationId=${fpwLocId}&planId=99&newPlan=1&floorPlan=1`;
   }
 });
 
