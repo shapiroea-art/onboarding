@@ -46,11 +46,19 @@ Landing page showing all projects in a filterable, searchable table.
 
 ---
 
-### site-planner-location.html — Project Hub (~2,450 lines)
+### site-planner-location.html — Project Hub (~2,500 lines)
 
-The central hub between the Projects list and the interactive Plan editor. Three distinct view modes based on URL parameters. Full details in `Knowledge/SitePlanner-Locations.md`.
+The central hub between the Projects list and the interactive Plan editor. Three distinct view modes based on URL parameters. All three views share a single `renderAllLocationsBom()` function that scopes data based on the active view.
 
-**Shared layout:** 64px left nav → 220px sidebar (location/plan tree) → main content area with top bar breadcrumb.
+**Shared layout:** 64px left nav → 220px sidebar (location/plan tree) → main content area with top bar breadcrumb + action buttons.
+
+#### Top Bar Actions (per tab)
+
+| View | Buttons |
+|---|---|
+| **All Locations** | Project details · \| · Delete · Close/Reopen · Share · Export · + Create location |
+| **Single Location** | Delete · + Create plan |
+| **Single Plan** | Delete |
 
 #### View Mode 1: All Locations (no `locationId` or `planId`)
 
@@ -58,38 +66,53 @@ The most feature-rich view — project-wide BOM management.
 
 | Element | Details |
 |---|---|
-| **Project Details card** | Collapsible card (collapsed by default) with 2-column grid: project name, created date, owner, status badge, unit system, shared users, contacts, notes. Edit mode with inline inputs. Closure info for closed projects. |
+| **Project Details** | Topbar button opens a modal in edit mode (single column, 20px gaps). Fields: project name, created date, owner, status badge, unit system, shared users, contacts, notes. |
 | **View Options** | Always-visible panel: search input, device type filter dropdown (dynamic from data), group-by toggle (Locations & Plans / Device type), sort (A-Z, Price ↑, Price ↓) |
-| **Bulk Editing Toolbar** | Items All/Selected toggle with select-all checkbox, Upfront/Yearly payment, 1/3/5/10yr duration, Retention dropdown, License dropdown, +Add-ons button, Delete with confirmation modal |
-| **BOM Table** | Hierarchical collapsible: Location (purple left border, #F8FAFC bg, 16px semibold) → Plan → Core group (colored left border, chevron-only expand, name click opens modal) → Cameras (click opens modal). Alternate "Device type" flat grouping. |
-| **Expand/Collapse all** | Single toggle button above table |
+| **Bulk Editing Toolbar** | Items All/Selected toggle with select-all checkbox, Upfront/Yearly payment, 1/3/5/10yr duration, Retention dropdown, License dropdown, +Add-ons button, Delete button, Expand/Collapse all (right-aligned) |
+| **BOM Table** | Hierarchical collapsible: Location (purple left border, #F8FAFC bg, 16px semibold) → Plan → Core group (colored left border, chevron-only expand, name click opens device info modal) → Cameras (click opens modal). Alternate "Device type" flat grouping. |
 | **Grand Total** | Label in dark grey, amount in 24px bold purple, tabular-nums font |
-| **What's Included** | Collapsible block with 10 features (Lumana AI, cloud backup, alerts, unlimited users, etc.) |
+| **What's Included** | Collapsible link below Grand Total, right-aligned, 670px max width, lilac background (#faf8ff) with purple border. 10 features in 2-column grid. |
 
 #### View Mode 2: Single Location (`locationId` set, no `planId`)
 
 | Element | Details |
 |---|---|
-| **Content header** | Address + "Create plan" button |
-| **BOM sections** | Collapsible groups by category (Cameras, Cores) with device rows: icon, qty badge, model, accessories, price |
+| **Content header** | Location address with pin icon |
+| **BOM** | Same shared BOM table (search, filters, toolbar) scoped to this location's plans. Group-by toggle shows "Plans / Device type". Location wrapper is skipped (goes straight to plan → core → camera hierarchy). |
 
 #### View Mode 3: Single Plan (`planId` set)
 
 | Element | Details |
 |---|---|
 | **Map preview (280px)** | Leaflet map with floor plan overlay SVG + "View Plan" button → links to `site-planner-prototype.html` |
-| **Hierarchical BOM** | Core → Camera grouping with unassigned cameras section + Grand Total |
+| **Content header** | Location address with pin icon |
+| **BOM toolbar** | Same shared search, filters, and Items toolbar as All Locations view |
+| **Hardware category** | Collapsible `.bom-category` block with header (title, device count badge, total), body (core groups → cameras, same `.all-bom-core-group` markup), footer ("Hardware Total"). `hwTotal = computePlanBomTotal(planId)`. |
+| **Software category** | Collapsible `.bom-category` block. Body: single license row ("Lumana License", N × $199). Footer: "Software Total". Only shown if cameras exist. |
+| **Grand Total** | Hardware Total + Software Total. Same 24px purple styling. |
+| **What's Included** | Same collapsible block as All Locations view. |
+
+#### Shared BOM Rendering (`renderAllLocationsBom()`)
+
+One function renders all three views. Key scoping logic:
+```
+bomLocations = showPlan ? [planLocation] : (!showAllLocations ? [currentLocation] : siteLocations)
+allPlanIds   = showPlan ? [planId] : PLANS.filter(p => allLocIds.includes(p.locationId)).map(p => p.id)
+```
+Plan tab uses a dedicated `if (showPlan)` branch that renders Hardware/Software category blocks instead of the groupBy locations/type table.
 
 #### Modals
 
 | Modal | Details |
 |---|---|
+| **Project Details** | Edit mode only (opens from topbar button). Single column layout, 20px gaps. Project name, date, owner, status, unit, shared users, contacts, notes. Cancel/Save. |
 | **Device Info** (Camera) | Name (editable), Model, Type, Color picker (8 colors), Price, Core assignment dropdown. Cancel/Save. |
 | **Device Info** (Core) | Name (editable), Type, Channels, Color picker, Payment (Upfront/Yearly), Duration (1/3/5/10yr, conditional on Yearly), Price, Assigned Cameras list with tags (payment, duration, license, retention) and per-camera price. Cancel/Save. |
 | **Device Info** (Device) | Model, Category, Qty, Accessories, Unit price, Total (read-only). Cancel/Save. |
 | **Delete Confirmation** | Red trash icon, item count summary, Cancel/Delete. |
 | **Close Project** | Win/Loss toggle, optional notes, Cancel/Close. |
-| **Floor Plan Wizard** | 3-step: Crop → Scale → Align. |
+| **Create Location** | Location name + address inputs, map preview. |
+| **Create Plan** | Breadcrumb context, plan name input, floor plan upload area. |
 
 #### Data Model
 
@@ -102,11 +125,13 @@ The most feature-rich view — project-wide BOM management.
 | `CORES` | planId, name, type, channels, cameraCount, price, color |
 | `PLAN_CAMERAS` | planId, name, model, type, price, color, coreIdx (synthetic `_id` at init) |
 
+Constants: `LICENSE_PRICE = 199` (per camera, for software licensing).
+
 Hierarchy: Site → Locations → Plans → (Cores → Cameras + Devices)
 
 #### State Objects
 
-`_allBomViewOptions` (search, device filters, groupBy, sort), `_allBomScope` (mode, selectedCameras Set, selectedCores Set, bulk edit values), `_allBomCollapse` (expand/collapse state), `_allBomAllExpanded`, `_allBomIncludedOpen`, `_deviceInfoContext`.
+`_allBomViewOptions` (search, device filters, groupBy, sort), `_allBomScope` (mode, selectedCameras Set, selectedCores Set, bulk edit values), `_allBomCollapse` (expand/collapse state keyed by loc/plan/core/type), `_bomCategoryCollapse` (hardware/software collapse state for plan tab), `_allBomAllExpanded`, `_allBomIncludedOpen`, `_deviceInfoContext`.
 
 ---
 
@@ -158,13 +183,25 @@ The main floor-plan editor. Covered in detail in the rest of this document.
 
 ```
 Lumana-Desktop/
-├── site-planner-sites.html              ← Projects list (entry point, 442 lines)
-├── site-planner-location.html           ← Location detail + BOM summary (1,245 lines)
-├── site-planner-plan.html               ← Read-only plan viewer (456 lines)
-├── site-planner-prototype.html          ← Full interactive editor (~6,232 lines, all phases built)
+├── site-planner-sites.html              ← Projects list (entry point, ~1,100 lines)
+├── site-planner-location.html           ← Project hub + BOM management (~2,370 lines)
+├── site-planner-plan.html               ← Read-only plan viewer (~456 lines)
+├── site-planner-prototype.html          ← Full interactive floor-plan editor (~6,200 lines)
 │
 ├── Knowledge/
-│   └── SitePlanner-Plan.md              ← This file
+│   ├── SitePlanner-Plan.md              ← This file (build plan & architecture)
+│   └── SitePlanner-Locations.md         ← Detailed location page documentation
+│
+├── figma-assets/                        ← SVG icons for Figma / design use
+│   ├── dome-camera.svg
+│   ├── bullet-camera.svg
+│   ├── fisheye-camera.svg
+│   ├── camera-generic.svg
+│   ├── core-icon.svg
+│   ├── bom-icon.svg
+│   ├── floor-plan-icon.svg
+│   ├── site-planner-icon.svg
+│   └── site-planner-icon-v2.svg
 │
 └── assets/
     └── site-planner/

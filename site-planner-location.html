@@ -24,19 +24,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .nav-icon svg { width: 20px; height: 20px; }
 .nav-avatar { width: 32px; height: 32px; border-radius: 50%; background: #bbf7d0; color: #344054; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; cursor: pointer; }
 
-/* ── Sidebar ── */
-.sidebar { width: 220px; flex-shrink: 0; background: #fff; border-right: 1px solid #eaecf0; display: flex; flex-direction: column; overflow-y: auto; }
-.sidebar-tree { padding: 8px 8px; flex: 1; }
-.sidebar-location { padding: 8px 12px; font-size: 14px; font-weight: 500; color: #344054; border-radius: 6px; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 8px; }
-.sidebar-location:hover { background: #f2f4f7; }
-.sidebar-location.selected { background: #e0f2fe; color: #0369a1; }
-.sidebar-location-icon { width: 16px; height: 16px; flex-shrink: 0; }
-.sidebar-plans { padding-left: 24px; }
-.sidebar-plan { display: flex; align-items: center; gap: 6px; padding: 5px 12px; font-size: 12px; color: #667085; border-radius: 5px; cursor: pointer; transition: all 0.15s; text-decoration: none; }
-.sidebar-plan:hover { background: #f2f4f7; color: #344054; }
-.sidebar-plan.selected { background: #e0f2fe; color: #0369a1; }
-.sidebar-plan.selected .sidebar-plan-icon { color: #0369a1; }
-.sidebar-plan-icon { width: 14px; height: 14px; flex-shrink: 0; color: #98a2b3; }
 
 /* ── Right side (topbar + body) ── */
 .right { flex: 1; display: flex; flex-direction: column; min-width: 0; }
@@ -54,7 +41,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .btn-primary { background: #7c3aed; border-color: #7c3aed; color: #fff; }
 .btn-primary:hover { background: #6d28d9; }
 
-/* ── Body (sidebar + main) ── */
+/* ── Body ── */
 .body { flex: 1; display: flex; min-height: 0; }
 
 /* ── Main content ── */
@@ -330,8 +317,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .all-bom-plan.collapsed .all-bom-plan-children { display: none; }
 .all-bom-plan-name { font-size: 13px; font-weight: 600; color: #344054; }
 .all-bom-plan-meta { font-size: 12px; color: #98a2b3; }
-.all-bom-plan-total { margin-left: auto; font-size: 13px; font-weight: 600; color: #344054; white-space: nowrap; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-variant-numeric: tabular-nums; }
+.all-bom-plan-total { font-size: 13px; font-weight: 600; color: #344054; white-space: nowrap; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-variant-numeric: tabular-nums; }
+.all-bom-plan-view { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; font-size: 11px; font-weight: 600; color: #7c3aed; background: #f5f3ff; border: 1px solid #ede9fe; border-radius: 5px; text-decoration: none; white-space: nowrap; transition: all 0.15s; margin-left: auto; }
+.all-bom-plan-view:hover { background: #ede9fe; color: #6d28d9; }
+.all-bom-plan-view svg { width: 12px; height: 12px; }
 .all-bom-plan-children { padding: 4px 0 4px 16px; }
+.all-bom-plan-total-line { display: flex; justify-content: space-between; padding: 10px 14px; margin-top: 4px; background: #f9fafb; border-radius: 6px; font-size: 13px; font-weight: 700; color: #344054; }
 
 /* ── Core groups inside plan ── */
 .all-bom-core-group { margin-bottom: 4px; }
@@ -350,7 +341,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .all-bom-core-type { font-size: 12px; color: #98a2b3; margin-left: 4px; }
 .all-bom-core-badge { font-size: 11px; font-weight: 600; color: #667085; background: #eaecf0; border-radius: 10px; padding: 1px 8px; }
 .all-bom-core-price { margin-left: auto; font-size: 13px; font-weight: 600; color: #344054; white-space: nowrap; }
-.all-bom-core-children { padding: 2px 0 2px 14px; }
+.all-bom-core-children { padding: 2px 0 2px 52px; }
 
 /* ── Device type grouping headers ── */
 .all-bom-type-group { margin-bottom: 4px; }
@@ -384,7 +375,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .all-bom-empty { padding: 16px; text-align: center; font-size: 13px; color: #98a2b3; }
 
 /* ── Grand Total ── */
-.all-bom-grand { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-top: 2px solid #eaecf0; margin-top: 12px; }
+.all-bom-grand { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-top: 2px solid #eaecf0; margin-top: 12px; background: #f9fafb; border-radius: 8px; }
 .all-bom-grand-label { font-size: 14px; font-weight: 600; color: #344054; }
 .all-bom-grand-val { font-size: 24px; font-weight: 800; color: #7c3aed; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-variant-numeric: tabular-nums; }
 
@@ -486,9 +477,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
       <div class="topbar-actions" id="topbarActions"></div>
     </div>
 
-    <!-- Body: sidebar + main -->
+    <!-- Body -->
     <div class="body">
-      <aside class="sidebar" id="sidebar"></aside>
       <main class="main" id="mainContent"></main>
     </div>
   </div>
@@ -1447,7 +1437,9 @@ function renderAllLocationsBom() {
     const singlePlan = showPlan;
     bomLocations.forEach(loc => {
       const locPlans = PLANS.filter(p => p.locationId === loc.id);
-      const locTotal = computeLocationBomTotal(loc.id);
+      const locHwOnlyTotal = computeLocationBomTotal(loc.id);
+      const locCamCount = locPlans.reduce((s, p) => s + PLAN_CAMERAS.filter(c => c.planId === p.id).length, 0);
+      const locTotal = locHwOnlyTotal + locCamCount * LICENSE_PRICE;
       const locCollapsed = _allBomCollapse['loc-' + loc.id] !== false;
 
       if (!singleLoc && !singlePlan) {
@@ -1462,26 +1454,31 @@ function renderAllLocationsBom() {
       }
 
       locPlans.forEach(plan => {
-        const planTotal = computePlanBomTotal(plan.id);
+        const planHwTotal = computePlanBomTotal(plan.id);
+        const planSwTotal = PLAN_CAMERAS.filter(c => c.planId === plan.id).length * LICENSE_PRICE;
+        const planTotal = planHwTotal + planSwTotal;
         const planCollapsed = _allBomCollapse['plan-' + plan.id] !== false;
 
         if (!singlePlan) {
         tableHtml += '<div class="all-bom-plan' + (planCollapsed ? ' collapsed' : '') + '" id="allBomPlan' + plan.id + '">';
+        var viewPlanHref = 'site-planner-prototype.html?siteId=' + siteId + '&locationId=' + plan.locationId + '&planId=' + plan.id;
         tableHtml += '<div class="all-bom-plan-row" onclick="toggleAllBomPlan(' + plan.id + ')">' +
           '<div class="all-bom-plan-chev">' + chevronSVG16 + '</div>' +
           '<span class="all-bom-plan-name">' + plan.name + '</span>' +
+          '<a class="all-bom-plan-view" href="' + viewPlanHref + '" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>View plan</a>' +
           '<span class="all-bom-plan-total">$' + planTotal.toLocaleString() + '</span>' +
         '</div>';
         tableHtml += '<div class="all-bom-plan-children">';
         }
 
-        // Hierarchical: Core → Camera (matching prototype)
+        // Hierarchical: Core → Camera wrapped in Hardware/Software blocks
         const planCoresArr = CORES.filter(c => c.planId === plan.id);
         const planCamsAll = PLAN_CAMERAS.filter(c => c.planId === plan.id);
         const showCams = _allBomViewOptions.devices['Cameras'];
         const showCores = _allBomViewOptions.devices['Cores'];
 
-        // Core groups
+        // Build hardware inner HTML (core groups + cameras)
+        var locHwGroupsHtml = '';
         planCoresArr.forEach((core, ci) => {
           if (!showCores && !showCams) return;
           const coreCams = showCams ? allBomSortItems(planCamsAll.filter(c => c.coreIdx === ci).filter(c => allBomMatchesSearch(c.name, c.model)), 'name', 'price') : [];
@@ -1491,8 +1488,8 @@ function renderAllLocationsBom() {
           const coreGroupTotal = core.price + coreCams.reduce((s, c) => s + c.price, 0);
           const coreCb = selectMode && showCores ? '<input type="checkbox" class="bom-cb bom-item-cb"' + (_allBomScope.selectedCores.has(core._cid) ? ' checked' : '') + ' onclick="allBomScopeToggleItem(' + core._cid + ',\'core\',event)">' : '';
 
-          tableHtml += '<div class="all-bom-core-group' + (coreCollapsed ? ' collapsed' : '') + '" id="allBomCore' + coreKey + '">';
-          tableHtml += '<div class="all-bom-core-hdr" style="--core-color:' + core.color + '">' +
+          locHwGroupsHtml += '<div class="all-bom-core-group' + (coreCollapsed ? ' collapsed' : '') + '" id="allBomCore' + coreKey + '">';
+          locHwGroupsHtml += '<div class="all-bom-core-hdr" style="--core-color:' + core.color + '">' +
             coreCb +
             '<div class="all-bom-core-chev" onclick="toggleAllBomCoreGroup(\'' + coreKey + '\',event)">' + chevronSVG16 + '</div>' +
             '<div class="all-bom-core-info" onclick="openDeviceInfoModal(\'core\',' + core._cid + ')">' +
@@ -1503,21 +1500,21 @@ function renderAllLocationsBom() {
             '<span class="all-bom-core-badge">' + coreCams.length + '/' + core.channels + ' ch</span>' +
             '<span class="all-bom-core-price">$' + coreGroupTotal.toLocaleString() + '</span>' +
           '</div>';
-          tableHtml += '<div class="all-bom-core-children">';
+          locHwGroupsHtml += '<div class="all-bom-core-children">';
           coreCams.forEach(cam => {
             const checked = _allBomScope.selectedCameras.has(cam._id);
             const cbHtml = selectMode ? '<input type="checkbox" class="bom-cb bom-item-cb"' + (checked ? ' checked' : '') + ' onclick="allBomScopeToggleItem(' + cam._id + ',\'camera\',event)">' : '';
-            tableHtml += '<div class="all-bom-item" onclick="openDeviceInfoModal(\'camera\',' + cam._id + ')">' +
+            locHwGroupsHtml += '<div class="all-bom-item" onclick="openDeviceInfoModal(\'camera\',' + cam._id + ')">' +
               '<div class="all-bom-item-primary">' + cbHtml +
               '<div class="all-bom-item-icon" style="background:' + cam.color + '">' + camSVGSmall + '</div>' +
               '<div class="all-bom-item-name-wrap"><span class="all-bom-item-name">' + cam.name + '</span><span class="all-bom-item-model">' + cam.type + ' · ' + cam.model + '</span></div>' +
               '<span class="all-bom-item-price">$' + cam.price.toLocaleString() + '</span>' +
             '</div></div>';
           });
-          tableHtml += '</div></div>';
+          locHwGroupsHtml += '</div></div>';
         });
 
-        // Unassigned cameras (coreIdx < 0 or no matching core)
+        // Unassigned cameras
         if (showCams) {
           let unassigned = planCamsAll.filter(c => c.coreIdx < 0 || c.coreIdx >= planCoresArr.length);
           unassigned = unassigned.filter(c => allBomMatchesSearch(c.name, c.model));
@@ -1526,27 +1523,81 @@ function renderAllLocationsBom() {
             const uKey = plan.id + '-unassigned';
             const uCollapsed = !!_allBomCollapse['core-' + uKey];
             const uTotal = unassigned.reduce((s, c) => s + c.price, 0);
-            tableHtml += '<div class="all-bom-core-group' + (uCollapsed ? ' collapsed' : '') + '" id="allBomCore' + uKey + '">';
-            tableHtml += '<div class="all-bom-core-hdr all-bom-core-hdr-unassigned" onclick="toggleAllBomCoreGroup(\'' + uKey + '\',event)">' +
+            locHwGroupsHtml += '<div class="all-bom-core-group' + (uCollapsed ? ' collapsed' : '') + '" id="allBomCore' + uKey + '">';
+            locHwGroupsHtml += '<div class="all-bom-core-hdr all-bom-core-hdr-unassigned" onclick="toggleAllBomCoreGroup(\'' + uKey + '\',event)">' +
               '<div class="all-bom-core-chev">' + chevronSVG16 + '</div>' +
               '<span class="all-bom-core-name">Unassigned Cameras</span>' +
               '<span class="all-bom-core-badge">' + unassigned.length + '</span>' +
               '<span class="all-bom-core-price">$' + uTotal.toLocaleString() + '</span>' +
             '</div>';
-            tableHtml += '<div class="all-bom-core-children">';
+            locHwGroupsHtml += '<div class="all-bom-core-children">';
             unassigned.forEach(cam => {
               const checked = _allBomScope.selectedCameras.has(cam._id);
               const cbHtml = selectMode ? '<input type="checkbox" class="bom-cb bom-item-cb"' + (checked ? ' checked' : '') + ' onclick="allBomScopeToggleItem(' + cam._id + ',\'camera\',event)">' : '';
-              tableHtml += '<div class="all-bom-item" onclick="openDeviceInfoModal(\'camera\',' + cam._id + ')">' +
+              locHwGroupsHtml += '<div class="all-bom-item" onclick="openDeviceInfoModal(\'camera\',' + cam._id + ')">' +
                 '<div class="all-bom-item-primary">' + cbHtml +
                 '<div class="all-bom-item-icon" style="background:' + cam.color + '">' + camSVGSmall + '</div>' +
                 '<div class="all-bom-item-name-wrap"><span class="all-bom-item-name">' + cam.name + '</span><span class="all-bom-item-model">' + cam.type + ' · ' + cam.model + '</span></div>' +
                 '<span class="all-bom-item-price">$' + cam.price.toLocaleString() + '</span>' +
               '</div></div>';
             });
-            tableHtml += '</div></div>';
+            locHwGroupsHtml += '</div></div>';
           }
         }
+
+        // Hardware category block
+        const locPlanHwTotal = computePlanBomTotal(plan.id);
+        const locPlanHwCount = planCamsAll.length + planCoresArr.length;
+        const locBomChevSvg = '<svg class="bom-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>';
+        const locHwCollapsed = _bomCategoryCollapse['hw-' + plan.id] ? ' collapsed' : '';
+
+        tableHtml += '<div class="bom-category' + locHwCollapsed + '" data-category="hw-' + plan.id + '">' +
+          '<div class="bom-category-hdr" onclick="toggleBomCategory(\'hw-' + plan.id + '\')">' +
+            locBomChevSvg +
+            '<span class="bom-category-title">Hardware</span>' +
+            '<span class="bom-category-badge">' + locPlanHwCount + '</span>' +
+            '<span class="bom-category-total">$' + locPlanHwTotal.toLocaleString() + '</span>' +
+          '</div>' +
+          '<div class="bom-category-body">' + locHwGroupsHtml + '</div>' +
+          '<div class="bom-category-footer">' +
+            '<span class="bom-category-footer-label">Hardware Total</span>' +
+            '<span class="bom-category-footer-val">$' + locPlanHwTotal.toLocaleString() + '</span>' +
+          '</div>' +
+        '</div>';
+
+        // Software category block
+        const locSwTotal = planCamsAll.length * LICENSE_PRICE;
+        const locSwCollapsed = _bomCategoryCollapse['sw-' + plan.id] ? ' collapsed' : '';
+        const locLicenseIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" width="16" height="16"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>';
+
+        if (planCamsAll.length > 0) {
+          tableHtml += '<div class="bom-category' + locSwCollapsed + '" data-category="sw-' + plan.id + '">' +
+            '<div class="bom-category-hdr" onclick="toggleBomCategory(\'sw-' + plan.id + '\')">' +
+              locBomChevSvg +
+              '<span class="bom-category-title">Software</span>' +
+              '<span class="bom-category-badge">' + planCamsAll.length + '</span>' +
+              '<span class="bom-category-total">$' + locSwTotal.toLocaleString() + '</span>' +
+            '</div>' +
+            '<div class="bom-category-body">' +
+              '<div class="bom-sw-row">' +
+                '<span class="bom-sw-icon">' + locLicenseIcon + '</span>' +
+                '<span class="bom-sw-name">Lumana License</span>' +
+                '<span class="bom-sw-qty">' + planCamsAll.length + ' &times; $' + LICENSE_PRICE + '</span>' +
+                '<span class="bom-sw-price">$' + locSwTotal.toLocaleString() + '</span>' +
+              '</div>' +
+            '</div>' +
+            '<div class="bom-category-footer">' +
+              '<span class="bom-category-footer-label">Software Total</span>' +
+              '<span class="bom-category-footer-val">$' + locSwTotal.toLocaleString() + '</span>' +
+            '</div>' +
+          '</div>';
+        }
+
+        // Plan total line
+        const locPlanGrandTotal = locPlanHwTotal + locSwTotal;
+        tableHtml += '<div class="all-bom-plan-total-line">' +
+          '<span>Total</span><span>$' + locPlanGrandTotal.toLocaleString() + '</span>' +
+        '</div>';
 
         if (!singlePlan) tableHtml += '</div></div>'; // plan children + plan
       });
@@ -1673,44 +1724,6 @@ function renderAllLocationsBom() {
     '</div></div>';
 }
 
-/* ── Build sidebar ── */
-function buildSidebar() {
-  const sidebar = document.getElementById('sidebar');
-  let html = '';
-
-  html += '<div class="sidebar-tree">';
-  html += `
-    <div class="sidebar-location ${showAllLocations ? 'selected' : ''}" onclick="window.location.href='site-planner-location.html?siteId=${siteId}'">
-      <svg class="sidebar-location-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
-      All locations
-    </div>
-  `;
-  siteLocations.forEach(loc => {
-    const isLocSelected = !showPlan && !showAllLocations && loc.id === locationId;
-    const locPlans = PLANS.filter(p => p.locationId === loc.id);
-
-    html += `
-      <div class="sidebar-location ${isLocSelected ? 'selected' : ''}" onclick="window.location.href='site-planner-location.html?siteId=${siteId}&locationId=${loc.id}'">
-        <svg class="sidebar-location-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-        ${loc.name}
-      </div>
-      <div class="sidebar-plans">
-    `;
-    locPlans.forEach(plan => {
-      const isPlanSelected = showPlan && plan.id === planId;
-      html += `
-        <a class="sidebar-plan ${isPlanSelected ? 'selected' : ''}" href="site-planner-location.html?siteId=${siteId}&locationId=${loc.id}&planId=${plan.id}">
-          <svg class="sidebar-plan-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
-          ${plan.name}
-        </a>
-      `;
-    });
-    html += '</div>';
-  });
-  html += '</div>';
-
-  sidebar.innerHTML = html;
-}
 
 /* ── Device icon SVG ── */
 function deviceIconSVG(category) {
@@ -1869,7 +1882,6 @@ function buildBreadcrumb() {
 
 /* ── Init ── */
 buildBreadcrumb();
-buildSidebar();
 buildMain();
 
 /* ── Create Location Modal (variables + opener) ── */
