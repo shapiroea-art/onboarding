@@ -746,7 +746,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
         <span class="sep">›</span>
         <a href="#" id="bc-site">Project: HQ Campus</a>
         <span class="sep">›</span>
-        <span class="current" id="bc-loc-plan">Location: Main Building, Plan: Level 1</span>
+        <span class="current" id="bc-loc-plan">Location: Main Building, Sublocation: Level 1</span>
       </div>
       <div class="topbar-actions">
         <button class="btn-icon" onclick="openRenamePlanModal()" title="Edit plan">
@@ -788,7 +788,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
     <!-- Success Banner -->
     <div class="success-banner" id="newPlanBanner">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-      You created a plan
+      You created a sublocation
       <button class="banner-close" id="closeBanner" title="Dismiss"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
 
@@ -6193,7 +6193,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const bcSite = document.getElementById('bc-site');
   const bcLocPlan = document.getElementById('bc-loc-plan');
   if (bcSite) { bcSite.href = `site-planner-location.html?siteId=${siteId}`; bcSite.textContent = 'Project: ' + (bcSiteNames[siteId] || 'Project'); }
-  if (bcLocPlan) { bcLocPlan.textContent = 'Location: ' + (bcLocNames[locationId] || 'Location') + ', Plan: ' + (bcPlanNames[planId] || 'Plan'); }
+  if (bcLocPlan) { bcLocPlan.textContent = 'Location: ' + (bcLocNames[locationId] || 'Location') + ', Sublocation: ' + (bcPlanNames[planId] || 'Plan'); }
 
   /* Always default to Floor plan & Map */
   setMapMode('both');
