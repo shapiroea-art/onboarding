@@ -216,7 +216,7 @@ body.list-view #bomVoGroupByBlock { display: none !important; }
 .cc-btn svg { width: 14px; height: 14px; }
 
 /* ── Properties ── */
-.properties { width: 850px; flex-shrink: 0; background: #fff; border-left: 1px solid #eaecf0; display: flex; flex-direction: column; position: relative; overflow: visible; transition: width 0.2s ease; }
+.properties { width: 1030px; flex-shrink: 0; background: #fff; border-left: 1px solid #eaecf0; display: flex; flex-direction: column; position: relative; overflow: visible; transition: width 0.2s ease; }
 .properties.collapsed { width: 0; border-left: none; }
 .properties.collapsed .rp-tabs,
 .properties.collapsed .rp-body,
@@ -4549,12 +4549,10 @@ function renderBOMPane() {
   const showPaymentActive = !_bomScope.paymentUnpressed && activePayment;
   const showDurationActive = !_bomScope.durationUnpressed && activeDuration;
 
-  // Render View Options + Auto-assign into the BOM header row
+  // Render View Options into the BOM header row (Auto-assign moved into the toolbar)
   const bomHeaderActions = document.getElementById('bomHeaderActions');
-  const autoAssignBtnHtml = (cams.length > 0) ? `<button class="bom-auto-assign-btn" onclick="autoAssignCores()" title="Auto-assign unassigned cameras to cores (creates new cores as needed)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Auto-assign cores</button>` : '';
   if (bomHeaderActions) {
     bomHeaderActions.innerHTML = (cams.length + cores.length > 0) ? `
-      ${autoAssignBtnHtml}
       <div class="bom-view-opts-wrap">
         <button class="bom-bulk-btn ${_bomViewOptions.open ? 'active' : ''}" onclick="toggleBomViewOpts(event)">
           View options
@@ -4614,11 +4612,16 @@ function renderBOMPane() {
     : '';
   const rightGroupClose = isListMode ? '</div>' : '';
 
+  const autoAssignBtnToolbarHtml = (cams.length > 0)
+    ? `<button class="bom-auto-assign-btn" onclick="autoAssignCores()" title="Auto-assign unassigned cameras to cores (creates new cores as needed)">Auto-assign cores</button><span style="width:1px;height:18px;background:#eaecf0;flex-shrink:0;margin:0 8px"></span>`
+    : '';
+
   const toolbarHtml = (cams.length + cores.length > 0) ? `
     <div class="bom-toolbar" style="flex-direction:column;gap:0;padding:0">
       <div class="bom-toolbar-row" style="${rowStyle}">
         ${listAddBtnsHtml}
         ${rightGroupOpen}
+        ${autoAssignBtnToolbarHtml}
         <span style="font-size:11px;font-weight:500;color:#98a2b3;white-space:nowrap">Items:</span>
         <div class="bom-quick-switch">
           <button class="bom-quick-switch-btn ${!selectMode ? 'active' : ''}" onclick="bomSetScope('all')" style="text-align:center">All</button>
