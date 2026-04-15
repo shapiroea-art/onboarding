@@ -57,6 +57,34 @@ body.list-view .rp-tabs { display: none !important; }
 body.list-view #propsPane { display: none !important; }
 body.list-view #bomPane { display: block !important; }
 body.list-view .bom-delete-btn { margin-left: 0 !important; }
+body.list-view #bomVoGroupByBlock { display: none !important; }
+
+/* List view: grouped BOM rows with qty stepper */
+.bom-list-row { display: flex; align-items: center; gap: 10px; padding: 8px 16px; border-bottom: 1px solid #f2f4f7; min-height: 40px; }
+.bom-list-row:hover { background: #f9fafb; }
+.bom-list-row .bom-item-icon { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; color: #667085; flex-shrink: 0; }
+.bom-list-row .bom-item-icon svg { width: 16px; height: 16px; }
+.bom-list-row.bom-list-subrow { padding-left: 48px; background: #fafbfc; border-bottom: 1px solid #f2f4f7; }
+.bom-list-row.bom-list-subrow .bom-item-icon { color: #98a2b3; }
+.bom-list-row .bom-list-name-wrap { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.bom-list-row .bom-list-name { font-size: 13px; font-weight: 500; color: #101828; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bom-list-row .bom-list-sub { font-size: 11px; color: #98a2b3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bom-list-row .bom-list-tags { display: flex; gap: 4px; flex-wrap: wrap; flex-shrink: 0; max-width: 320px; }
+.bom-list-row .bom-list-unit { font-size: 12px; color: #667085; white-space: nowrap; flex-shrink: 0; min-width: 64px; text-align: right; font-variant-numeric: tabular-nums; }
+.bom-list-row .bom-list-subtotal { font-size: 13px; font-weight: 600; color: #101828; white-space: nowrap; flex-shrink: 0; min-width: 84px; text-align: right; font-variant-numeric: tabular-nums; }
+.bom-list-stepper { display: inline-flex; align-items: center; border: 1px solid #d0d5dd; border-radius: 6px; overflow: hidden; background: #fff; flex-shrink: 0; }
+.bom-list-stepper button { width: 24px; height: 24px; border: 0; background: #fff; color: #344054; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; padding: 0; }
+.bom-list-stepper button:hover { background: #f9fafb; }
+.bom-list-stepper button:disabled { color: #d0d5dd; cursor: not-allowed; background: #fff; }
+.bom-list-stepper input { width: 36px; height: 24px; border: 0; border-left: 1px solid #d0d5dd; border-right: 1px solid #d0d5dd; text-align: center; font-size: 12px; font-weight: 500; color: #344054; font-family: inherit; padding: 0; -moz-appearance: textfield; outline: none; }
+.bom-list-stepper input::-webkit-outer-spin-button, .bom-list-stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.bom-list-stepper input:focus { background: #f9fafb; }
+.bom-list-section-hdr { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: #f9fafb; border-bottom: 1px solid #eaecf0; border-top: 1px solid #eaecf0; font-size: 11px; font-weight: 600; color: #667085; text-transform: uppercase; letter-spacing: 0.6px; }
+.bom-list-section-hdr .bom-list-section-count { background: #eaecf0; color: #667085; font-size: 10px; font-weight: 600; padding: 1px 7px; border-radius: 10px; }
+.bom-list-row .bom-list-cb { flex-shrink: 0; }
+
+/* Sticky BOM toolbar — keeps add devices + edit items row visible while scrolling */
+.bom-pane .bom-toolbar { position: sticky; top: 0; z-index: 10; background: #fff; }
 
 /* Unplaced tag (legacy — used by cores) */
 .unplaced-tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; font-size: 10px; font-weight: 500; color: #667085; background: #f2f4f7; border: 1px solid #eaecf0; border-radius: 10px; cursor: pointer; margin-left: 6px; text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap; flex-shrink: 0; transition: background 0.12s, color 0.12s, border-color 0.12s; }
@@ -2851,10 +2879,11 @@ function renderProperties(id) {
           </div>
         </div>
       </div>
+      ${(cam.unplaced && state.viewMode === 'list') ? '' : `
       <div class="prop-row">
         <span class="prop-label">Placement</span>
         <div class="prop-ctrl">${_placementBtnHtml('camera', id, !!cam.unplaced)}</div>
-      </div>
+      </div>`}
     </div>
     <div class="props-section">
       <div class="props-section-title">Camera Config</div>
@@ -3701,7 +3730,7 @@ function renderBomCamItem(cam, coreId, idx) {
     : [];
   const camAddonsHtml = camAddons.map(a => renderBomAddonItem(a, true)).join('');
 
-  const unplacedBadge = cam.unplaced ? `<button type="button" class="place-btn" onclick="placeUnplacedCamera(${cam.id});event.stopPropagation()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>Place on plan</button>` : '';
+  const unplacedBadge = (cam.unplaced && state.viewMode !== 'list') ? `<button type="button" class="place-btn" onclick="placeUnplacedCamera(${cam.id});event.stopPropagation()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>Place on plan</button>` : '';
 
   return `${dropZone}<div class="bom-item" data-cam-row="${cam.id}" ${dragAttr}>
     <div class="bom-item-primary" onclick="selectCamera(${cam.id})" title="Select camera">
@@ -3774,6 +3803,451 @@ function renderBomAddonItem(addon, doubleIndent) {
   </div>`;
 }
 
+// ── Grouped BOM List view helpers ──
+function _camGroupKey(cam) {
+  return [cam.typeId, cam.resolution || '4K', cam.license || 'Essential', cam.retention || 30, cam.payment || 'Upfront', cam.duration || 1].join('|');
+}
+function _coreGroupKey(core) {
+  return [core.typeId, core.payment || 'Upfront', core.duration || 1].join('|');
+}
+function _addonGroupKey(addon) {
+  return [addon.typeId, addon.retention == null ? '' : addon.retention, addon.payment || 'Upfront', addon.duration || 1].join('|');
+}
+function _groupBy(items, keyFn) {
+  const map = new Map();
+  items.forEach(it => {
+    const k = keyFn(it);
+    if (!map.has(k)) map.set(k, []);
+    map.get(k).push(it);
+  });
+  return map;
+}
+// Sort groups (arrays) by sample first-item using existing _bomSortItems rules
+function _sortGroups(groups) {
+  const entries = Array.from(groups.entries());
+  entries.sort(([ka, a], [kb, b]) => {
+    const s = _bomViewOptions.sort;
+    const sa = a[0], sb = b[0];
+    if (s === 'priceLow') return (sa.price || 0) - (sb.price || 0);
+    if (s === 'priceHigh') return (sb.price || 0) - (sa.price || 0);
+    return (sa.name || sa.type || '').localeCompare(sb.name || sb.type || '');
+  });
+  return entries;
+}
+
+// Cameras: add/remove by group
+function _listAddCam(groupKey) {
+  const sample = state.cameras.find(c => _camGroupKey(c) === groupKey);
+  if (!sample) return;
+  const newCam = addCamera(sample.typeId, 0, 0, true, { unplaced: true });
+  if (!newCam) return;
+  newCam.resolution = sample.resolution;
+  newCam.license = sample.license;
+  newCam.retention = sample.retention;
+  newCam.payment = sample.payment;
+  newCam.duration = sample.duration;
+  updateUI();
+}
+function _listRemoveCam(groupKey) {
+  const groupCams = state.cameras.filter(c => _camGroupKey(c) === groupKey);
+  if (!groupCams.length) return;
+  const assignedSet = new Set();
+  state.cores.forEach(core => (core.cameraIds || []).forEach(id => assignedSet.add(id)));
+  let target = groupCams.find(c => c.unplaced);
+  if (!target) target = groupCams.find(c => !c.unplaced && !assignedSet.has(c.id));
+  if (!target) target = groupCams.slice().sort((a, b) => b.id - a.id)[0];
+  if (!target) return;
+  deleteCamera(target.id);
+}
+function _listCamQtyStep(key, delta) {
+  if (delta > 0) _listAddCam(key);
+  else _listRemoveCam(key);
+  renderBOMPane();
+  updateProjectTotal && updateProjectTotal();
+}
+function _listCamQtySet(key, newQty) {
+  newQty = Math.max(0, Math.min(999, parseInt(newQty, 10) || 0));
+  const current = state.cameras.filter(c => _camGroupKey(c) === key).length;
+  const d = newQty - current;
+  if (d === 0) { renderBOMPane(); return; }
+  if (d > 0) { for (let i = 0; i < d; i++) _listAddCam(key); }
+  else { for (let i = 0; i < -d; i++) _listRemoveCam(key); }
+  renderBOMPane();
+  updateProjectTotal && updateProjectTotal();
+}
+
+// Cores: add/remove by group
+function _listAddCore(groupKey) {
+  const sample = state.cores.find(c => _coreGroupKey(c) === groupKey);
+  if (!sample) return;
+  const newCore = addCore(sample.typeId, 0, 0, true, { unplaced: true });
+  if (!newCore) return;
+  newCore.payment = sample.payment;
+  newCore.duration = sample.duration;
+  updateUI();
+}
+function _listRemoveCore(groupKey) {
+  const groupCores = state.cores.filter(c => _coreGroupKey(c) === groupKey);
+  if (!groupCores.length) return;
+  let target = groupCores.find(c => c.unplaced);
+  if (!target) target = groupCores.slice().sort((a, b) => b.id - a.id)[0];
+  if (!target) return;
+  deleteCore(target.id);
+}
+function _listCoreQtyStep(key, delta) {
+  if (delta > 0) _listAddCore(key);
+  else _listRemoveCore(key);
+  renderBOMPane();
+  updateProjectTotal && updateProjectTotal();
+}
+function _listCoreQtySet(key, newQty) {
+  newQty = Math.max(0, Math.min(999, parseInt(newQty, 10) || 0));
+  const current = state.cores.filter(c => _coreGroupKey(c) === key).length;
+  const d = newQty - current;
+  if (d === 0) { renderBOMPane(); return; }
+  if (d > 0) { for (let i = 0; i < d; i++) _listAddCore(key); }
+  else { for (let i = 0; i < -d; i++) _listRemoveCore(key); }
+  renderBOMPane();
+  updateProjectTotal && updateProjectTotal();
+}
+
+// Camera-scope addons under a camera group
+function _listAddCamAddon(addonKey, camGroupKey) {
+  const [typeId, retentionStr, payment, durationStr] = addonKey.split('|');
+  const groupCams = state.cameras.filter(c => _camGroupKey(c) === camGroupKey);
+  if (!groupCams.length) return;
+  const hasAddonCamIds = new Set(
+    state.addons.filter(a => a.typeId === typeId).map(a => a.cameraId)
+  );
+  const targetCam = groupCams.find(c => !hasAddonCamIds.has(c.id)) || groupCams[0];
+  addAddon(typeId, {
+    cameraId: targetCam.id,
+    retention: retentionStr ? +retentionStr : null,
+    payment: payment || 'Upfront',
+    duration: durationStr ? +durationStr : 1,
+  });
+}
+function _listRemoveCamAddon(addonKey, camGroupKey) {
+  const groupCams = state.cameras.filter(c => _camGroupKey(c) === camGroupKey);
+  const groupCamIds = new Set(groupCams.map(c => c.id));
+  const matching = state.addons.filter(a => _addonGroupKey(a) === addonKey && groupCamIds.has(a.cameraId));
+  if (!matching.length) return;
+  const target = matching.slice().sort((a, b) => b.id - a.id)[0];
+  saveUndo();
+  state.addons = state.addons.filter(a => a.id !== target.id);
+  updateUI();
+}
+function _listCamAddonQtyStep(addonKey, camGroupKey, delta) {
+  if (delta > 0) _listAddCamAddon(addonKey, camGroupKey);
+  else _listRemoveCamAddon(addonKey, camGroupKey);
+  renderBOMPane();
+  updateProjectTotal && updateProjectTotal();
+}
+function _listCamAddonQtySet(addonKey, camGroupKey, newQty) {
+  newQty = Math.max(0, Math.min(999, parseInt(newQty, 10) || 0));
+  const groupCams = state.cameras.filter(c => _camGroupKey(c) === camGroupKey);
+  const groupCamIds = new Set(groupCams.map(c => c.id));
+  const current = state.addons.filter(a => _addonGroupKey(a) === addonKey && groupCamIds.has(a.cameraId)).length;
+  const d = newQty - current;
+  if (d === 0) { renderBOMPane(); return; }
+  if (d > 0) { for (let i = 0; i < d; i++) _listAddCamAddon(addonKey, camGroupKey); }
+  else { for (let i = 0; i < -d; i++) _listRemoveCamAddon(addonKey, camGroupKey); }
+  renderBOMPane();
+  updateProjectTotal && updateProjectTotal();
+}
+
+// Plan-scope addons
+function _listAddPlanAddon(addonKey) {
+  const [typeId, retentionStr, payment, durationStr] = addonKey.split('|');
+  addAddon(typeId, {
+    cameraId: null,
+    retention: retentionStr ? +retentionStr : null,
+    payment: payment || 'Upfront',
+    duration: durationStr ? +durationStr : 1,
+  });
+}
+function _listRemovePlanAddon(addonKey) {
+  const matching = state.addons.filter(a => _addonGroupKey(a) === addonKey && !a.cameraId);
+  if (!matching.length) return;
+  const target = matching.slice().sort((a, b) => b.id - a.id)[0];
+  saveUndo();
+  state.addons = state.addons.filter(a => a.id !== target.id);
+  updateUI();
+}
+function _listPlanAddonQtyStep(addonKey, delta) {
+  if (delta > 0) _listAddPlanAddon(addonKey);
+  else _listRemovePlanAddon(addonKey);
+  renderBOMPane();
+  updateProjectTotal && updateProjectTotal();
+}
+function _listPlanAddonQtySet(addonKey, newQty) {
+  newQty = Math.max(0, Math.min(999, parseInt(newQty, 10) || 0));
+  const current = state.addons.filter(a => _addonGroupKey(a) === addonKey && !a.cameraId).length;
+  const d = newQty - current;
+  if (d === 0) { renderBOMPane(); return; }
+  if (d > 0) { for (let i = 0; i < d; i++) _listAddPlanAddon(addonKey); }
+  else { for (let i = 0; i < -d; i++) _listRemovePlanAddon(addonKey); }
+  renderBOMPane();
+  updateProjectTotal && updateProjectTotal();
+}
+
+// List-mode group-level select toggles (used in select scope)
+function _bomListCamGroupState(cams) {
+  const ids = cams.map(c => c.id);
+  const selCount = ids.reduce((n, id) => n + (_bomScope.selectedCameras.has(id) ? 1 : 0), 0);
+  if (selCount === 0) return 'none';
+  if (selCount === ids.length) return 'all';
+  return 'some';
+}
+function _bomListAddonGroupState(addons, set) {
+  const ids = addons.map(a => a.id);
+  const selCount = ids.reduce((n, id) => n + (set.has(id) ? 1 : 0), 0);
+  if (selCount === 0) return 'none';
+  if (selCount === ids.length) return 'all';
+  return 'some';
+}
+function _bomListToggleCamGroup(groupKey, evt) {
+  if (evt) evt.stopPropagation();
+  const groupCams = state.cameras.filter(c => _camGroupKey(c) === groupKey);
+  const ids = groupCams.map(c => c.id);
+  const allSelected = ids.length > 0 && ids.every(id => _bomScope.selectedCameras.has(id));
+  if (allSelected) {
+    ids.forEach(id => _bomScope.selectedCameras.delete(id));
+  } else {
+    ids.forEach(id => _bomScope.selectedCameras.add(id));
+  }
+  _bomScope.paymentUnpressed = false;
+  _bomScope.durationUnpressed = false;
+  renderBOMPane();
+}
+function _bomListToggleCamAddonGroup(addonKey, camGroupKey, evt) {
+  if (evt) evt.stopPropagation();
+  const groupCams = state.cameras.filter(c => _camGroupKey(c) === camGroupKey);
+  const groupCamIds = new Set(groupCams.map(c => c.id));
+  const groupAddons = state.addons.filter(a => _addonGroupKey(a) === addonKey && groupCamIds.has(a.cameraId));
+  const ids = groupAddons.map(a => a.id);
+  const allSelected = ids.length > 0 && ids.every(id => _bomScope.selectedAddons.has(id));
+  if (allSelected) ids.forEach(id => _bomScope.selectedAddons.delete(id));
+  else ids.forEach(id => _bomScope.selectedAddons.add(id));
+  renderBOMPane();
+}
+function _bomListTogglePlanAddonGroup(addonKey, evt) {
+  if (evt) evt.stopPropagation();
+  const groupAddons = state.addons.filter(a => _addonGroupKey(a) === addonKey && !a.cameraId);
+  const ids = groupAddons.map(a => a.id);
+  const allSelected = ids.length > 0 && ids.every(id => _bomScope.selectedAddons.has(id));
+  if (allSelected) ids.forEach(id => _bomScope.selectedAddons.delete(id));
+  else ids.forEach(id => _bomScope.selectedAddons.add(id));
+  renderBOMPane();
+}
+
+function _renderListCamRow(cams) {
+  const sample = cams[0];
+  const qty = cams.length;
+  const icon = ICONS[sample.iconType] || BOM_CAM_ICON;
+  const key = _camGroupKey(sample);
+  const modelLabel = sample.model || sample.name || 'Generic';
+  const brandSub = (sample.name && sample.name !== modelLabel) ? escHtml(sample.name) : 'Camera';
+  const selectMode = _bomScope.mode === 'select';
+  const camGroupState = _bomListCamGroupState(cams);
+  const cbHtml = selectMode
+    ? `<input type="checkbox" class="bom-cb bom-list-cb" data-cb-state="${camGroupState}" ${camGroupState === 'all' ? 'checked' : ''} onclick="_bomListToggleCamGroup('${key}',event)">`
+    : '';
+  const tags = `<span class="bom-list-tags">
+    ${_bomTagHtml('payment', sample.payment || 'Upfront')}
+    ${_bomTagHtml('duration', (sample.duration || 1) + ' yr')}
+    ${_bomTagHtml('license', sample.license || 'Essential')}
+    ${_bomTagHtml('retention', (sample.retention || 30) + 'd')}
+    ${_bomTagHtml('resolution', sample.resolution || '4K')}
+  </span>`;
+  const unit = sample.price;
+  const subtotal = unit * qty;
+  // Camera-scope addons grouped within this cam group
+  const camIds = new Set(cams.map(c => c.id));
+  const addons = state.addons.filter(a =>
+    camIds.has(a.cameraId) &&
+    ADDON_TYPES[a.typeId] && ADDON_TYPES[a.typeId].scope === 'camera' &&
+    _bomMatchesSearch(a)
+  );
+  const addonGroups = _groupBy(addons, _addonGroupKey);
+  const addonRowsHtml = Array.from(addonGroups.entries()).map(([aKey, aList]) => {
+    const aSample = aList[0];
+    const aDef = ADDON_TYPES[aSample.typeId];
+    if (!aDef) return '';
+    const aQty = aList.length;
+    const aUnit = aSample.price;
+    const aSubtotal = aUnit * aQty;
+    let aTagsInner = '';
+    if (aDef.fields.includes('payment')) {
+      aTagsInner += _bomTagHtml('payment', aSample.payment || 'Upfront');
+      const d = aSample.payment === 'Yearly' ? (aSample.duration || 1) + ' yr' : '—';
+      aTagsInner += _bomTagHtml('duration', d);
+    }
+    if (aDef.fields.includes('retention') && aSample.retention) {
+      aTagsInner += _bomTagHtml('retention', aSample.retention + 'd');
+    }
+    const aStepper = `<div class="bom-list-stepper" onclick="event.stopPropagation()">
+      <button type="button" onclick="_listCamAddonQtyStep('${aKey}','${key}',-1)" ${aQty <= 0 ? 'disabled' : ''}>−</button>
+      <input type="number" min="0" max="999" value="${aQty}" onchange="_listCamAddonQtySet('${aKey}','${key}',+this.value)">
+      <button type="button" onclick="_listCamAddonQtyStep('${aKey}','${key}',1)">+</button>
+    </div>`;
+    const aGroupState = _bomListAddonGroupState(aList, _bomScope.selectedAddons);
+    const aCbHtml = selectMode
+      ? `<input type="checkbox" class="bom-cb bom-list-cb" data-cb-state="${aGroupState}" ${aGroupState === 'all' ? 'checked' : ''} onclick="_bomListToggleCamAddonGroup('${aKey}','${key}',event)">`
+      : '';
+    return `<div class="bom-list-row bom-list-subrow">
+      ${aCbHtml}
+      <span class="bom-item-icon" style="color:${aDef.color}">${ADDON_ICON}</span>
+      <div class="bom-list-name-wrap">
+        <span class="bom-list-name">${escHtml(aDef.name)}</span>
+        <span class="bom-list-sub">Add-on</span>
+      </div>
+      <span class="bom-list-tags">${aTagsInner}</span>
+      <span class="bom-list-unit">$${aUnit.toLocaleString()}</span>
+      ${aStepper}
+      <span class="bom-list-subtotal">$${aSubtotal.toLocaleString()}</span>
+    </div>`;
+  }).join('');
+
+  const stepperHtml = `<div class="bom-list-stepper" onclick="event.stopPropagation()">
+    <button type="button" onclick="_listCamQtyStep('${key}',-1)" ${qty <= 0 ? 'disabled' : ''}>−</button>
+    <input type="number" min="0" max="999" value="${qty}" onchange="_listCamQtySet('${key}',+this.value)">
+    <button type="button" onclick="_listCamQtyStep('${key}',1)">+</button>
+  </div>`;
+
+  return `<div class="bom-list-row" ${selectMode ? '' : `onclick="selectCamera(${sample.id})" style="cursor:pointer"`}>
+    ${cbHtml}
+    <span class="bom-item-icon" style="color:${sample.color || '#7c3aed'}">${icon}</span>
+    <div class="bom-list-name-wrap">
+      <span class="bom-list-name">${escHtml(modelLabel)}</span>
+      <span class="bom-list-sub">${brandSub}</span>
+    </div>
+    ${tags}
+    <span class="bom-list-unit">$${unit.toLocaleString()}</span>
+    ${stepperHtml}
+    <span class="bom-list-subtotal">$${subtotal.toLocaleString()}</span>
+  </div>${addonRowsHtml}`;
+}
+
+function _renderListCoreRow(coresInGroup) {
+  const sample = coresInGroup[0];
+  const qty = coresInGroup.length;
+  const key = _coreGroupKey(sample);
+  const duration = sample.payment === 'Yearly' ? (sample.duration || 1) + ' yr' : '—';
+  const tags = `<span class="bom-list-tags">
+    ${_bomTagHtml('payment', sample.payment || 'Upfront')}
+    ${_bomTagHtml('duration', duration)}
+  </span>`;
+  const unit = sample.price;
+  const subtotal = unit * qty;
+  const stepperHtml = `<div class="bom-list-stepper" onclick="event.stopPropagation()">
+    <button type="button" onclick="_listCoreQtyStep('${key}',-1)" ${qty <= 0 ? 'disabled' : ''}>−</button>
+    <input type="number" min="0" max="999" value="${qty}" onchange="_listCoreQtySet('${key}',+this.value)">
+    <button type="button" onclick="_listCoreQtyStep('${key}',1)">+</button>
+  </div>`;
+  return `<div class="bom-list-row" onclick="selectCore(${sample.id})" style="cursor:pointer">
+    <span class="bom-item-icon" style="color:${sample.color || '#667085'}">${BOM_CORE_ICON}</span>
+    <div class="bom-list-name-wrap">
+      <span class="bom-list-name">${escHtml(sample.type || sample.name)}</span>
+      <span class="bom-list-sub">Core</span>
+    </div>
+    ${tags}
+    <span class="bom-list-unit">$${unit.toLocaleString()}</span>
+    ${stepperHtml}
+    <span class="bom-list-subtotal">$${subtotal.toLocaleString()}</span>
+  </div>`;
+}
+
+function _renderListPlanAddonRow(addonsInGroup) {
+  const sample = addonsInGroup[0];
+  const def = ADDON_TYPES[sample.typeId];
+  if (!def) return '';
+  const qty = addonsInGroup.length;
+  const key = _addonGroupKey(sample);
+  const selectMode = _bomScope.mode === 'select';
+  const groupState = _bomListAddonGroupState(addonsInGroup, _bomScope.selectedAddons);
+  const cbHtml = selectMode
+    ? `<input type="checkbox" class="bom-cb bom-list-cb" data-cb-state="${groupState}" ${groupState === 'all' ? 'checked' : ''} onclick="_bomListTogglePlanAddonGroup('${key}',event)">`
+    : '';
+  let tagsInner = '';
+  if (def.fields.includes('payment')) {
+    tagsInner += _bomTagHtml('payment', sample.payment || 'Upfront');
+    const d = sample.payment === 'Yearly' ? (sample.duration || 1) + ' yr' : '—';
+    tagsInner += _bomTagHtml('duration', d);
+  }
+  if (def.fields.includes('retention') && sample.retention) {
+    tagsInner += _bomTagHtml('retention', sample.retention + 'd');
+  }
+  const unit = sample.price;
+  const subtotal = unit * qty;
+  const stepperHtml = `<div class="bom-list-stepper" onclick="event.stopPropagation()">
+    <button type="button" onclick="_listPlanAddonQtyStep('${key}',-1)" ${qty <= 0 ? 'disabled' : ''}>−</button>
+    <input type="number" min="0" max="999" value="${qty}" onchange="_listPlanAddonQtySet('${key}',+this.value)">
+    <button type="button" onclick="_listPlanAddonQtyStep('${key}',1)">+</button>
+  </div>`;
+  return `<div class="bom-list-row" ${selectMode ? '' : `onclick="selectAddon(${sample.id})" style="cursor:pointer"`}>
+    ${cbHtml}
+    <span class="bom-item-icon" style="color:${def.color}">${ADDON_ICON}</span>
+    <div class="bom-list-name-wrap">
+      <span class="bom-list-name">${escHtml(def.name)}</span>
+      <span class="bom-list-sub">Plan add-on</span>
+    </div>
+    <span class="bom-list-tags">${tagsInner}</span>
+    <span class="bom-list-unit">$${unit.toLocaleString()}</span>
+    ${stepperHtml}
+    <span class="bom-list-subtotal">$${subtotal.toLocaleString()}</span>
+  </div>`;
+}
+
+function _renderGroupedListHwHtml(cams, cores) {
+  const vo = _bomViewOptions;
+  const showCams = vo.devices.cameras;
+  const showCores = vo.devices.cores;
+  const showAddons = vo.devices.addons;
+
+  let html = '';
+
+  // Cameras — grouped
+  if (showCams && cams.length) {
+    const filteredCams = cams.filter(_bomMatchesSearch);
+    const camGroups = _groupBy(filteredCams, _camGroupKey);
+    const sortedCamGroups = _sortGroups(camGroups);
+    if (sortedCamGroups.length) {
+      html += `<div class="bom-list-section-hdr">Cameras <span class="bom-list-section-count">${sortedCamGroups.length}</span></div>`;
+      sortedCamGroups.forEach(([key, list]) => { html += _renderListCamRow(list); });
+    }
+  }
+
+  // Cores — grouped
+  if (showCores && cores.length) {
+    const filteredCores = cores.filter(_bomMatchesSearch);
+    const coreGroups = _groupBy(filteredCores, _coreGroupKey);
+    const sortedCoreGroups = _sortGroups(coreGroups);
+    if (sortedCoreGroups.length) {
+      html += `<div class="bom-list-section-hdr">Cores <span class="bom-list-section-count">${sortedCoreGroups.length}</span></div>`;
+      sortedCoreGroups.forEach(([key, list]) => { html += _renderListCoreRow(list); });
+    }
+  }
+
+  // Plan-scope add-ons — grouped
+  if (showAddons) {
+    const planAddons = state.addons.filter(a =>
+      ADDON_TYPES[a.typeId] && ADDON_TYPES[a.typeId].scope === 'plan' && _bomMatchesSearch(a)
+    );
+    const planAddonGroups = _groupBy(planAddons, _addonGroupKey);
+    const sortedPlanAddonGroups = _sortGroups(planAddonGroups);
+    if (sortedPlanAddonGroups.length) {
+      html += `<div class="bom-list-section-hdr">Add-ons <span class="bom-list-section-count">${sortedPlanAddonGroups.length}</span></div>`;
+      sortedPlanAddonGroups.forEach(([key, list]) => { html += _renderListPlanAddonRow(list); });
+    }
+  }
+
+  if (!html && vo.search) {
+    html = '<div style="padding:24px 16px;text-align:center;color:#98a2b3;font-size:13px">No matching devices</div>';
+  }
+  return html;
+}
+
 function renderBOMPane() {
   const pane = document.getElementById('bomPane');
   const cams = state.cameras;
@@ -3817,7 +4291,9 @@ function renderBOMPane() {
   // ── Hardware groups ──
   let hwGroupsHtml = '';
 
-  if (vo.groupBy === 'cores') {
+  if (state.viewMode === 'list') {
+    hwGroupsHtml = _renderGroupedListHwHtml(cams, cores);
+  } else if (vo.groupBy === 'cores') {
     // ── Group by Cores (default) ──
 
     // Unassigned cameras FIRST
@@ -4237,6 +4713,9 @@ function renderBOMPane() {
         </div>
       </div>
     </div>`;
+
+  // Set indeterminate state on partially-selected group checkboxes (can't set via attribute)
+  pane.querySelectorAll('.bom-list-cb[data-cb-state="some"]').forEach(cb => { cb.indeterminate = true; });
 
   // Restore search focus if view options dropdown is open
   if (_bomViewOptions.open && _bomViewOptions.search) {
@@ -5859,10 +6338,11 @@ function renderCoreProperties(id) {
           ${durationInlineHtml}
         </div>
       </div>
+      ${(core.unplaced && state.viewMode === 'list') ? '' : `
       <div class="prop-row">
         <span class="prop-label">Placement</span>
         <div class="prop-ctrl">${_placementBtnHtml('core', id, !!core.unplaced)}</div>
-      </div>
+      </div>`}
     </div>
     <div class="props-section">
       <div class="props-section-title" style="display:flex;align-items:center;gap:8px">
@@ -6665,13 +7145,22 @@ function setViewMode(mode) {
     document.querySelector('.properties').classList.remove('collapsed');
     renderBOMPane();
   } else {
+    // Keep the BOM right panel visible and re-render in original per-instance format.
+    // switchTab syncs tab buttons, pane display, and calls renderBOMPane.
+    // Do this BEFORE Konva/map resize so a canvas error can't prevent the BOM from re-rendering.
+    switchTab('bom');
     // Resize Konva stage in case container size changed
-    if (typeof stage !== 'undefined' && stage) {
-      const container = document.getElementById('konva-container');
-      if (container) { stage.width(container.offsetWidth); stage.height(container.offsetHeight); stage.draw(); }
-    }
+    try {
+      if (typeof stage !== 'undefined' && stage) {
+        const container = document.getElementById('konva-container');
+        if (container && container.offsetWidth > 0 && container.offsetHeight > 0) {
+          stage.width(container.offsetWidth);
+          stage.height(container.offsetHeight);
+          stage.draw();
+        }
+      }
+    } catch (e) { /* canvas may not be ready; next interaction will redraw */ }
     if (typeof map !== 'undefined' && map && map.invalidateSize) { setTimeout(() => map.invalidateSize(), 50); }
-    renderBOMPane();
   }
 }
 
